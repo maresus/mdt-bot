@@ -1709,6 +1709,42 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     """
     appointment_state = get_appointment_state(session_id)
     unified_state = get_unified_state(session_id)
+    context = unified_state.setdefault("context", {})
+
+    def _clear_booking_details_preserve_service() -> None:
+        """Clear appointment details when changing service, keep only service type."""
+        appointment_state["date"] = None
+        appointment_state["time"] = None
+        appointment_state["name"] = None
+        appointment_state["phone"] = None
+        appointment_state["email"] = None
+        appointment_state["reason"] = None
+        appointment_state["step"] = "date"
+
+    # Handle pending service switch confirmation (DA/NE).
+    pending_service_switch = context.get("pending_service_switch")
+    if pending_service_switch and is_in_flow(session_id):
+        pending_service_key = str(pending_service_switch).lower()
+        pending_info = get_service_info(pending_service_key)
+
+        if is_affirmative(message):
+            appointment_state["service_type"] = pending_service_key
+            _clear_booking_details_preserve_service()
+            context["pending_service_switch"] = None
+
+            if pending_info:
+                return (
+                    f"Super, preklopim na **{pending_info['name']}**.\n\n"
+                    f"📋 Trajanje: {pending_info['duration_minutes']} minut\n"
+                    f"💰 Cena: {pending_info['price_range']}\n\n"
+                    "Kateri datum vas zanima? (npr. 15.3.2026)"
+                )
+            return "Super, preklopim storitev. Kateri datum vas zanima? (npr. 15.3.2026)"
+
+        if is_negative(message):
+            context["pending_service_switch"] = None
+            step = appointment_state.get("step") or get_current_step(session_id)
+            return build_resume_prompt(step) or "V redu, nadaljujemo z naročilom."
 
     # Keep unified state in sync with legacy appointment state.
     if appointment_state.get("step"):
@@ -1719,7 +1755,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         unified_state["step"] = None
 
     decision = unified_route(message, unified_state)
-    suggested_service = unified_state.get("context", {}).get("suggested_service")
+    suggested_service = context.get("suggested_service")
 
     # If user provides a date after service info prompt, start booking immediately
     date_str = extract_date_from_message(message)
@@ -1727,7 +1763,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         appointment_state["service_type"] = suggested_service.lower()
         appointment_state["step"] = None
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-        unified_state["context"]["suggested_service"] = None
+        context["suggested_service"] = None
         return handle_appointment_booking(message, session_id)
 
     # Log decision for debugging
@@ -1750,7 +1786,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         appointment_state["service_type"] = suggested_service.lower()
         appointment_state["step"] = None
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-        unified_state["context"]["suggested_service"] = None
+        context["suggested_service"] = None
         return handle_appointment_booking(message, session_id)
 
     if decision.primary_intent == IntentType.NEGATIVE and is_in_flow(session_id):
@@ -1817,6 +1853,18 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
             if service_hint:
                 service_info = get_service_info(str(service_hint).lower())
                 if service_info:
+                    current_service = appointment_state.get("service_type")
+                    incoming_service = str(service_hint).lower()
+                    if current_service and incoming_service != current_service:
+                        current_info = get_service_info(current_service)
+                        current_label = current_info["name"] if current_info else current_service
+                        context["pending_service_switch"] = incoming_service
+                        return (
+                            f"Glede na opis priporočam **{service_info['name']}** "
+                            f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
+                            f"Trenutno imate izbran **{current_label}**.\n"
+                            f"Želite preklopiti na **{service_info['name']}**? (DA / NE)"
+                        )
                     answer = (
                         f"Za to je najprimernejši **{service_info['name']}** "
                         f"({service_info['duration_minutes']} min, {service_info['price_range']})."
