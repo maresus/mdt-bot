@@ -56,12 +56,14 @@ from app.services.session.unified_state import (
 from app.services.routing.unified_router import route as unified_route, IntentType
 from app.services.routing.confidence import SwitchAction, detect_service_type as unified_detect_service
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
+from app.core.response_formatter import format_response
 from app.services.flows.booking_flow import (
     BookingFlowDeps,
     get_resume_prompt as booking_get_resume_prompt,
     handle_appointment_booking as booking_handle_appointment_booking,
 )
 from app.services.flows.info_flow import pick_info_key
+from app.services.flows.interrupt_flow import InterruptFlowDeps, resolve_interrupt_answer
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -1420,6 +1422,12 @@ BOOKING_FLOW_DEPS = BookingFlowDeps(
     send_notifications_async=_send_reservation_emails_async,
 )
 
+INTERRUPT_FLOW_DEPS = InterruptFlowDeps(
+    get_info_response=_get_info_response,
+    service_price_info=_service_price_info,
+    get_service_info=get_service_info,
+)
+
 
 def get_resume_prompt(state: dict) -> str:
     """Backward-compatible wrapper around extracted booking flow."""
@@ -1562,41 +1570,30 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
             return None
 
         # Answer the interrupting question
-        if decision.primary_intent == IntentType.INFO:
-            answer = _get_info_response(pick_info_key(message))
-        elif decision.primary_intent == IntentType.PRICE:
-            service_key = appointment_state.get("service_type") or decision.service_type or suggested_service
-            if service_key:
-                answer = _service_price_info(service_key.lower())
-            else:
-                answer = _get_info_response("cene")
-        elif decision.primary_intent == IntentType.SERVICE_INFO:
-            service_hint = decision.service_type or appointment_state.get("service_type") or suggested_service
-            if service_hint:
-                service_info = get_service_info(str(service_hint).lower())
-                if service_info:
-                    current_service = appointment_state.get("service_type")
-                    incoming_service = str(service_hint).lower()
-                    if current_service and incoming_service != current_service:
-                        current_info = get_service_info(current_service)
-                        current_label = current_info["name"] if current_info else current_service
-                        context["pending_service_switch"] = incoming_service
-                        return (
-                            f"Glede na opis priporočam **{service_info['name']}** "
-                            f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
-                            f"Trenutno imate izbran **{current_label}**.\n"
-                            f"Želite preklopiti na **{service_info['name']}**? (DA / NE)"
-                        )
-                    answer = (
-                        f"Za to je najprimernejši **{service_info['name']}** "
-                        f"({service_info['duration_minutes']} min, {service_info['price_range']})."
+        service_hint = decision.service_type or appointment_state.get("service_type") or suggested_service
+        if decision.primary_intent == IntentType.SERVICE_INFO and service_hint:
+            service_info = get_service_info(str(service_hint).lower())
+            if service_info:
+                current_service = appointment_state.get("service_type")
+                incoming_service = str(service_hint).lower()
+                if current_service and incoming_service != current_service:
+                    current_info = get_service_info(current_service)
+                    current_label = current_info["name"] if current_info else current_service
+                    context["pending_service_switch"] = incoming_service
+                    return (
+                        f"Glede na opis priporočam **{service_info['name']}** "
+                        f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
+                        f"Trenutno imate izbran **{current_label}**.\n"
+                        f"Želite preklopiti na **{service_info['name']}**? (DA / NE)"
                     )
-                else:
-                    answer = _get_info_response("storitve")
-            else:
-                answer = _get_info_response("storitve")
-        else:
-            answer = None
+
+        answer = resolve_interrupt_answer(
+            message=message,
+            primary_intent=decision.primary_intent,
+            service_hint=decision.service_type or suggested_service,
+            active_service=appointment_state.get("service_type"),
+            deps=INTERRUPT_FLOW_DEPS,
+        )
 
         if answer:
             return build_interrupt_response(answer, step, include_resume=True)
@@ -1763,17 +1760,25 @@ async def chat(request: ChatRequest) -> ChatResponse:
     if USE_UNIFIED_ROUTER:
         unified_response = handle_unified_routing(message, session_id)
         if unified_response is not None:
+            payload = format_response(
+                unified_response,
+                metadata={"contract_version": "v0.1", "router": "unified"},
+            )
             # Update conversation history
             conversation_history.append({"role": "user", "content": message})
-            conversation_history.append({"role": "assistant", "content": unified_response})
+            conversation_history.append({"role": "assistant", "content": payload["text"]})
             last_user_message_by_session[session_id] = message
             if len(conversation_history) > 20:
                 conversation_history = conversation_history[-20:]
-            return ChatResponse(reply=unified_response, session_id=session_id)
+            return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
         # If None returned, fall through to legacy system
         if is_in_flow(session_id):
             response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
+            payload = format_response(
+                response_text,
+                metadata={"contract_version": "v0.1", "router": "unified_fallback"},
+            )
+            return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
 
     # ===== LEGACY ROUTING SYSTEM =====
     # If last bot asked to book after health advice, accept short "da"
@@ -2274,7 +2279,11 @@ Kaj vas zanima?"""
         # Non-critical - don't fail the request
         print(f"[CHAT_HISTORY] Failed to save conversation: {e}")
 
-    return ChatResponse(reply=response_text, session_id=session_id)
+    payload = format_response(
+        response_text,
+        metadata={"contract_version": "v0.1", "router": "legacy", "intent": intent},
+    )
+    return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
 
 
 # ============================================================
