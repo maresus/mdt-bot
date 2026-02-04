@@ -90,6 +90,27 @@
     .stat-badge.pending { border-left: 3px solid var(--pending); }
     .stat-badge.confirmed { border-left: 3px solid var(--success); }
 
+    .quick-add-card {
+      background: linear-gradient(135deg, #ecfeff 0%, #ccfbf1 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .quick-add-card h3 {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+    .quick-add-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
     /* Pending section - TOP */
     .pending-section {
       background: var(--card);
@@ -647,6 +668,14 @@
                style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;"
                oninput="handleSearch(this.value)" />
       </div>
+    </div>
+
+    <div class="quick-add-card">
+      <div>
+        <h3>➕ Ročno dodajanje termina</h3>
+        <p>Za telefonske rezervacije ali direktni vnos odpri obrazec in shrani termin.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openNewModal()">Dodaj termin</button>
     </div>
 
     <!-- PENDING ON TOP -->
