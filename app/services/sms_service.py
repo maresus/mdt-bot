@@ -45,6 +45,7 @@ class ReminderType(Enum):
     POST_VISIT_1_DAY = "post_visit_1_day"
     CONFIRMATION = "confirmation"
     CANCELLATION = "cancellation"
+    BOOKING_RECEIVED = "booking_received"
 
 
 # SMS Templates
@@ -95,6 +96,16 @@ Pridite 10 min prej.
 {date} ob {time}
 
 Za nov termin: {phone} ali chat
+""".strip(),
+
+    ReminderType.BOOKING_RECEIVED: """
+{clinic_name}: Naročilo prejeto.
+
+{service_name}
+{date} ob {time}
+
+Potrditev termina prejmete kmalu.
+Info: {phone}
 """.strip(),
 }
 
@@ -347,3 +358,8 @@ def send_confirmation_sms(reservation: Dict[str, Any]) -> Dict[str, Any]:
 def send_cancellation_sms(reservation: Dict[str, Any]) -> Dict[str, Any]:
     """Pošlje SMS ob preklicu rezervacije."""
     return send_appointment_reminder(reservation, ReminderType.CANCELLATION)
+
+
+def send_booking_received_sms(reservation: Dict[str, Any]) -> Dict[str, Any]:
+    """Pošlje SMS, da je naročilo prejeto (pred končno potrditvijo)."""
+    return send_appointment_reminder(reservation, ReminderType.BOOKING_RECEIVED)

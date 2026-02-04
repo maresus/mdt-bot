@@ -29,6 +29,10 @@ uvicorn main:app --reload --port 8000
 | DATABASE_URL | PostgreSQL connection string | DA (production) |
 | ADMIN_TOKEN | Token za admin API | DA |
 | RESEND_API_KEY | Resend API za email | DA |
+| TWILIO_ACCOUNT_SID | Twilio SID za SMS | NE |
+| TWILIO_AUTH_TOKEN | Twilio auth token | NE |
+| TWILIO_PHONE_NUMBER | Twilio sender številka | NE |
+| SMS_MOCK_MODE | `true`/`false` (priporočeno `false` v produkciji) | NE |
 
 ## 📡 API Endpoints
 

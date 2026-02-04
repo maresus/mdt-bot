@@ -12,6 +12,11 @@ from app.services.email_service import (
     send_reservation_confirmed,
     send_reservation_rejected,
 )
+from app.services.sms_service import (
+    send_booking_received_sms,
+    send_cancellation_sms,
+    send_confirmation_sms,
+)
 from app.services.reservation_service import SERVICES, ReservationService
 from app.services.chat_history_service import get_chat_history_service
 
@@ -500,6 +505,10 @@ def confirm_reservation(reservation_id: int, data: Optional[ConfirmReservationRe
     )
     res = service.get_reservation(reservation_id) or res
     send_reservation_confirmed(res)
+    sms_sent = False
+    if res.get("phone"):
+        sms_result = send_confirmation_sms(res)
+        sms_sent = bool(sms_result.get("success"))
     subject = _ensure_subject_tag(reservation_id, "Potrditev rezervacije")
     service.add_reservation_message(
         reservation_id=reservation_id,
@@ -510,7 +519,7 @@ def confirm_reservation(reservation_id: int, data: Optional[ConfirmReservationRe
         to_email=res.get("email") or "",
         message_id=None,
     )
-    return {"success": True, "email_sent": True, "room": requested_room or requested_location}
+    return {"success": True, "email_sent": True, "sms_sent": sms_sent, "room": requested_room or requested_location}
 
 
 @router.post("/reservations/{reservation_id}/reject")
@@ -522,6 +531,10 @@ def reject_reservation(reservation_id: int):
     service.update_reservation(reservation_id, status="rejected")
     res = service.get_reservation(reservation_id) or res
     send_reservation_rejected(res)
+    sms_sent = False
+    if res.get("phone"):
+        sms_result = send_cancellation_sms(res)
+        sms_sent = bool(sms_result.get("success"))
     subject = _ensure_subject_tag(reservation_id, "Zavrnjena rezervacija")
     service.add_reservation_message(
         reservation_id=reservation_id,
@@ -532,7 +545,7 @@ def reject_reservation(reservation_id: int):
         to_email=res.get("email") or "",
         message_id=None,
     )
-    return {"success": True, "email_sent": True}
+    return {"success": True, "email_sent": True, "sms_sent": sms_sent}
 
 
 @router.post("/send-message")
@@ -812,7 +825,14 @@ def create_admin_reservation(data: AdminCreateReservation):
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Napaka pri shranjevanju: {exc}")
-    return {"success": True, "id": new_id, "warning": warning}
+
+    sms_sent = False
+    if data.phone:
+        created = service.get_reservation(new_id)
+        if created:
+            sms_result = send_booking_received_sms(created)
+            sms_sent = bool(sms_result.get("success"))
+    return {"success": True, "id": new_id, "warning": warning, "sms_sent": sms_sent}
 
 
 # ==================== CHAT HISTORY ENDPOINTS ====================

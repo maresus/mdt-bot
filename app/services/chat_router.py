@@ -15,6 +15,7 @@ from fastapi.responses import StreamingResponse
 from app.models.chat import ChatRequest, ChatResponse
 from app.services.reservation_service import ReservationService
 from app.services.email_service import send_guest_confirmation, send_admin_notification
+from app.services.sms_service import send_booking_received_sms
 from app.services.health_center_extensions import (
     validate_appointment_rules,
     format_appointment_summary,
@@ -566,13 +567,15 @@ def _ensure_kb_initialized():
             print("[KB] Will fall back to direct INFO_RESPONSES lookup")
 
 def _send_reservation_emails_async(payload: dict) -> None:
-    """Send appointment confirmation emails asynchronously"""
+    """Send appointment notifications asynchronously (email + SMS)."""
     def _worker() -> None:
         try:
             send_guest_confirmation(payload)
             send_admin_notification(payload)
+            if payload.get("phone"):
+                send_booking_received_sms(payload)
         except Exception as exc:
-            print(f"[EMAIL] Async send failed: {exc}")
+            print(f"[NOTIFY] Async send failed: {exc}")
     threading.Thread(target=_worker, daemon=True).start()
 
 # Load full knowledge base

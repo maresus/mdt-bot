@@ -10,6 +10,7 @@ beautifulsoup4
 openai>=1.0.0
 psycopg2-binary
 pydantic-settings
+twilio
 pytest>=7.0.0
 pytest-cov>=4.0.0
 # sentence-transformers>=2.2.0  # DISABLED: Adds 2GB+ (torch, CUDA) - re-ranker is optional

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.services.email_service import send_admin_notification
 from app.services.reservation_service import ReservationService
+from app.services.sms_service import send_booking_received_sms
 
 router = APIRouter(prefix="/api/webhook", tags=["webhook"])
 
@@ -110,5 +111,9 @@ async def receive_wordpress_reservation(
             "source": data.source,
         }
     )
+
+    created = service.get_reservation(res_id)
+    if created and created.get("phone"):
+        send_booking_received_sms(created)
 
     return {"status": "ok", "reservation_id": res_id}
