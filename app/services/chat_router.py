@@ -68,7 +68,8 @@ from app.services.flows.interrupt_flow import InterruptFlowDeps, resolve_interru
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
 USE_FULL_KB_LLM = False  # False = RAG (hitro), True = full KB (počasno)
-USE_UNIFIED_ROUTER = os.getenv("USE_UNIFIED_ROUTER", "false").strip().lower() in {"1", "true", "yes", "on"}
+# D4: legacy kill - unified router is always enabled.
+USE_UNIFIED_ROUTER = True
 SHORT_MODE = os.getenv("SHORT_MODE", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 # ========== ANTI-LOOP & CACHE MECHANISMS ==========
@@ -1748,541 +1749,113 @@ Ponujamo:
 
 @router.post("/", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    """Main chat endpoint for health center assistant"""
+    """Main chat endpoint (D4): unified router only, legacy path removed."""
     global conversation_history, last_interaction, chat_session_id
 
     message = request.message.strip()
     session_id = request.session_id or chat_session_id
-    lowered = message.lower()
 
-    # ===== UNIFIED ROUTING SYSTEM =====
-    # New architecture - can be enabled with USE_UNIFIED_ROUTER=true
-    if USE_UNIFIED_ROUTER:
-        unified_response = handle_unified_routing(message, session_id)
-        if unified_response is not None:
-            payload = format_response(
-                unified_response,
-                metadata={"contract_version": "v0.1", "router": "unified"},
-            )
-            # Update conversation history
-            conversation_history.append({"role": "user", "content": message})
-            conversation_history.append({"role": "assistant", "content": payload["text"]})
-            last_user_message_by_session[session_id] = message
-            if len(conversation_history) > 20:
-                conversation_history = conversation_history[-20:]
-            return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
-        # If None returned, fall through to legacy system
-        if is_in_flow(session_id):
-            response_text = handle_appointment_booking(message, session_id)
-            payload = format_response(
-                response_text,
-                metadata={"contract_version": "v0.1", "router": "unified_fallback"},
-            )
-            return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
+    if not message:
+        payload = format_response(
+            "Prosim napišite sporočilo, da vam lahko pomagam.",
+            metadata={"contract_version": "v0.1", "router": "unified_only"},
+        )
+        return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
 
-    # ===== LEGACY ROUTING SYSTEM =====
-    # If last bot asked to book after health advice, accept short "da"
-    if is_affirmative(message) and conversation_history:
-        last_bot = conversation_history[-1].get("content", "")
-        if "Želite, da vas naročim na pregled?" in last_bot:
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
-
-    # If previous user message was a health symptom, treat short "da" as booking confirmation
-    prev_user_msg = last_user_message_by_session.get(session_id, "").lower()
-    if is_affirmative(message) and any(kw in prev_user_msg for kw in ["boli", "bolec", "boleč", "bolečin", "izpuščaj", "izpuscaj", "simptom", "težav", "srbi", "znamenje", "koža", "koza"]):
-        response_text = handle_appointment_booking(message, session_id)
-        return ChatResponse(reply=response_text, session_id=session_id)
-
-    # Update last interaction time
+    # Session timeout hygiene
     now = datetime.now()
     if last_interaction and (now - last_interaction).total_seconds() > 3600:
-        # Reset session after 1 hour of inactivity
         conversation_history = []
         if session_id in appointment_states:
             reset_appointment_state(appointment_states[session_id])
+        reset_unified_state(session_id)
     last_interaction = now
 
-    # ===== ANTI-LOOP DETECTION =====
-    # Skip loop detection for health symptoms (users often rephrase)
-    if classify_intent_rules(message, conversation_history) != "health_symptoms" and conversation_tracker.detect_loop(session_id, message):
+    # Keep anti-loop guard (unified mode only)
+    if conversation_tracker.detect_loop(session_id, message):
         loop_count = conversation_tracker.get_loop_count(session_id)
-        conversation_tracker.add_message(session_id, message)  # Track even if loop
-
+        conversation_tracker.add_message(session_id, message)
         if loop_count >= 2:
-            # 2nd loop detected -> reset and offer restart
             conversation_tracker.reset_loop_count(session_id)
-            return ChatResponse(
-                reply="""Mislim, da je prišlo do nesporazuma. Začniva znova! 🔄
-
-**Kako vam lahko pomagam danes?**
-- 🗓️ Naročilo na pregled (povejte kateri pregled + datum)
-- ℹ️ Informacije o storitvah in cenah
-- 📍 Lokacija in kontakt
-
-Za dodatno pomoč pokličite: 📞 01 234 56 78""",
-                session_id=session_id
+            payload = format_response(
+                "Mislim, da je prišlo do nesporazuma. Začniva znova. Kako vam lahko pomagam?",
+                metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
             )
-        else:
-            # 1st loop detected -> clarification
-            return ChatResponse(
-                reply="Opazil sem, da ponavljate vprašanje. Pomagam vam z veseljem! Prosim povejte konkretno:\n- Kateri pregled vas zanima?\n- Želeni datum in ura?",
-                session_id=session_id
-            )
+            return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
+        payload = format_response(
+            "Opazil sem ponavljanje. Prosim povejte konkretno: pregled + datum.",
+            metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
+        )
+        return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
 
-    # No loop detected, add message to tracking
     conversation_tracker.add_message(session_id, message)
 
-    # Check if user is in booking flow
-    state = get_appointment_state(session_id)
-    if session_id not in conversation_state:
-        conversation_state[session_id] = {}
+    # Primary path: unified routing handler
+    response_text = handle_unified_routing(message, session_id)
 
-    # ===== HEALTH ADVICE -> BOOKING CONFIRMATION =====
-    last_bot_msg = conversation_state.get(session_id, {}).get("last_bot_message", "")
-    if not last_bot_msg and conversation_history:
-        last_bot_msg = conversation_history[-1].get("content", "")
-    if conversation_state.get(session_id, {}).get("awaiting_booking_confirmation") and is_affirmative(message):
-        conversation_state[session_id]["awaiting_booking_confirmation"] = False
+    # If unified handler delegates booking step details
+    if response_text is None and is_in_flow(session_id):
         response_text = handle_appointment_booking(message, session_id)
-        return ChatResponse(reply=response_text, session_id=session_id)
-    # If bot just offered a date for a specific service, accept date directly
-    if extract_date_from_message(message) and ("Želite termin" in last_bot_msg or "Povejte mi datum" in last_bot_msg):
-        service_from_last = extract_service_type(last_bot_msg)
-        if service_from_last:
-            state["service_type"] = service_from_last
-            state["step"] = "date"
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
-    if "Želite, da vas naročim na pregled?" in last_bot_msg and is_affirmative(message):
-        response_text = handle_appointment_booking(message, session_id)
-        return ChatResponse(reply=response_text, session_id=session_id)
-    if is_affirmative(message) and len(conversation_history) >= 2:
-        prev_user = conversation_history[-2].get("content", "").lower()
-        if any(kw in prev_user for kw in ["boli", "bolec", "boleč", "bolečin", "izpuščaj", "simptom", "težav"]):
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
 
-    if state.get("awaiting_booking_confirmation"):
-        if is_affirmative(message):
-            state["awaiting_booking_confirmation"] = False
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
-        if is_negative(message):
-            state["awaiting_booking_confirmation"] = False
-            return ChatResponse(
-                reply="V redu, brez naročila. Če želite, vam lahko še kako drugače pomagam.",
-                session_id=session_id,
-            )
-
-    # ===== OFF-TOPIC DETECTION IN BOOKING FLOW =====
-    if state["step"] is not None:
-        # Check if waiting for resume confirmation
-        if state.get("waiting_resume_confirmation"):
-            if is_affirmative(message):
-                # User wants to continue booking
-                state["waiting_resume_confirmation"] = False
-
-                # Use variation of prompt to avoid repetition
-                step = state.get("step")
-                if step == "date":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim vnesite datum (npr. 15.3.2026)."
-                elif step == "time":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim povejte uro (npr. 14:00)."
-                elif step == "name":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim vnesite vaše ime in priimek."
-                elif step == "phone":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim vnesite vašo telefonsko številko."
-                elif step == "email":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim vnesite vaš email naslov."
-                elif step == "reason":
-                    prompt = "Odlično, nadaljujmo! 😊 Prosim opišite razlog vašega obiska."
-                else:
-                    prompt = "Odlično, nadaljujmo! 😊"
-
-                return ChatResponse(
-                    reply=prompt,
-                    session_id=session_id
-                )
-            else:
-                # If user provides valid next-step input, continue instead of cancel
-                step = state.get("step")
-                if step == "date" and extract_date_from_message(message):
-                    state["waiting_resume_confirmation"] = False
-                    response_text = handle_appointment_booking(message, session_id)
-                    return ChatResponse(reply=response_text, session_id=session_id)
-                if step == "time" and extract_time_from_message(message):
-                    state["waiting_resume_confirmation"] = False
-                    response_text = handle_appointment_booking(message, session_id)
-                    return ChatResponse(reply=response_text, session_id=session_id)
-                if step == "name" and is_likely_full_name(message):
-                    state["waiting_resume_confirmation"] = False
-                    response_text = handle_appointment_booking(message, session_id)
-                    return ChatResponse(reply=response_text, session_id=session_id)
-                if step == "phone":
-                    digits_only = re.sub(r"[^\d]", "", message)
-                    if len(digits_only) >= 8:
-                        state["waiting_resume_confirmation"] = False
-                        response_text = handle_appointment_booking(message, session_id)
-                        return ChatResponse(reply=response_text, session_id=session_id)
-                if step == "email" and ("@" in message and "." in message.split("@")[-1]):
-                    state["waiting_resume_confirmation"] = False
-                    response_text = handle_appointment_booking(message, session_id)
-                    return ChatResponse(reply=response_text, session_id=session_id)
-                # User doesn't want to continue - reset booking
-                reset_appointment_state(state)
-                conversation_tracker.reset_loop_count(session_id)  # Reset loop detection on cancel
-                return ChatResponse(
-                    reply="V redu, naročilo je preklicano. Če potrebujete pomoč, sem tukaj!",
-                    session_id=session_id
-                )
-
-        # ===== FIRST: Try to extract expected input based on current step =====
-        # This prevents valid input from being misclassified as OFF-TOPIC
-        current_step = state.get("step")
-        input_matches_expected_format = False
-
-        if current_step == "date":
-            # Check if message looks like a date
-            date_str = extract_date_from_message(message)
-            if date_str:
-                input_matches_expected_format = True
-        elif current_step == "time":
-            # Check if message looks like a time
-            time_str = extract_time_from_message(message)
-            if time_str:
-                input_matches_expected_format = True
-        elif current_step == "select_service":
-            # Check if message mentions a service
-            service_type = extract_service_type(message)
-            if service_type:
-                input_matches_expected_format = True
-        elif current_step == "name":
-            # Check if message looks like a name (2+ words or 3+ chars without digits in first part)
-            if is_likely_full_name(message):
-                input_matches_expected_format = True
-        elif current_step == "phone":
-            # Check if message contains mostly digits
-            digits_only = re.sub(r'[^\d]', '', message)
-            if len(digits_only) >= 8:
-                input_matches_expected_format = True
-        elif current_step == "email":
-            # Check if message looks like email
-            if "@" in message and "." in message.split("@")[-1]:
-                input_matches_expected_format = True
-        elif current_step == "reason":
-            # Check if message is descriptive text (not a question about pricing/services)
-            if len(message.strip()) > 5 and "?" not in message:
-                input_matches_expected_format = True
-
-        # If input matches expected format, skip OFF-TOPIC detection
-        if input_matches_expected_format:
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
-
-        # If user mentions a different service mid-flow, switch service and reset steps
-        service_switch = extract_service_type(message)
-        if service_switch and service_switch != state.get("service_type"):
-            state["service_type"] = service_switch
-            state["date"] = None
-            state["time"] = None
-            state["name"] = None
-            state["phone"] = None
-            state["email"] = None
-            state["reason"] = None
-            state["step"] = "date"
-            state["waiting_resume_confirmation"] = False
-            info = get_service_info(service_switch)
-            return ChatResponse(
-                reply=f"""Odlično! Naročilo na **{info['name']}**.
-
-Trajanje: {info['duration_minutes']} minut
-Cena: {info['price_range']}
-
-Kateri datum vas zanima? (npr. 15.3.2026)""",
-                session_id=session_id,
-            )
-
-        # ===== SECOND: Check OFF-TOPIC only if input didn't match expected format =====
-        # Detect if message is OFF-TOPIC (info question during booking)
-        # Now enabled for ALL steps (not just date/time)
-        intent = classify_intent_rules(message, conversation_history)
-        lowered_message = message.lower()
-        is_question_like = "?" in message or any(token in lowered_message for token in ["boli", "boleč", "bolec"])
-
-        # OFF-TOPIC intents: info queries that are not part of booking flow
-        OFF_TOPIC_INTENTS = ["info_services", "info_prices", "info_contact", "info_hours", "info_location"]
-
-        if intent in OFF_TOPIC_INTENTS or intent.startswith("info_") or (intent == "question" and is_question_like):
-            # Handle OFF-TOPIC question
-            if intent == "info_services":
-                if state.get("service_type"):
-                    info = get_service_info(state["service_type"])
-                    info_response = f"{info['name']}: {info['description']}" if info else _get_info_response("storitve")
-                else:
-                    info_response = _get_info_response("storitve")
-            elif intent == "info_prices":
-                info_response = _service_price_info(state.get("service_type"))
-            elif intent == "info_contact":
-                info_response = _short_contact_info()
-            elif intent == "info_hours":
-                info_response = _get_info_response("delovni_cas")
-            elif intent == "question" and is_question_like:
-                info_response = (
-                    "Za medicinska vprašanja (npr. bolečina) ne morem dati zanesljivega odgovora. "
-                    "Za podrobnosti pokličite 01 234 56 78."
-                )
-            else:
-                info_response = INFO_RESPONSES.get(intent.replace("info_", ""), "Prosim, pojasnite vprašanje.")
-
-            # Check if booking really started (service selected)
-            if state.get("service_type") is None:
-                # Booking hasn't really started - just answer, no resume prompt
-                return ChatResponse(
-                    reply=info_response,
-                    session_id=session_id
-                )
-
-            # Booking is active - build resume prompt
-            service_name = get_service_info(state["service_type"])["name"]
-            date_str = state.get("date", "")
-            time_str = state.get("time", "")
-
-            resume_prompt = "\n\nAli želite nadaljevati z naročilom"
-            if service_name:
-                resume_prompt += f" za {service_name}"
-            if date_str:
-                resume_prompt += f" na {date_str}"
-            if time_str:
-                resume_prompt += f" ob {time_str}"
-            resume_prompt += "? (DA / NE)"
-
-            # Set flag to wait for resume confirmation
-            state["waiting_resume_confirmation"] = True
-
-            return ChatResponse(
-                reply=info_response + resume_prompt,
-                session_id=session_id
-            )
-
-        # ===== GREETING/HELP PRESERVATION =====
-        # If greeting or affirmative, continue flow
-        if is_greeting(message) or is_affirmative(message):
-            # Ignore greeting, continue flow
-            response_text = handle_appointment_booking(message, session_id)
-            return ChatResponse(reply=response_text, session_id=session_id)
-
-        # Normal booking flow (ON-TOPIC)
-        response_text = handle_appointment_booking(message, session_id)
-        return ChatResponse(reply=response_text, session_id=session_id)
-
-    # Classify intent with conversation context
-    intent = classify_intent(message, conversation_history)
-
-    # Handle different intents
-    if intent == "greeting":
-        response_text = _get_info_response("pozdrav")
-
-    elif intent == "thanks":
-        response_text = _get_info_response("hvala")
-
-    elif intent == "info_services":
-        response_text = _get_info_response("storitve")
-
-    elif intent == "info_narocanje":
-        response_text = _get_info_response("narocanje")
-
-    elif intent == "info_prices":
-        response_text = _get_info_response("cene")
-        if _has_booking_keywords(message):
-            response_text += "\n\nČe želite, lahko takoj začnemo z naročanjem – povejte, kateri pregled vas zanima."
-
-    elif intent == "info_ekipa":
-        response_text = _get_info_response("ekipa")
-
-    elif intent == "info_contact":
-        response_text = _get_info_response("kontakt")
-
-    elif intent == "info_hours":
-        response_text = _get_info_response("delovni_cas")
-
-    elif intent == "health_symptoms":
-        # Use KB if possible; otherwise LLM health advice
-        detected_service = unified_detect_service(message)
-        if detected_service:
-            state["service_type"] = detected_service.lower()
-        response_text = answer_health_query(message, detected_service)
-        state["awaiting_booking_confirmation"] = True
-
-    elif intent.startswith("info_"):
-        service_key = intent.replace("info_", "")
-        if service_key in INFO_RESPONSES:
-            response_text = _get_info_response(service_key)
+    # Final fallback (knowledge/general)
+    if response_text is None:
+        cached_response = response_cache.get(message)
+        if cached_response:
+            response_text = cached_response
         else:
-            response_text = _get_info_response("storitve")
-
-    elif intent.startswith("book_"):
-        # Start booking flow
-        if intent == "book_general":
-            # Reset celoten state za novo naročilo
-            reset_appointment_state(state)
-            response_text = handle_appointment_booking(message, session_id)
-        else:
-            service_key = intent.replace("book_", "")
-            reset_appointment_state(state)
-            state["service_type"] = service_key
-            response_text = handle_appointment_booking(message, session_id)
-
-    elif intent == "check_availability":
-        # Extract date and service
-        date_str = extract_date_from_message(message)
-        service_type = extract_service_type(message)
-
-        if not date_str:
-            response_text = "Za kateri datum želite preveriti proste termine? (npr. 15.3.2026)"
-        elif not service_type:
-            response_text = f"""Za {date_str} - kateri pregled vas zanima?
-
-- Dermatolog
-- Ortoped
-- Okulist
-- Laserski poseg
-- Estetski poseg
-- Kozmetika"""
-        else:
-            slots = get_available_time_slots(date_str, service_type)
-            if not slots:
-                response_text = f"Žal za {date_str} ni prostih terminov za {service_type}."
-            else:
-                slots_str = ", ".join(slots[:15])
-                if len(slots) > 15:
-                    slots_str += f" ... (še {len(slots) - 15} terminov)"
-                response_text = f"""Prosti termini za {service_type} na {date_str}:
-
-{slots_str}
-
-Želite naročilo?"""
-
-    else:
-        # General question - use RAG/LLM
-        try:
-            # ===== CACHE CHECK =====
-            cached_response = response_cache.get(message)
-            if cached_response:
-                response_text = cached_response
-            else:
-                # Try Chroma RAG first
+            try:
                 if is_tourist_query(message):
-                    rag_answer = answer_tourist_question(message)
-                    response_text = rag_answer
+                    response_text = answer_tourist_question(message)
                 else:
-                    # ===== HEALTH SYMPTOMS: Use RAG engine with knowledge.jsonl =====
-                    # Check if this looks like a health symptom query
-                    health_keywords = ["boli", "bolec", "boleč", "bolečin", "težav", "simptom",
-                                       "koleno", "hrbet", "rama", "noga", "roka", "vrat", "gleženj",
-                                       "koža", "izpuščaj", "srbeč", "srbec", "srbečic", "oči", "vid", "glava",
-                                       "glavobol", "migrena", "omotica"]
-                    lowered_msg = message.lower()
-                    is_health_query = any(kw in lowered_msg for kw in health_keywords)
+                    response_text = answer_with_hybrid_kb(
+                        message,
+                        history=conversation_history,
+                        session_id=session_id,
+                    )
+                if len(response_text) > 50 and "Nisem prepričan" not in response_text:
+                    response_cache.set(message, response_text)
+            except Exception as e:
+                print(f"[UNIFIED_FALLBACK] Error: {e}")
+                response_text = "Lahko pomagam z naročilom, cenami, lokacijo in termini."
 
-                    if is_health_query:
-                        # Use KB if possible; otherwise LLM health advice
-                        response_text = answer_health_query(message)
-                        state["awaiting_booking_confirmation"] = True
-                    else:
-                        # ===== HYBRID KNOWLEDGE BASE =====
-                        # Use hybrid retrieval (BM25 + vector embeddings) with confidence gating
-                        response_text = answer_with_hybrid_kb(
-                            message,
-                            history=conversation_history,
-                            session_id=session_id
-                        )
-
-                    # ===== CACHE RESPONSE =====
-                    # Only cache if not a clarification request
-                    if len(response_text) > 50 and "Nisem prepričan" not in response_text:
-                        response_cache.set(message, response_text)
-
-        except Exception as e:
-            print(f"[RAG] Error: {e}")
-            response_text = """Lahko vam pomagam z:
-- Naročilom na pregled
-- Informacijami o storitvah
-- Cenami
-- Prostimi termini
-
-Kaj vas zanima?"""
-
-    # If we offered booking after health advice, set confirmation flag
-    if "Želite, da vas naročim na pregled?" in response_text:
-        state["awaiting_booking_confirmation"] = True
-        conversation_state[session_id]["awaiting_booking_confirmation"] = True
-
-    # Add to conversation history
+    # Persist lightweight history + metadata
     conversation_history.append({"role": "user", "content": message})
     conversation_history.append({"role": "assistant", "content": response_text})
-    conversation_state[session_id]["last_bot_message"] = response_text
     last_user_message_by_session[session_id] = message
-
-    # Keep only last 20 messages
     if len(conversation_history) > 20:
         conversation_history = conversation_history[-20:]
 
-    # ===== PERSISTENT STORAGE =====
-    # Save both user message and assistant response to database
+    decision = unified_route(message, get_unified_state(session_id))
+    metadata = {
+        "contract_version": "v0.1",
+        "router": "unified_only",
+        "intent": decision.primary_intent.value,
+        "confidence": round(float(decision.confidence), 3),
+        "action": decision.action.value,
+    }
+
     try:
-        # Determine current booking step
-        current_step = state.get("step") if state["step"] is not None else None
-
-        # Check if response was cached
-        was_cached = (cached_response == response_text) if 'cached_response' in locals() else False
-
-        # Extract service mentioned (if in booking intent)
-        service_mentioned = None
-        if intent.startswith("book_"):
-            service_mentioned = intent.replace("book_", "")
-            if service_mentioned == "general":
-                service_mentioned = None
-
-        # Save user message
+        state = get_appointment_state(session_id)
+        current_step = state.get("step") if state.get("step") is not None else None
         save_chat_message(
             session_id=session_id,
             role="user",
             content=message,
-            intent=intent,
-            service_mentioned=service_mentioned,
+            intent=decision.primary_intent.value,
             booking_step=current_step,
-            response_cached=False
+            response_cached=False,
         )
-
-        # Get confidence metadata if available
-        confidence_metadata = None
-        if session_id in conversation_state:
-            confidence_metadata = conversation_state[session_id].get("last_confidence_metadata")
-
-        # Save assistant response with confidence metadata
         save_chat_message(
             session_id=session_id,
             role="assistant",
             content=response_text,
-            intent=None,  # Only user messages have intent
-            service_mentioned=service_mentioned,
             booking_step=current_step,
-            response_cached=was_cached,
-            metadata=confidence_metadata
+            metadata=metadata,
         )
-
-        # Clear confidence metadata after saving
-        if session_id in conversation_state and "last_confidence_metadata" in conversation_state[session_id]:
-            del conversation_state[session_id]["last_confidence_metadata"]
     except Exception as e:
-        # Non-critical - don't fail the request
         print(f"[CHAT_HISTORY] Failed to save conversation: {e}")
 
-    payload = format_response(
-        response_text,
-        metadata={"contract_version": "v0.1", "router": "legacy", "intent": intent},
-    )
+    payload = format_response(response_text, metadata=metadata)
     return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
 
 
