@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Zdravstveni center – Asistent</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -30,6 +30,7 @@
       --radius: 16px;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       font-size: 16px;
+      --app-vh: 100vh;
     }
 
     body {
@@ -393,36 +394,64 @@
 
     /* Responsive */
     @media (max-width: 768px) {
+      body {
+        align-items: stretch;
+        justify-content: flex-start;
+        overflow: hidden;
+      }
+
       .container {
         padding: 0;
+        min-height: var(--app-vh);
       }
 
       .chat-card {
         border-radius: 0;
-        height: 100vh;
-        max-height: 100vh;
+        height: var(--app-vh);
+        max-height: var(--app-vh);
+        overflow: hidden;
       }
 
       .chat-header {
-        padding: 16px 20px;
+        padding: calc(8px + env(safe-area-inset-top)) 14px 10px;
+        align-items: flex-start;
+        position: sticky;
+        top: 0;
+        z-index: 30;
       }
 
       .header-icon {
-        width: 48px;
-        height: 48px;
-        font-size: 24px;
+        width: 38px;
+        height: 38px;
+        font-size: 19px;
+        border-radius: 10px;
       }
 
       .header-info h1 {
-        font-size: 1.2rem;
+        font-size: 1.02rem;
+        line-height: 1.15;
       }
 
       .header-info p {
-        font-size: 0.8rem;
+        font-size: 0.74rem;
+        line-height: 1.25;
+      }
+
+      .new-session-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+
+      .status-badge {
+        padding: 5px 9px;
+        font-size: 0.72rem;
       }
 
       .messages-container {
-        padding: 16px;
+        padding: 12px;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 210px;
       }
 
       .message-bubble {
@@ -430,16 +459,45 @@
       }
 
       .input-area {
-        padding: 16px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.08);
+        border-top: 1px solid var(--border);
       }
 
       .quick-actions {
-        gap: 6px;
+        display: none !important;
       }
 
       .quick-chip {
         font-size: 0.8rem;
         padding: 6px 12px;
+        white-space: nowrap;
+      }
+
+      .input-wrapper {
+        gap: 8px;
+      }
+
+      .input-field {
+        min-height: 44px;
+        max-height: 96px;
+        padding: 10px 12px;
+      }
+
+      .send-button {
+        padding: 12px 14px;
+        font-size: 0.88rem;
+      }
+
+      .input-hint {
+        font-size: 0.72rem;
+        margin-top: 6px;
+        display: none;
       }
     }
 
@@ -529,6 +587,18 @@
   </div>
 
   <script>
+    function setAppVh() {
+      const vh = (window.visualViewport && window.visualViewport.height)
+        ? window.visualViewport.height
+        : window.innerHeight;
+      document.documentElement.style.setProperty('--app-vh', `${Math.round(vh)}px`);
+    }
+    setAppVh();
+    window.addEventListener('resize', setAppVh);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setAppVh);
+    }
+
     // Configuration
     const apiUrl = "/chat/";
     const sessionKey = "chat_session_id";
@@ -545,6 +615,12 @@
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
     const newSessionBtn = document.getElementById('newSessionBtn');
+
+    messageInput.addEventListener('focus', () => {
+      setTimeout(() => {
+        messageInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 120);
+    });
 
     // Timeout Management (1 hour)
     const ONE_HOUR = 3600 * 1000;
@@ -630,6 +706,19 @@
     }
 
     // Send message
+    function normalizeChatResponse(data) {
+      const displayText = data?.display_text ?? data?.text ?? data?.reply ?? '';
+      const metadata = data?.metadata ?? {};
+      const actionSuggestion = data?.action_suggestion ?? metadata?.action_suggestion ?? null;
+
+      let finalText = displayText || 'Ni odgovora.';
+      if (actionSuggestion) {
+        finalText += `\n\n💡 ${actionSuggestion}`;
+      }
+
+      return { text: finalText, metadata };
+    }
+
     async function sendMessage() {
       const text = messageInput.value.trim();
       if (!text) return;
@@ -657,7 +746,8 @@
           addMessage('Oprostite, prišlo je do napake pri povezavi. Poskusite znova.', 'bot');
         } else {
           const data = await response.json();
-          addMessage(data.reply ?? 'Ni odgovora.', 'bot');
+          const normalized = normalizeChatResponse(data);
+          addMessage(normalized.text, 'bot');
         }
       } catch (error) {
         console.error('Error:', error);

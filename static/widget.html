@@ -268,7 +268,10 @@
         if (res.ok) {
           // Parse JSON response
           const data = await res.json();
-          addMessageToDOM(data.reply || 'Oprostite, prišlo je do napake.', 'bot');
+          const displayText = data?.display_text ?? data?.text ?? data?.reply ?? 'Oprostite, prišlo je do napake.';
+          const actionSuggestion = data?.action_suggestion ?? data?.metadata?.action_suggestion;
+          const finalText = actionSuggestion ? `${displayText}\n\n💡 ${actionSuggestion}` : displayText;
+          addMessageToDOM(finalText, 'bot');
         } else {
           addMessageToDOM('Oprostite, strežnik ni dosegljiv.', 'bot');
         }
@@ -307,7 +310,7 @@
     // Initialize
     const hasHistory = loadHistory();
     if (!hasHistory) {
-      addMessageToDOM('Pozdravljeni! 👋 Kako vam lahko pomagam?\n\nVprašajte me o:\n• Sobah in nastanitvah\n• Vikend kosilih\n• Naših izdelkih\n• Izletih v okolici', 'bot', false);
+      addMessageToDOM('Pozdravljeni! 👋 Kako vam lahko pomagam?\n\nVprašajte me o:\n• Pregledih in posegih\n• Naročanju\n• Ceniku\n• Kontaktih', 'bot', false);
     }
   </script>
 </body>
