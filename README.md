@@ -69,7 +69,7 @@ Pred deployem zaženi deploy gate:
 ./scripts/deploy_gate.sh
 ```
 
-Skript preveri D3 module contract test, Golden 30 contract teste + ključne routing smoke teste (vključno z 50 E2E scenariji) in faila, če karkoli pade.
+Skript preveri D3 module contract test, Golden 30 contract teste, ključne routing smoke teste (vključno z 50 E2E scenariji) in D6 stress test (100 switch ciklov + validation edge check). Faila, če karkoli pade.
 
 Za strožji pre-check (routing + API smoke):
 
