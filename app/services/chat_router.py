@@ -56,6 +56,12 @@ from app.services.session.unified_state import (
 from app.services.routing.unified_router import route as unified_route, IntentType
 from app.services.routing.confidence import SwitchAction, detect_service_type as unified_detect_service
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
+from app.services.flows.booking_flow import (
+    BookingFlowDeps,
+    get_resume_prompt as booking_get_resume_prompt,
+    handle_appointment_booking as booking_handle_appointment_booking,
+)
+from app.services.flows.info_flow import pick_info_key
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -1395,307 +1401,34 @@ def detect_service_from_message(message: str) -> Optional[str]:
     """Backward-compatible alias for older call sites."""
     return extract_service_type(message)
 
+BOOKING_FLOW_DEPS = BookingFlowDeps(
+    get_appointment_state=get_appointment_state,
+    reset_appointment_state=reset_appointment_state,
+    reset_unified_state=reset_unified_state,
+    reset_loop_count=conversation_tracker.reset_loop_count,
+    is_negative=is_negative,
+    is_affirmative=is_affirmative,
+    is_likely_full_name=is_likely_full_name,
+    extract_service_type=extract_service_type,
+    extract_date_from_message=extract_date_from_message,
+    extract_time_from_message=extract_time_from_message,
+    validate_appointment_rules=validate_appointment_rules,
+    get_available_time_slots=get_available_time_slots,
+    get_service_info=get_service_info,
+    format_appointment_summary=format_appointment_summary,
+    reservation_service_cls=ReservationService,
+    send_notifications_async=_send_reservation_emails_async,
+)
+
+
 def get_resume_prompt(state: dict) -> str:
-    """Get prompt for current booking step (used when resuming after OFF-TOPIC)"""
-    step = state.get("step")
-
-    if step == "date":
-        return "Kateri datum vas zanima? (npr. 15.3.2026)"
-    elif step == "time":
-        return "Katero uro si želite? (npr. 14:00)"
-    elif step == "name":
-        return "Prosim vnesite vaše ime in priimek."
-    elif step == "phone":
-        return "Odlično! Kakšna je vaša telefonska številka?"
-    elif step == "email":
-        return "Kakšen je vaš email naslov? (za potrditev termina)"
-    elif step == "reason":
-        return "Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
-    elif step == "confirm":
-        service_info = get_service_info(state.get("service_type", "dermatolog"))
-        summary = format_appointment_summary(
-            state.get("date", ""),
-            state.get("time", ""),
-            state.get("service_type", ""),
-            state.get("name", "")
-        )
-        return f"""{summary}
-
-Razlog obiska: {state.get('reason', '-')}
-Telefon: {state.get('phone', '-')}
-Email: {state.get('email', '-')}
-
-Ali so podatki pravilni? (DA / NE)"""
-    else:
-        # Default: ask for service
-        return """Na kateri pregled se želite naročiti?
-
-- Dermatološki pregled
-- Ortopedski pregled
-- Okulistični pregled
-- Laserski poseg
-- Estetski poseg
-- Kozmetični salon"""
+    """Backward-compatible wrapper around extracted booking flow."""
+    return booking_get_resume_prompt(state, BOOKING_FLOW_DEPS)
 
 
 def handle_appointment_booking(message: str, session_id: str) -> str:
-    """Handle multi-step appointment booking conversation"""
-    state = get_appointment_state(session_id)
-    lowered = message.lower()
-
-    # Check for cancellation
-    if any(word in lowered for word in ["prekliči", "prekini", "ne želim", "nazaj"]):
-        reset_appointment_state(state)
-        reset_unified_state(session_id)
-        conversation_tracker.reset_loop_count(session_id)  # Reset loop detection on cancel
-        return "V redu, rezervacije ne bom nadaljeval. Kaj vas še zanima?"
-    if is_negative(message):
-        reset_appointment_state(state)
-        reset_unified_state(session_id)
-        conversation_tracker.reset_loop_count(session_id)
-        return "V redu, naročilo sem preklical. Če želite, lahko začnemo znova."
-
-    # Če je service_type že nastavljen (iz classify_intent) ampak step je None -> preskoči na datum
-    if state["service_type"] is not None and state["step"] is None:
-        date_str = extract_date_from_message(message)
-        if date_str:
-            state["step"] = "date"
-            # continue to date handling below
-        else:
-            service_info = get_service_info(state["service_type"])
-            # Če service_type ni veljaven, ponudi izbiro
-            if service_info is None:
-                state["service_type"] = None
-                return """Na kateri pregled se želite naročiti?
-
-- Dermatološki pregled
-- Ortopedski pregled
-- Okulistični pregled
-- Laserski poseg
-- Estetski poseg
-- Kozmetični salon"""
-            state["step"] = "date"
-            return f"""Super! 🩺 Naročilo na **{service_info['name']}**.
-
-📋 Trajanje: {service_info['duration_minutes']} minut
-💰 Cena: {service_info['price_range']}
-
-Kateri datum vas zanima? (npr. 15.3.2026)"""
-
-    # Step 1: Service type (select_service or None)
-    if state["step"] in (None, "select_service") or state["service_type"] is None:
-        service_type = extract_service_type(message)
-        if service_type:
-            state["service_type"] = service_type
-            state["step"] = "date"
-            service_info = get_service_info(service_type)
-            return f"""Odlično! Naročilo na **{service_info['name']}**.
-
-Trajanje: {service_info['duration_minutes']} minut
-Cena: {service_info['price_range']}
-
-Kateri datum vas zanima? (npr. 15.3.2026)"""
-        else:
-            state["step"] = "select_service"  # Mark that we're waiting for service selection
-            return """Na kateri pregled se želite naročiti?
-
-- Dermatološki pregled
-- Ortopedski pregled
-- Okulistični pregled
-- Laserski poseg
-- Estetski poseg
-- Kozmetični salon"""
-
-    # Step 2: Date
-    if state["step"] == "date" or state["date"] is None:
-        date_str = extract_date_from_message(message)
-        if date_str:
-            # Validate date
-            valid, error = validate_appointment_rules(
-                date_str=date_str,
-                time_str="10:00",  # Dummy time for date validation
-                service_type=state["service_type"],
-                patient_name="",
-                patient_phone=""
-            )
-
-            if not valid and "datum" in error.lower():
-                return f"❌ {error}\n\nProsim izberite drug datum."
-
-            state["date"] = date_str
-            state["step"] = "time"
-
-            # Show available slots
-            slots = get_available_time_slots(date_str, state["service_type"])
-            if not slots:
-                return f"""Žal za {date_str} ni prostih terminov.
-
-Prosim izberite drug datum."""
-
-            slots_str = ", ".join(slots[:10])  # Show first 10 slots
-            if len(slots) > 10:
-                slots_str += f" ... (še {len(slots) - 10} terminov)"
-
-            return f"""Prosti termini za {date_str}:
-
-{slots_str}
-
-Katera ura vam ustreza?"""
-        else:
-            return "Kateri datum vas zanima? (Prosim v formatu DD.MM.YYYY, npr. 15.03.2026)"
-
-    # Step 3: Time
-    if state["step"] == "time" or state["time"] is None:
-        time_str = extract_time_from_message(message)
-        if time_str:
-            # Validate time
-            valid, error = validate_appointment_rules(
-                date_str=state["date"],
-                time_str=time_str,
-                service_type=state["service_type"],
-                patient_name="",
-                patient_phone=""
-            )
-
-            if not valid:
-                return f"❌ {error}\n\nProsim izberite drug termin."
-
-            state["time"] = time_str
-            state["step"] = "name"
-
-            return f"""Termin {state['date']} ob {time_str} je prost! ✅
-
-Kako je vaše ime in priimek?"""
-        else:
-            return "Prosim povejte uro termina (npr. 10:00 ali ob 10)"
-
-    # Step 4: Name
-    if state["step"] == "name" or state["name"] is None:
-        # Extract name (assume everything that's not obviously other data is name)
-        if is_likely_full_name(message):
-            state["name"] = message.strip()
-            state["step"] = "phone"
-            return "Hvala! Kakšna je vaša telefonska številka?"
-        return "Prosim vnesite vaše ime in priimek."
-
-    # Step 5: Phone
-    if state["step"] == "phone" or state["phone"] is None:
-        # Extract phone number
-        phone = re.sub(r'[^\d+]', '', message)
-        if len(phone) >= 8:
-            state["phone"] = phone
-            state["step"] = "email"
-            return "Odlično! Kakšen je vaš email naslov? (za potrditev termina)"
-        else:
-            return "Prosim vnesite veljavno telefonsko številko."
-
-    # Step 6: Email
-    if state["step"] == "email" or state["email"] is None:
-        # Validate email
-        if "@" in message and "." in message.split("@")[1]:
-            state["email"] = message.strip()
-            state["step"] = "reason"
-            return "Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
-        else:
-            return "Prosim vnesite veljaven email naslov."
-
-    # Step 7: Reason
-    if state["step"] == "reason" or state["reason"] is None:
-        state["reason"] = message.strip()
-        state["step"] = "confirm"
-
-        # Show summary
-        summary = format_appointment_summary(
-            state["date"],
-            state["time"],
-            state["service_type"],
-            state["name"]
-        )
-
-        return f"""{summary}
-
-Razlog obiska: {state['reason']}
-Telefon: {state['phone']}
-Email: {state['email']}
-
-Ali so podatki pravilni? (DA / NE)"""
-
-    # Step 8: Confirmation
-    if state["step"] == "confirm":
-        # STRICT CONFIRMATION: use is_affirmative instead of simple keyword match
-        if is_affirmative(message):
-            # Create appointment
-            try:
-                rs = ReservationService()
-                service_info = get_service_info(state["service_type"])
-
-                res_id = rs.create_reservation(
-                    date=state["date"],
-                    people=1,
-                    reservation_type="table",  # "table" type za kompatibilnost z admin panelom
-                    time=state["time"],
-                    location=service_info["name"],  # Za admin panel slot picker
-                    service_type=state["service_type"].upper(),
-                    duration_minutes=service_info["duration_minutes"],
-                    name=state["name"],
-                    phone=state["phone"],
-                    email=state["email"],
-                    reason=state["reason"],
-                    source="chat",
-                )
-
-                # Send confirmation emails
-                appointment_data = {
-                    "id": res_id,
-                    "name": state["name"],
-                    "email": state["email"],
-                    "phone": state["phone"],
-                    "date": state["date"],
-                    "time": state["time"],
-                    "location": service_info["name"],
-                    "service_type": state["service_type"],
-                    "service_name": service_info["name"],
-                    "duration_minutes": service_info["duration_minutes"],
-                    "reason": state["reason"],
-                    "reservation_type": "table",
-                }
-                _send_reservation_emails_async(appointment_data)
-
-                # Save values before reset
-                email = state["email"]
-                date = state["date"]
-                time = state["time"]
-
-                # Reset state
-                reset_appointment_state(state)
-                reset_unified_state(session_id)
-
-                return f"""✅ **Naročilo uspešno ustvarjeno!**
-
-Številka naročila: #{res_id}
-
-Potrditev smo poslali na {email}.
-Vidimo se {date} ob {time}!
-
-Če imate še kakšna vprašanja, mi jih lahko zastavite."""
-
-            except Exception as e:
-                print(f"[BOOKING] Error creating appointment: {e}")
-                return f"""❌ Prišlo je do napake pri ustvarjanju naročila.
-
-Prosim kontaktirajte nas na [telefonska številka] ali [email].
-
-Napaka: {str(e)}"""
-
-        elif any(word in lowered for word in ["ne", "no", "popravi"]):
-            reset_appointment_state(state)
-            reset_unified_state(session_id)
-            return "Podatki razveljavljeni. Začnimo znova - na kateri pregled se želite naročiti?"
-
-        else:
-            return "Prosim odgovorite z DA ali NE."
-
-    return "Oprostite, nisem razumel. Lahko ponovite?"
+    """Backward-compatible wrapper around extracted booking flow."""
+    return booking_handle_appointment_booking(message, session_id, BOOKING_FLOW_DEPS)
 
 
 # ============================================================
@@ -1830,18 +1563,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
 
         # Answer the interrupting question
         if decision.primary_intent == IntentType.INFO:
-            # Find appropriate info response
-            lowered = message.lower()
-            if any(k in lowered for k in ["lokacija", "naslov", "kje"]):
-                answer = _get_info_response("lokacija")
-            elif any(k in lowered for k in ["delovni", "ura", "odprt"]):
-                answer = _get_info_response("delovni_cas")
-            elif any(k in lowered for k in ["parking"]):
-                answer = _get_info_response("parkiranje")
-            elif any(k in lowered for k in ["kako se naročim", "kako se narocim", "naročanje", "narocanje", "naročim", "narocim"]):
-                answer = _get_info_response("narocanje")
-            else:
-                answer = _get_info_response("kontakt")
+            answer = _get_info_response(pick_info_key(message))
         elif decision.primary_intent == IntentType.PRICE:
             service_key = appointment_state.get("service_type") or decision.service_type or suggested_service
             if service_key:
@@ -2016,20 +1738,12 @@ Ponujamo:
     # Handle INFO
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
-        if any(k in lowered for k in ["lokacija", "naslov", "kje", "nahajate"]):
-            return _get_info_response("lokacija")
-        elif any(k in lowered for k in ["delovni", "ura", "odprt", "kdaj"]):
-            return _get_info_response("delovni_cas")
-        elif any(k in lowered for k in ["parking", "parkplac", "parkirišče"]):
-            return _get_info_response("parkiranje")
-        elif any(k in lowered for k in ["kako se naročim", "kako se narocim", "naročanje", "narocanje", "naročim", "narocim"]):
-            return _get_info_response("narocanje")
-        elif any(k in lowered for k in ["telefon", "email", "kontakt"]):
-            return _get_info_response("kontakt")
-        elif any(k in lowered for k in ["pridem", "pridemo", "pot"]):
+        info_key = pick_info_key(message)
+        if info_key != "kontakt":
+            return _get_info_response(info_key)
+        if any(k in lowered for k in ["pridem", "pridemo", "pot"]):
             return INFO_RESPONSES.get("lokacija")
-        else:
-            return _get_info_response("kontakt")
+        return _get_info_response("kontakt")
 
     # For other intents, fall back to legacy system
     return None
