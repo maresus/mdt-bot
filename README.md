@@ -83,6 +83,15 @@ Finalni D7 gate (runtime pin + full gate + env check):
 STRICT_ENV_CHECK=true ./scripts/final_gate_d7.sh
 ```
 
+Post-deploy sanity (production URL):
+
+```bash
+BASE_URL="https://<railway-domain>" ADMIN_TOKEN="<admin-token>" ./scripts/postdeploy_sanity.sh
+```
+
+Release lock + rollback checklist:
+- `docs/RELEASE_LOCK_D7.md`
+
 ## 📧 Email Potrdila
 
 Sistem avtomatsko pošilja email potrdila za:
