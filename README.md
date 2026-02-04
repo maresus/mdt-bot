@@ -77,6 +77,12 @@ Za strožji pre-check (routing + API smoke):
 ./scripts/deploy_gate_full.sh
 ```
 
+Finalni D7 gate (runtime pin + full gate + env check):
+
+```bash
+STRICT_ENV_CHECK=true ./scripts/final_gate_d7.sh
+```
+
 ## 📧 Email Potrdila
 
 Sistem avtomatsko pošilja email potrdila za:
