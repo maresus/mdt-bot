@@ -69,7 +69,7 @@ Pred deployem zaženi deploy gate:
 ./scripts/deploy_gate.sh
 ```
 
-Skript preveri ključne routing smoke teste (vključno z 50 E2E scenariji) in faila, če karkoli pade.
+Skript preveri Golden 30 contract teste + ključne routing smoke teste (vključno z 50 E2E scenariji) in faila, če karkoli pade.
 
 Za strožji pre-check (routing + API smoke):
 

@@ -1,0 +1,39 @@
+[
+  {"name": "G01 greeting zdravo", "message": "zdravo", "expected_intent": "GREETING"},
+  {"name": "G02 greeting dober dan", "message": "dober dan", "expected_intent": "GREETING"},
+  {"name": "G03 goodbye hvala", "message": "hvala za pomoč", "expected_intent": "GOODBYE"},
+  {"name": "G04 goodbye adijo", "message": "adijo", "expected_intent": "GOODBYE"},
+
+  {"name": "B01 booking ortoped", "message": "rad bi termin pri ortopedu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+  {"name": "B02 booking dermatolog", "message": "želim termin pri dermatologu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+  {"name": "B03 booking generic", "message": "rad bi se naročil", "expected_intent": "BOOKING_APPOINTMENT"},
+  {"name": "B04 booking okulist", "message": "potrebujem pregled oči", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "OKULIST"},
+  {"name": "B05 booking fizioterapija", "message": "rabim fizioterapijo", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "FIZIOTERAPIJA"},
+  {"name": "B06 booking laser", "message": "rad bi laserski poseg", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "LASERSKI_POSEG"},
+  {"name": "B07 booking kozmetika", "message": "želim kozmetični tretma", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "KOZMETIKA"},
+
+  {"name": "S01 simptom koleno", "message": "boli me koleno", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+  {"name": "S02 simptom izpuscaj", "message": "imam izpuščaj na koži", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+  {"name": "S03 simptom vid", "message": "slabo vidim", "expected_intent": "SERVICE_INFO", "expected_service": "OKULIST"},
+  {"name": "S04 info storitve", "message": "katere storitve ponujate", "expected_intent": "SERVICE_INFO"},
+  {"name": "S05 service inquiry", "message": "kaj zdravi dermatolog", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+  {"name": "S06 estetski info", "message": "zanima me botox", "expected_intent": "SERVICE_INFO", "expected_service": "ESTETSKI_POSEG"},
+
+  {"name": "I01 lokacija", "message": "kje se nahajate", "expected_intent": "INFO"},
+  {"name": "I02 parking", "message": "imate parking", "expected_intent": "INFO"},
+  {"name": "I03 delovni cas", "message": "kdaj ste odprti", "expected_intent": "INFO"},
+
+  {"name": "P01 cena", "message": "koliko stane pregled", "expected_intent": "PRICE"},
+  {"name": "P02 cenik", "message": "kakšne so cene", "expected_intent": "PRICE"},
+
+  {"name": "U01 urgency nujno", "message": "rabim nujno pomoč", "expected_intent": "URGENCY"},
+  {"name": "U02 urgency danes", "message": "rabim termin danes", "expected_intent": "URGENCY"},
+
+  {"name": "A01 affirmative", "message": "da", "expected_intent": "AFFIRMATIVE"},
+  {"name": "A02 affirmative ok", "message": "ok", "expected_intent": "AFFIRMATIVE"},
+  {"name": "A03 negative", "message": "ne", "expected_intent": "NEGATIVE"},
+
+  {"name": "F01 in-flow parking interrupt", "message": "imate parking", "in_flow": true, "expected_intent": "INFO", "expected_action": "soft_interrupt"},
+  {"name": "F02 in-flow price interrupt", "message": "koliko stane", "in_flow": true, "expected_intent": "PRICE", "expected_action": "soft_interrupt"},
+  {"name": "F03 in-flow urgency hard switch", "message": "nujno", "in_flow": true, "expected_intent": "URGENCY", "expected_action": "hard_switch"}
+]

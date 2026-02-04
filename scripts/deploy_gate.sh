@@ -15,13 +15,16 @@ export USE_UNIFIED_ROUTER="${USE_UNIFIED_ROUTER:-true}"
 echo "[DEPLOY GATE] Root: $ROOT_DIR"
 echo "[DEPLOY GATE] USE_UNIFIED_ROUTER=$USE_UNIFIED_ROUTER"
 
-echo "[1/3] test_routing.py"
+echo "[1/4] test_golden_30.py"
+"$VENV_PY" "$ROOT_DIR/scripts/test_golden_30.py"
+
+echo "[2/4] test_routing.py"
 "$VENV_PY" "$ROOT_DIR/scripts/test_routing.py"
 
-echo "[2/3] smoke_test_routing.py"
+echo "[3/4] smoke_test_routing.py"
 "$VENV_PY" "$ROOT_DIR/scripts/smoke_test_routing.py"
 
-echo "[3/3] smoke_test_e2e_50.py"
+echo "[4/4] smoke_test_e2e_50.py"
 "$VENV_PY" "$ROOT_DIR/scripts/smoke_test_e2e_50.py"
 
-echo "[DEPLOY GATE] OK - vsi routing smoke testi so uspešni."
+echo "[DEPLOY GATE] OK - Golden30 + routing smoke testi so uspešni."
