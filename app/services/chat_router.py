@@ -810,6 +810,31 @@ def _has_booking_keywords(message: str) -> bool:
     ])
 
 
+def _looks_like_symptom_report(message: str) -> bool:
+    """Heuristic: user reports symptoms (not asking informational question)."""
+    lowered = message.lower()
+    symptom_markers = [
+        "boli",
+        "boleč",
+        "bolec",
+        "bolečin",
+        "bolecin",
+        "težav",
+        "tezav",
+        "srbi",
+        "izpuščaj",
+        "izpuscaj",
+        "otekl",
+        "slabo vidim",
+        "imam",
+        "me ",
+    ]
+    question_markers = ["?", "kaj", "kako", "kateri", "katere", "koliko", "kdaj", "kje", "ali "]
+    has_symptom = any(marker in lowered for marker in symptom_markers)
+    asks_question = any(marker in lowered for marker in question_markers)
+    return has_symptom and not asks_question
+
+
 # Old rule-based classify_intent kept as fallback
 def classify_intent_rules(message: str, history: list = None) -> str:
     """Rule-based fallback for intent classification"""
@@ -1837,6 +1862,15 @@ Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši pr
             unified_state.setdefault("context", {})["suggested_service"] = service
             appointment_state["service_type"] = service.lower()
             appointment_state["step"] = None
+            if _looks_like_symptom_report(message):
+                service_info = get_service_info(service.lower())
+                if service_info:
+                    return (
+                        f"Razumem. Za zdaj svetujem počitek in brez večjih obremenitev.\n\n"
+                        f"Glede na opis priporočam **{service_info['name']}** "
+                        f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
+                        "🎯 Želite termin? Povejte mi datum!"
+                    )
         if service == "DERMATOLOG":
             return """**Dermatologija** - pregledi kožnih težav
 
