@@ -742,8 +742,8 @@ def get_imap_status():
 
 @router.post("/imap_resync")
 def imap_resync(
-    limit: int = 50,
     request: Request,
+    limit: int = 50,
     role: str = Depends(require_write),
 ):
     """Ročno prebere zadnjih N sporočil iz IMAP."""
