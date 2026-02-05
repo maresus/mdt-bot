@@ -21,6 +21,7 @@ class FlowStep(str, Enum):
     NAME = "name"             # Patient name
     PHONE = "phone"           # Contact phone
     EMAIL = "email"           # Contact email (optional)
+    REASON = "reason"         # Visit reason
     CONFIRM = "confirm"       # Confirmation
 
 

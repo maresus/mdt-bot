@@ -1546,6 +1546,9 @@ def _booking_resume_prompt(step: str | None, state: dict[str, Any]) -> str:
 BOOKING_INTERRUPT_DEPS = BookingInterruptDeps(
     is_in_flow=is_in_flow,
     get_current_step=get_current_step,
+    get_appointment_data=get_appointment_data,
+    get_context_value=lambda session_id, key, default=None: StateManager(session_id).get_context_value(key, default),
+    set_context_value=lambda session_id, key, value: StateManager(session_id).set_context_value(key, value),
     extract_date_from_message=extract_date_from_message,
     extract_time_from_message=extract_time_from_message,
     extract_service_type=extract_service_type,
@@ -1585,6 +1588,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
 
     def _clear_booking_details_preserve_service() -> None:
         """Clear appointment details when changing service, keep only service type."""
+        current_service = appointment_state.get("service_type")
         appointment_state["date"] = None
         appointment_state["time"] = None
         appointment_state["name"] = None
@@ -1592,6 +1596,9 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         appointment_state["email"] = None
         appointment_state["reason"] = None
         appointment_state["step"] = "date"
+        state_mgr.clear_appointment_data()
+        if current_service:
+            state_mgr.set_appointment_field("service_type", current_service)
 
     # Handle pending service switch confirmation (DA/NE).
     pending_service_switch = context.get("pending_service_switch")
@@ -1601,8 +1608,10 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
 
         if is_affirmative(message):
             appointment_state["service_type"] = pending_service_key
+            state_mgr.set_appointment_field("service_type", pending_service_key)
             _clear_booking_details_preserve_service()
             state_mgr.clear_context_key("pending_service_switch")
+            state_mgr.set_step(FlowStep.DATE)
 
             if pending_info:
                 return (
@@ -1655,8 +1664,6 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         session_id=session_id,
         decision_intent=decision.primary_intent,
         service_hint=decision.service_type or suggested_service,
-        appointment_state=appointment_state,
-        context=context,
         deps=BOOKING_INTERRUPT_DEPS,
     )
     if policy_response:

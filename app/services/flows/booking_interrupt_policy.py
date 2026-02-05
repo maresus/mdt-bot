@@ -12,6 +12,9 @@ from app.services.routing.unified_router import IntentType
 class BookingInterruptDeps:
     is_in_flow: Callable[[str], bool]
     get_current_step: Callable[[str], str | None]
+    get_appointment_data: Callable[[str], dict[str, Any]]
+    get_context_value: Callable[[str, str, Any], Any]
+    set_context_value: Callable[[str, str, Any], None]
     extract_date_from_message: Callable[[str], Optional[str]]
     extract_time_from_message: Callable[[str], Optional[str]]
     extract_service_type: Callable[[str], Optional[str]]
@@ -37,15 +40,15 @@ def handle_booking_interrupt(
     session_id: str,
     decision_intent: IntentType,
     service_hint: str | None,
-    appointment_state: dict[str, Any],
-    context: dict[str, Any],
     deps: BookingInterruptDeps,
 ) -> str | None:
     """Apply booking interrupt policy. Return response text or None to continue."""
     if not deps.is_in_flow(session_id):
         return None
 
-    step = appointment_state.get("step") or deps.get_current_step(session_id)
+    step = deps.get_current_step(session_id)
+    appointment_data = deps.get_appointment_data(session_id)
+    state_view = {"step": step, **appointment_data}
 
     # If user is answering expected step, continue booking flow.
     if step == "date" and deps.extract_date_from_message(message):
@@ -65,7 +68,7 @@ def handle_booking_interrupt(
     if step == "reason" and message.strip():
         return None
 
-    current_service = appointment_state.get("service_type")
+    current_service = appointment_data.get("service_type")
     incoming_service = (service_hint or "").lower() if service_hint else None
 
     # If user asks service info with a different service while booking, require explicit switch.
@@ -75,7 +78,7 @@ def handle_booking_interrupt(
             label = info["name"] if info else incoming_service
             current_info = deps.get_service_info(str(current_service).lower())
             current_label = current_info["name"] if current_info else str(current_service)
-            context["pending_service_switch"] = incoming_service
+            deps.set_context_value(session_id, "pending_service_switch", incoming_service)
             return (
                 f"Glede na opis priporočam **{label}**.\n\n"
                 f"Trenutno imate izbran **{current_label}**.\n"
@@ -103,4 +106,4 @@ def handle_booking_interrupt(
         return deps.build_interrupt_response(answer, step, True)
 
     # Otherwise, repeat the expected step prompt.
-    return deps.build_resume_prompt(step, appointment_state)
+    return deps.build_resume_prompt(step, state_view)

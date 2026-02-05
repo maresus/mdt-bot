@@ -16,6 +16,7 @@ from app.services.chat_router import (  # type: ignore
 from app.services.session.unified_state import (  # type: ignore
     FlowStep,
     FlowType,
+    StateManager,
     get_unified_state,
     reset_unified_state,
     start_flow,
@@ -32,6 +33,16 @@ def _assert(name: str, cond: bool, detail: str = "") -> bool:
 
 def _reset_booking(session_id: str, service: str = "dermatolog"):
     reset_unified_state(session_id)
+    sm = StateManager(session_id)
+    sm.set_flow(FlowType.APPOINTMENT)
+    sm.set_step(FlowStep.DATE)
+    sm.set_appointment_field("service_type", service)
+    sm.set_appointment_field("date", None)
+    sm.set_appointment_field("time", None)
+    sm.set_appointment_field("name", None)
+    sm.set_appointment_field("phone", None)
+    sm.set_appointment_field("email", None)
+    sm.set_appointment_field("reason", None)
     state = get_appointment_state(session_id)
     state["service_type"] = service
     state["step"] = "date"
@@ -85,6 +96,11 @@ def run_validation_edges() -> tuple[int, int]:
 
     sid = "d6-val-phone"
     state = _reset_booking(sid, "ortoped")
+    sm = StateManager(sid)
+    sm.set_appointment_field("date", "10.04.2026")
+    sm.set_appointment_field("time", "10:00")
+    sm.set_appointment_field("name", "Marko Satler")
+    sm.set_step(FlowStep.PHONE)
     state["date"] = "10.04.2026"
     state["time"] = "10:00"
     state["name"] = "Marko Satler"
@@ -97,6 +113,12 @@ def run_validation_edges() -> tuple[int, int]:
 
     sid = "d6-val-email"
     state = _reset_booking(sid, "ortoped")
+    sm = StateManager(sid)
+    sm.set_appointment_field("date", "10.04.2026")
+    sm.set_appointment_field("time", "10:00")
+    sm.set_appointment_field("name", "Marko Satler")
+    sm.set_appointment_field("phone", "041123123")
+    sm.set_step(FlowStep.EMAIL)
     state["date"] = "10.04.2026"
     state["time"] = "10:00"
     state["name"] = "Marko Satler"
@@ -110,6 +132,7 @@ def run_validation_edges() -> tuple[int, int]:
 
     sid = "d6-val-date"
     state = _reset_booking(sid, "ortoped")
+    StateManager(sid).set_step(FlowStep.DATE)
     state["step"] = "date"
     msg = handle_appointment_booking("12.4.2026", sid)  # Nedelja (pričakovano zavrnjen datum)
     date_ok = ("izberite drug datum" in msg.lower()) or ("od ponedeljka do petka" in msg.lower())
@@ -120,6 +143,9 @@ def run_validation_edges() -> tuple[int, int]:
 
     sid = "d6-val-time"
     state = _reset_booking(sid, "ortoped")
+    sm = StateManager(sid)
+    sm.set_step(FlowStep.TIME)
+    sm.set_appointment_field("date", "10.04.2026")
     state["step"] = "time"
     state["date"] = "10.04.2026"
     msg = handle_appointment_booking("kadarkoli", sid)
