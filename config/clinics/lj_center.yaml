@@ -1,0 +1,70 @@
+clinic_id: "lj_center"
+contact:
+  name: "Zdravstveni center Ljubljana"
+  email: "info@zdravstveni-center.si"
+  phone: "01 234 56 78"
+  address: "Zdraviliška ulica 12, 1000 Ljubljana"
+services:
+  dermatolog:
+    name: "Dermatološki pregled"
+    price_range: "25-150 €"
+    duration_minutes: 30
+    description: "Pregledi kožnih bolezni, laserski in estetski posegi"
+  ortoped:
+    name: "Ortopedski pregled"
+    price_range: "40-80 €"
+    duration_minutes: 30
+    description: "Pregledi sklepov, hrbtenice, športne poškodbe"
+  okulist:
+    name: "Okulistični pregled"
+    price_range: "30-120 €"
+    duration_minutes: 30
+    description: "Očesni pregledi, predpis očal in leč"
+  laserski_poseg:
+    name: "Laserski poseg"
+    price_range: "50-200 €"
+    duration_minutes: 30
+    description: "Lasersko odstranjevanje žilic, bradavic, zdravljenje glivic"
+  estetski_poseg:
+    name: "Estetski poseg"
+    price_range: "100-400 €"
+    duration_minutes: 30
+    description: "Botox, fillerji, biorevitalizacija, radiofrekvenca"
+  kozmetika:
+    name: "Kozmetični salon"
+    price_range: "30-100 €"
+    duration_minutes: 60
+    description: "Nega obraza, tretmaji kože"
+service_map:
+  dermatolog:
+    - "dermatolog"
+    - "dermatološki"
+    - "koža"
+    - "kozni"
+    - "kožne"
+    - "znamenje"
+    - "izpuščaj"
+  ortoped:
+    - "ortoped"
+    - "ortopedski"
+    - "ortopedija"
+    - "koleno"
+    - "hrbtenica"
+  okulist:
+    - "okulist"
+    - "okulistični"
+    - "očesni"
+    - "vid"
+  laserski_poseg:
+    - "laser"
+    - "laserski"
+    - "žilice"
+    - "bradavice"
+  estetski_poseg:
+    - "estetski"
+    - "botox"
+    - "filer"
+  kozmetika:
+    - "kozmetika"
+    - "kozmetični"
+    - "nega obraza"

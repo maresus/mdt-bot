@@ -1589,16 +1589,17 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     def _clear_booking_details_preserve_service() -> None:
         """Clear appointment details when changing service, keep only service type."""
         current_service = appointment_state.get("service_type")
-        appointment_state["date"] = None
-        appointment_state["time"] = None
-        appointment_state["name"] = None
-        appointment_state["phone"] = None
-        appointment_state["email"] = None
-        appointment_state["reason"] = None
-        appointment_state["step"] = "date"
         state_mgr.clear_appointment_data()
         if current_service:
             state_mgr.set_appointment_field("service_type", current_service)
+        if appointment_state is not None:
+            appointment_state["date"] = None
+            appointment_state["time"] = None
+            appointment_state["name"] = None
+            appointment_state["phone"] = None
+            appointment_state["email"] = None
+            appointment_state["reason"] = None
+            appointment_state["step"] = "date"
 
     # Handle pending service switch confirmation (DA/NE).
     pending_service_switch = context.get("pending_service_switch")
@@ -1607,11 +1608,8 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         pending_info = get_service_info(pending_service_key)
 
         if is_affirmative(message):
-            appointment_state["service_type"] = pending_service_key
-            state_mgr.set_appointment_field("service_type", pending_service_key)
-            _clear_booking_details_preserve_service()
+            state_mgr.confirm_service_switch(pending_service_key, legacy_state=appointment_state)
             state_mgr.clear_context_key("pending_service_switch")
-            state_mgr.set_step(FlowStep.DATE)
 
             if pending_info:
                 return (
@@ -1650,8 +1648,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     # If user provides a date after service info prompt, start booking immediately
     date_str = extract_date_from_message(message)
     if date_str and suggested_service and not is_in_flow(session_id):
-        appointment_state["service_type"] = suggested_service.lower()
-        appointment_state["step"] = None
+        state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
         state_mgr.clear_context_key("suggested_service")
         return handle_appointment_booking(message, session_id)
@@ -1683,8 +1680,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
 
     # If user confirms after service info (no flow yet), start booking
     if decision.primary_intent == IntentType.AFFIRMATIVE and suggested_service and not is_in_flow(session_id):
-        appointment_state["service_type"] = suggested_service.lower()
-        appointment_state["step"] = None
+        state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
         state_mgr.clear_context_key("suggested_service")
         return handle_appointment_booking(message, session_id)
@@ -1707,15 +1703,12 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
             # Start new booking flow
             service_type = decision.service_type
             if service_type:
-                set_appointment_field(session_id, "service_type", service_type)
-                appointment_state["service_type"] = service_type.lower()
-                appointment_state["step"] = None
+                state_mgr.transition_to_booking(service_type=service_type, legacy_state=appointment_state)
                 start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
                 return f"Odlično! Naročilo za {service_type.lower()}. Kateri datum vam ustreza? (npr. 15.2.2026)"
             else:
+                state_mgr.transition_to_booking(service_type=None, legacy_state=appointment_state)
                 start_flow(session_id, FlowType.APPOINTMENT, FlowStep.SERVICE)
-                appointment_state["service_type"] = None
-                appointment_state["step"] = "select_service"
                 return "Na kateri pregled se želite naročiti?\n\n- Dermatolog\n- Ortoped\n- Okulist\n- Laserski poseg\n- Estetski poseg\n- Kozmetika"
         # Already in flow - fall back to legacy step handling
         return None
@@ -1735,8 +1728,6 @@ Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši pr
         service = decision.service_type
         if service:
             state_mgr.set_context_value("suggested_service", service)
-            appointment_state["service_type"] = service.lower()
-            appointment_state["step"] = None
             if _looks_like_symptom_report(message):
                 return _advice_only(service)
         if _looks_like_symptom_report(message) and not service:

@@ -97,6 +97,39 @@ class StateManager:
         state["appointment_data"] = blank_unified_state()["appointment_data"]
         self._log_change("appointment=<cleared>")
 
+    def transition_to_booking(self, service_type: Optional[str] = None, legacy_state: Optional[Dict[str, Any]] = None) -> None:
+        """Single-writer transition into booking flow (optional legacy sync)."""
+        self.set_flow(FlowType.APPOINTMENT)
+        self.clear_appointment_data()
+        if service_type:
+            self.set_appointment_field("service_type", service_type)
+            self.set_step(FlowStep.DATE)
+        else:
+            self.set_step(FlowStep.SERVICE)
+        if legacy_state is not None:
+            legacy_state["service_type"] = service_type.lower() if service_type else None
+            legacy_state["step"] = "date" if service_type else "select_service"
+            legacy_state["date"] = None
+            legacy_state["time"] = None
+            legacy_state["name"] = None
+            legacy_state["phone"] = None
+            legacy_state["email"] = None
+            legacy_state["reason"] = None
+
+    def confirm_service_switch(self, service_type: str, legacy_state: Optional[Dict[str, Any]] = None) -> None:
+        """Apply a confirmed service switch (optional legacy sync)."""
+        self.clear_appointment_data()
+        self.set_appointment_field("service_type", service_type)
+        self.set_step(FlowStep.DATE)
+        if legacy_state is not None:
+            legacy_state["service_type"] = service_type.lower()
+            legacy_state["step"] = "date"
+            legacy_state["date"] = None
+            legacy_state["time"] = None
+            legacy_state["name"] = None
+            legacy_state["phone"] = None
+            legacy_state["email"] = None
+            legacy_state["reason"] = None
     def get_full_state(self) -> Dict[str, Any]:
         import copy
         return copy.deepcopy(self.get_state())

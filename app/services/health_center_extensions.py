@@ -10,6 +10,7 @@ Storitve:
 - Kozmetični salon
 """
 from datetime import datetime, timedelta
+import os
 from typing import Optional, Tuple, List, Set
 
 # Variacije imen storitev za prepoznavo v besedilu.
@@ -67,6 +68,23 @@ SERVICES = {
         "description": "Nega obraza, tretmaji kože"
     },
 }
+
+# Optional clinic config override (multi-tenancy)
+try:
+    from app.services.clinic_config import get_clinic_config
+
+    _clinic_config = get_clinic_config(
+        defaults={
+            "services": SERVICES,
+            "service_map": SERVICE_NAME_MAP,
+        }
+    )
+    if isinstance(_clinic_config.get("services"), dict):
+        SERVICES = _clinic_config["services"]
+    if isinstance(_clinic_config.get("service_map"), dict):
+        SERVICE_NAME_MAP = _clinic_config["service_map"]
+except Exception:
+    pass
 
 # Delovni čas
 WORKING_HOURS = {
