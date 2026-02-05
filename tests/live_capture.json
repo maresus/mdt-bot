@@ -1,1 +1,165 @@
-[]
+[
+  {
+    "name": "LC01_basic_booking_ortoped",
+    "dialog": [
+      {"message": "zivjo", "expect_contains_any": ["kako lahko", "pozdrav", "pomos", "pomagam"]},
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]}
+    ]
+  },
+  {
+    "name": "LC02_interrupt_parking_mid_booking",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "imate parking", "expect_contains_any": ["parkir", "parking"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]}
+    ]
+  },
+  {
+    "name": "LC03_weekend_date_reject",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "12.4.2026", "expect_contains_any": ["ponedeljek", "petek", "drug datum", "delovni"]}
+    ]
+  },
+  {
+    "name": "LC04_switch_service_symptom",
+    "dialog": [
+      {"message": "rad bi termin za dermatolog", "expect_contains_any": ["datum", "termin", "dermatolog"]},
+      {"message": "boli me koleno", "expect_contains_any": ["ortoped", "ortopedski"]}
+    ]
+  },
+  {
+    "name": "LC05_info_working_hours_idle",
+    "dialog": [
+      {"message": "kaksen je delovni cas", "expect_contains_any": ["delovni", "ponedeljek", "petek", "odpr"]}
+    ]
+  },
+  {
+    "name": "LC06_info_prices_idle",
+    "dialog": [
+      {"message": "koliko stane ortoped", "expect_contains_any": ["cena", "eur"]}
+    ]
+  },
+  {
+    "name": "LC07_location_info",
+    "dialog": [
+      {"message": "kje ste", "expect_contains_any": ["lokacija", "naslov", "ulica", "ljubljana"]}
+    ]
+  },
+  {
+    "name": "LC08_booking_okulist",
+    "dialog": [
+      {"message": "rad bi termin za okulist", "expect_contains_any": ["datum", "termin", "okulist"]},
+      {"message": "15.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+    ]
+  },
+  {
+    "name": "LC09_booking_laser",
+    "dialog": [
+      {"message": "rad bi laserski poseg", "expect_contains_any": ["datum", "termin", "laser"]},
+      {"message": "20.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+    ]
+  },
+  {
+    "name": "LC10_booking_estetika",
+    "dialog": [
+      {"message": "zanimam se za estetski poseg", "expect_contains_any": ["datum", "termin", "estet"]},
+      {"message": "18.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+    ]
+  },
+  {
+    "name": "LC11_booking_kozmetika",
+    "dialog": [
+      {"message": "rad bi termin za kozmetiko", "expect_contains_any": ["datum", "termin", "kozmet"]},
+      {"message": "21.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+    ]
+  },
+  {
+    "name": "LC12_info_contact",
+    "dialog": [
+      {"message": "kontakt", "expect_contains_any": ["telefon", "email", "kontakt"]}
+    ]
+  },
+  {
+    "name": "LC13_interrupt_price_mid_booking",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "koliko stane pregled", "expect_contains_any": ["cena", "eur"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]}
+    ]
+  },
+  {
+    "name": "LC14_invalid_time_format",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "ob desetih", "expect_contains_any": ["ura", "cas", "prosim"]}
+    ]
+  },
+  {
+    "name": "LC15_name_then_phone",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]},
+      {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]}
+    ]
+  },
+  {
+    "name": "LC16_email_request",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]},
+      {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
+      {"message": "041567567", "expect_contains_any": ["email", "e-mail"]}
+    ]
+  },
+  {
+    "name": "LC17_reason_request",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]},
+      {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
+      {"message": "041567567", "expect_contains_any": ["email", "e-mail"]},
+      {"message": "marko@example.com", "expect_contains_any": ["razlog", "obiska"]}
+    ]
+  },
+  {
+    "name": "LC18_confirm_flow",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]},
+      {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
+      {"message": "041567567", "expect_contains_any": ["email", "e-mail"]},
+      {"message": "marko@example.com", "expect_contains_any": ["razlog", "obiska"]},
+      {"message": "bolecina", "expect_contains_any": ["Ali so podatki", "potrd"]}
+    ]
+  },
+  {
+    "name": "LC19_confirm_yes",
+    "dialog": [
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
+      {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
+      {"message": "10:00", "expect_contains_any": ["ime", "priimek"]},
+      {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
+      {"message": "041567567", "expect_contains_any": ["email", "e-mail"]},
+      {"message": "marko@example.com", "expect_contains_any": ["razlog", "obiska"]},
+      {"message": "bolecina", "expect_contains_any": ["Ali so podatki", "potrd"]},
+      {"message": "DA", "expect_contains_any": ["uspesno", "uspe", "ustvarjeno", "potrditev"]}
+    ]
+  },
+  {
+    "name": "LC20_general_question_then_booking",
+    "dialog": [
+      {"message": "kaksen je delovni cas", "expect_contains_any": ["delovni", "ponedeljek", "petek"]},
+      {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]}
+    ]
+  }
+]
