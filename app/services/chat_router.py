@@ -50,6 +50,7 @@ from app.services.session.unified_state import (
     set_appointment_field,
     get_appointment_data,
     is_appointment_complete,
+    StateManager,
     FlowType,
     FlowStep,
 )
@@ -1566,8 +1567,9 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     Returns response string, or None if should fall back to legacy system.
     """
     appointment_state = get_appointment_state(session_id)
-    unified_state = get_unified_state(session_id)
-    context = unified_state.setdefault("context", {})
+    state_mgr = StateManager(session_id)
+    unified_state = state_mgr.get_state()
+    context = state_mgr.ensure_context()
 
     def _clear_booking_details_preserve_service() -> None:
         """Clear appointment details when changing service, keep only service type."""
@@ -1588,7 +1590,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         if is_affirmative(message):
             appointment_state["service_type"] = pending_service_key
             _clear_booking_details_preserve_service()
-            context["pending_service_switch"] = None
+            state_mgr.clear_context_key("pending_service_switch")
 
             if pending_info:
                 return (
@@ -1600,22 +1602,26 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
             return "Super, preklopim storitev. Kateri datum vas zanima? (npr. 15.3.2026)"
 
         if is_negative(message):
-            context["pending_service_switch"] = None
+            state_mgr.clear_context_key("pending_service_switch")
             step = appointment_state.get("step") or get_current_step(session_id)
             return build_resume_prompt(step) or "V redu, nadaljujemo z naročilom."
 
     # Keep unified state in sync with legacy appointment state.
     was_in_flow = is_in_flow(session_id)
     if appointment_state.get("step"):
-        unified_state["flow"] = FlowType.APPOINTMENT.value
-        unified_state["step"] = appointment_state.get("step")
+        state_mgr.set_flow(FlowType.APPOINTMENT)
+        step_val = appointment_state.get("step")
+        try:
+            state_mgr.set_step(FlowStep(step_val))
+        except Exception:
+            state_mgr.set_step(None)
     elif appointment_state.get("service_type") or was_in_flow:
-        unified_state["flow"] = FlowType.APPOINTMENT.value
+        state_mgr.set_flow(FlowType.APPOINTMENT)
         if unified_state.get("step") is None:
-            unified_state["step"] = FlowStep.DATE.value
+            state_mgr.set_step(FlowStep.DATE)
     else:
-        unified_state["flow"] = FlowType.IDLE.value
-        unified_state["step"] = None
+        state_mgr.set_flow(FlowType.IDLE)
+        state_mgr.set_step(None)
 
     decision = unified_route(message, unified_state)
     suggested_service = context.get("suggested_service")
@@ -1626,7 +1632,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         appointment_state["service_type"] = suggested_service.lower()
         appointment_state["step"] = None
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-        context["suggested_service"] = None
+        state_mgr.clear_context_key("suggested_service")
         return handle_appointment_booking(message, session_id)
 
     # Log decision for debugging
@@ -1661,7 +1667,7 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
         appointment_state["service_type"] = suggested_service.lower()
         appointment_state["step"] = None
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-        context["suggested_service"] = None
+        state_mgr.clear_context_key("suggested_service")
         return handle_appointment_booking(message, session_id)
 
     if decision.primary_intent == IntentType.NEGATIVE and is_in_flow(session_id):
@@ -1709,7 +1715,7 @@ Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši pr
             return None
         service = decision.service_type
         if service:
-            unified_state.setdefault("context", {})["suggested_service"] = service
+            state_mgr.set_context_value("suggested_service", service)
             appointment_state["service_type"] = service.lower()
             appointment_state["step"] = None
             if _looks_like_symptom_report(message):

@@ -5,7 +5,7 @@ Handles appointment booking flows with interrupt support.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class FlowType(str, Enum):
@@ -26,6 +26,67 @@ class FlowStep(str, Enum):
 
 # In-memory state storage (per session_id)
 unified_states: Dict[str, Dict[str, Any]] = {}
+
+
+class StateManager:
+    """Single writer for unified state."""
+
+    def __init__(self, session_id: str):
+        self.session_id = session_id
+
+    def get_state(self) -> Dict[str, Any]:
+        return get_unified_state(self.session_id)
+
+    def reset_all(self) -> None:
+        reset_unified_state(self.session_id)
+
+    def reset_flow_only(self) -> None:
+        reset_flow(self.session_id)
+
+    def ensure_context(self) -> Dict[str, Any]:
+        state = self.get_state()
+        return state.setdefault("context", {})
+
+    def set_flow(self, flow_type: FlowType) -> None:
+        state = self.get_state()
+        state["flow"] = flow_type.value
+
+    def set_step(self, step: Optional[FlowStep]) -> None:
+        state = self.get_state()
+        state["step"] = step.value if step else None
+
+    def start_flow(self, flow_type: FlowType, initial_step: FlowStep) -> None:
+        state = self.get_state()
+        state["flow"] = flow_type.value
+        state["step"] = initial_step.value
+
+    def advance_step(self, next_step: FlowStep) -> None:
+        state = self.get_state()
+        state["step"] = next_step.value
+
+    def set_context_value(self, key: str, value: Any) -> None:
+        ctx = self.ensure_context()
+        ctx[key] = value
+
+    def get_context_value(self, key: str, default: Any = None) -> Any:
+        return self.ensure_context().get(key, default)
+
+    def clear_context_key(self, key: str) -> None:
+        ctx = self.ensure_context()
+        if key in ctx:
+            del ctx[key]
+
+    def get_appointment_data(self) -> Dict[str, Any]:
+        return self.get_state()["appointment_data"]
+
+    def set_appointment_field(self, field: str, value: Any) -> None:
+        state = self.get_state()
+        if field in state["appointment_data"]:
+            state["appointment_data"][field] = value
+
+    def clear_appointment_data(self) -> None:
+        state = self.get_state()
+        state["appointment_data"] = blank_unified_state()["appointment_data"]
 
 
 def blank_unified_state() -> Dict[str, Any]:
@@ -85,15 +146,12 @@ def get_current_step(session_id: str) -> str | None:
 
 def start_flow(session_id: str, flow_type: FlowType, initial_step: FlowStep) -> None:
     """Start a new flow."""
-    state = get_unified_state(session_id)
-    state["flow"] = flow_type.value
-    state["step"] = initial_step.value
+    StateManager(session_id).start_flow(flow_type, initial_step)
 
 
 def advance_step(session_id: str, next_step: FlowStep) -> None:
     """Advance to next step in flow."""
-    state = get_unified_state(session_id)
-    state["step"] = next_step.value
+    StateManager(session_id).advance_step(next_step)
 
 
 def push_interrupt(session_id: str, intent: str, data: Dict[str, Any] | None = None) -> None:
@@ -121,9 +179,7 @@ def get_appointment_data(session_id: str) -> Dict[str, Any]:
 
 def set_appointment_field(session_id: str, field: str, value: Any) -> None:
     """Set a field in appointment data."""
-    state = get_unified_state(session_id)
-    if field in state["appointment_data"]:
-        state["appointment_data"][field] = value
+    StateManager(session_id).set_appointment_field(field, value)
 
 
 def get_missing_appointment_fields(session_id: str) -> List[str]:
