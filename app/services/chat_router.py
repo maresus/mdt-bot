@@ -4,7 +4,7 @@ import json
 import os
 import hashlib
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Any, Optional, Tuple
 import uuid
 import threading
@@ -1835,6 +1835,19 @@ async def chat(request: ChatRequest) -> ChatResponse:
     }
 
     try:
+        flow_state = get_unified_state(session_id)
+        appointment_state = get_appointment_state(session_id)
+        current_step = appointment_state.get("step") if appointment_state.get("step") is not None else None
+        metadata["flow"] = flow_state.get("flow")
+        metadata["booking_step"] = current_step
+
+        ui_payload = _build_ui_payload(appointment_state, response_text)
+        if ui_payload:
+            metadata["ui"] = ui_payload
+    except Exception as e:
+        print(f"[UI_CONTRACT] Failed to build UI payload: {e}")
+
+    try:
         state = get_appointment_state(session_id)
         current_step = state.get("step") if state.get("step") is not None else None
         save_chat_message(
@@ -1857,6 +1870,57 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
     payload = format_response(response_text, metadata=metadata)
     return ChatResponse(reply=payload["text"], session_id=session_id, metadata=payload["metadata"])
+
+
+def _build_ui_payload(appointment_state: dict[str, Any], response_text: str | None) -> Optional[dict[str, Any]]:
+    step = appointment_state.get("step")
+    response_text = response_text or ""
+
+    if step in (None, "select_service") and "Na kateri pregled" in response_text:
+        return {
+            "type": "service_select",
+            "label": "Izberite storitev",
+            "options": [
+                {"label": "Dermatološki pregled", "value": "Dermatološki pregled"},
+                {"label": "Ortopedski pregled", "value": "Ortopedski pregled"},
+                {"label": "Okulistični pregled", "value": "Okulistični pregled"},
+                {"label": "Laserski poseg", "value": "Laserski poseg"},
+                {"label": "Estetski poseg", "value": "Estetski poseg"},
+                {"label": "Kozmetični salon", "value": "Kozmetični salon"},
+            ],
+        }
+
+    if step == "date":
+        return {
+            "type": "date_picker",
+            "label": "Izberite datum",
+            "min_date": date.today().isoformat(),
+        }
+
+    if step == "time":
+        date_str = str(appointment_state.get("date") or "")
+        service_type = str(appointment_state.get("service_type") or "")
+        slots: list[str] = []
+        if date_str and service_type:
+            try:
+                slots = get_available_time_slots(date_str, service_type)
+            except Exception:
+                slots = []
+        if slots:
+            return {
+                "type": "time_slots",
+                "label": f"Prosti termini za {date_str}",
+                "slots": slots[:12],
+            }
+
+    if step == "confirm" or "Ali so podatki pravilni" in response_text:
+        return {
+            "type": "confirm",
+            "label": "Ali so podatki pravilni?",
+            "options": ["DA", "NE"],
+        }
+
+    return None
 
 
 # ============================================================

@@ -80,6 +80,39 @@
       margin-right: auto; background: var(--bot-bg);
       color: var(--text); border-bottom-left-radius: 4px;
     }
+    .ui-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .ui-actions .ui-btn {
+      background: #fff5e6;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .ui-date {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .ui-date input[type="date"] {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+    .ui-label {
+      width: 100%;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
     .msg.typing { background: var(--bot-bg); color: var(--bot-text); padding: 12px 18px; }
     .typing-dots { display: flex; gap: 4px; }
     .typing-dots span {
@@ -213,13 +246,16 @@
       quickBtns.style.display = 'flex';
     }
     
-    function addMessageToDOM(text, who, save = true) {
+    function addMessageToDOM(text, who, save = true, metadata = null) {
       const div = document.createElement('div');
       div.className = 'msg ' + who;
       div.textContent = text;
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
       if (save) saveHistory();
+      if (who === 'bot' && metadata?.ui) {
+        renderUiActions(div, metadata.ui);
+      }
       return div;
     }
     
@@ -250,6 +286,73 @@
       localStorage.setItem(sessionKey, sessionId);
     }
 
+    function formatDateToDotted(isoDate) {
+      const [year, month, day] = isoDate.split('-');
+      return `${day}.${month}.${year}`;
+    }
+
+    function renderUiActions(container, ui) {
+      const actions = document.createElement('div');
+      actions.className = 'ui-actions';
+
+      if (ui?.label) {
+        const label = document.createElement('div');
+        label.className = 'ui-label';
+        label.textContent = ui.label;
+        actions.appendChild(label);
+      }
+
+      if (ui?.type === 'date_picker') {
+        const wrap = document.createElement('div');
+        wrap.className = 'ui-date';
+
+        const input = document.createElement('input');
+        input.type = 'date';
+        if (ui.min_date) input.min = ui.min_date;
+
+        const btn = document.createElement('button');
+        btn.className = 'ui-btn';
+        btn.textContent = 'Potrdi';
+        btn.addEventListener('click', () => {
+          if (!input.value) return;
+          const formatted = formatDateToDotted(input.value);
+          sendMessage(formatted);
+        });
+
+        wrap.appendChild(input);
+        wrap.appendChild(btn);
+        actions.appendChild(wrap);
+      } else if (ui?.type === 'time_slots' && Array.isArray(ui.slots)) {
+        ui.slots.forEach(slot => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = slot;
+          btn.addEventListener('click', () => sendMessage(slot));
+          actions.appendChild(btn);
+        });
+      } else if (ui?.type === 'confirm' && Array.isArray(ui.options)) {
+        ui.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = option;
+          btn.addEventListener('click', () => sendMessage(option));
+          actions.appendChild(btn);
+        });
+      } else if (ui?.type === 'service_select' && Array.isArray(ui.options)) {
+        ui.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = option.label || option.value;
+          btn.addEventListener('click', () => sendMessage(option.value || option.label));
+          actions.appendChild(btn);
+        });
+      }
+
+      if (actions.children.length > 0) {
+        container.appendChild(actions);
+      }
+    }
+
     async function sendMessage(text) {
       if (!text.trim()) return;
       addMessageToDOM(text, 'user');
@@ -271,7 +374,7 @@
           const displayText = data?.display_text ?? data?.text ?? data?.reply ?? 'Oprostite, prišlo je do napake.';
           const actionSuggestion = data?.action_suggestion ?? data?.metadata?.action_suggestion;
           const finalText = actionSuggestion ? `${displayText}\n\n💡 ${actionSuggestion}` : displayText;
-          addMessageToDOM(finalText, 'bot');
+          addMessageToDOM(finalText, 'bot', true, data?.metadata ?? null);
         } else {
           addMessageToDOM('Oprostite, strežnik ni dosegljiv.', 'bot');
         }

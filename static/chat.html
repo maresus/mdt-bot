@@ -252,6 +252,50 @@
       text-align: center;
     }
 
+    .ui-actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ui-actions .ui-btn {
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      color: #0f172a;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .ui-actions .ui-btn:hover {
+      background: #bae6fd;
+      transform: translateY(-1px);
+    }
+
+    .ui-date {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ui-date input[type="date"] {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+
+    .ui-label {
+      width: 100%;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
     /* Typing Indicator */
     .typing-indicator {
       display: flex;
@@ -650,7 +694,7 @@
     }
 
     // Add message to chat
-    function addMessage(text, type = 'bot') {
+    function addMessage(text, type = 'bot', metadata = null) {
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${type}`;
 
@@ -669,6 +713,10 @@
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
       localStorage.setItem("last_chat_activity", Date.now().toString());
+
+      if (type === 'bot' && metadata?.ui) {
+        renderUiActions(bubble, metadata.ui);
+      }
     }
 
     // Show typing indicator
@@ -719,11 +767,78 @@
       return { text: finalText, metadata };
     }
 
-    async function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
+    function formatDateToDotted(isoDate) {
+      const [year, month, day] = isoDate.split('-');
+      return `${day}.${month}.${year}`;
+    }
 
-      addMessage(text, 'user');
+    function renderUiActions(bubbleEl, ui) {
+      const actions = document.createElement('div');
+      actions.className = 'ui-actions';
+
+      if (ui?.label) {
+        const label = document.createElement('div');
+        label.className = 'ui-label';
+        label.textContent = ui.label;
+        actions.appendChild(label);
+      }
+
+      if (ui?.type === 'date_picker') {
+        const wrap = document.createElement('div');
+        wrap.className = 'ui-date';
+
+        const input = document.createElement('input');
+        input.type = 'date';
+        if (ui.min_date) input.min = ui.min_date;
+
+        const btn = document.createElement('button');
+        btn.className = 'ui-btn';
+        btn.textContent = 'Potrdi datum';
+        btn.addEventListener('click', () => {
+          if (!input.value) return;
+          const formatted = formatDateToDotted(input.value);
+          sendMessageWithText(formatted);
+        });
+
+        wrap.appendChild(input);
+        wrap.appendChild(btn);
+        actions.appendChild(wrap);
+      } else if (ui?.type === 'time_slots' && Array.isArray(ui.slots)) {
+        ui.slots.forEach(slot => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = slot;
+          btn.addEventListener('click', () => sendMessageWithText(slot));
+          actions.appendChild(btn);
+        });
+      } else if (ui?.type === 'confirm' && Array.isArray(ui.options)) {
+        ui.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = option;
+          btn.addEventListener('click', () => sendMessageWithText(option));
+          actions.appendChild(btn);
+        });
+      } else if (ui?.type === 'service_select' && Array.isArray(ui.options)) {
+        ui.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.className = 'ui-btn';
+          btn.textContent = option.label || option.value;
+          btn.addEventListener('click', () => sendMessageWithText(option.value || option.label));
+          actions.appendChild(btn);
+        });
+      }
+
+      if (actions.children.length > 0) {
+        bubbleEl.appendChild(actions);
+      }
+    }
+
+    async function sendMessageWithText(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      addMessage(trimmed, 'user');
       messageInput.value = '';
       messageInput.focus();
 
@@ -735,7 +850,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: text,
+            message: trimmed,
             session_id: sessionId
           })
         });
@@ -747,7 +862,7 @@
         } else {
           const data = await response.json();
           const normalized = normalizeChatResponse(data);
-          addMessage(normalized.text, 'bot');
+          addMessage(normalized.text, 'bot', normalized.metadata);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -756,6 +871,13 @@
       } finally {
         sendButton.disabled = false;
       }
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      sendMessageWithText(text);
     }
 
     // Show welcome message
