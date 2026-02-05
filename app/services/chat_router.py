@@ -64,6 +64,10 @@ from app.services.flows.booking_flow import (
 )
 from app.services.flows.info_flow import pick_info_key
 from app.services.flows.interrupt_flow import InterruptFlowDeps, resolve_interrupt_answer
+from app.services.flows.booking_interrupt_policy import (
+    BookingInterruptDeps,
+    handle_booking_interrupt,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -1460,6 +1464,29 @@ INTERRUPT_FLOW_DEPS = InterruptFlowDeps(
 )
 
 
+def _booking_resume_prompt(step: str | None, state: dict[str, Any]) -> str:
+    resume = build_resume_prompt(step)
+    if resume:
+        return resume
+    return booking_get_resume_prompt(state, BOOKING_FLOW_DEPS)
+
+
+BOOKING_INTERRUPT_DEPS = BookingInterruptDeps(
+    is_in_flow=is_in_flow,
+    get_current_step=get_current_step,
+    extract_date_from_message=extract_date_from_message,
+    extract_time_from_message=extract_time_from_message,
+    extract_service_type=extract_service_type,
+    is_likely_full_name=is_likely_full_name,
+    build_interrupt_response=build_interrupt_response,
+    build_resume_prompt=_booking_resume_prompt,
+    interrupt_answer=lambda **kwargs: resolve_interrupt_answer(deps=INTERRUPT_FLOW_DEPS, **kwargs),
+    get_info_response=_get_info_response,
+    get_service_info=get_service_info,
+    looks_like_symptom_report=_looks_like_symptom_report,
+)
+
+
 def get_resume_prompt(state: dict) -> str:
     """Backward-compatible wrapper around extracted booking flow."""
     return booking_get_resume_prompt(state, BOOKING_FLOW_DEPS)
@@ -1546,25 +1573,17 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     # Log decision for debugging
     print(f"[UNIFIED] Intent: {decision.primary_intent.value}, Confidence: {decision.confidence:.2f}, Action: {decision.action.value}, Service: {decision.service_type}")
 
-    # If user is answering the expected booking step, let booking flow handle it.
-    if is_in_flow(session_id):
-        step = appointment_state.get("step") or get_current_step(session_id)
-        if step == "date" and extract_date_from_message(message):
-            return None
-        if step == "time" and extract_time_from_message(message):
-            return None
-        if step == "select_service" and extract_service_type(message):
-            return None
-        if step == "name" and is_likely_full_name(message):
-            return None
-        if step == "phone":
-            cleaned = re.sub(r"[^\d+]", "", message)
-            if len(cleaned) >= 8:
-                return None
-        if step == "email" and ("@" in message and "." in message.split("@")[-1]):
-            return None
-        if step == "reason" and message.strip():
-            return None
+    policy_response = handle_booking_interrupt(
+        message=message,
+        session_id=session_id,
+        decision_intent=decision.primary_intent,
+        service_hint=decision.service_type or suggested_service,
+        appointment_state=appointment_state,
+        context=context,
+        deps=BOOKING_INTERRUPT_DEPS,
+    )
+    if policy_response:
+        return policy_response
 
     # Handle AFFIRMATIVE/NEGATIVE in booking flow
     if decision.primary_intent == IntentType.AFFIRMATIVE and is_in_flow(session_id):
@@ -1597,62 +1616,6 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
     # Handle GOODBYE
     if decision.primary_intent == IntentType.GOODBYE:
         return _get_info_response("hvala")
-
-    # Handle SOFT_INTERRUPT during booking flow
-    if decision.action == SwitchAction.SOFT_INTERRUPT and is_in_flow(session_id):
-        step = appointment_state.get("step") or get_current_step(session_id)
-
-        # If flow expects date but service is missing, use detected service first.
-        if step == "date" and not appointment_state.get("service_type") and decision.service_type:
-            appointment_state["service_type"] = decision.service_type.lower()
-            return handle_appointment_booking(message, session_id)
-
-        # If user is answering the expected booking step, do not interrupt.
-        if step == "date" and extract_date_from_message(message):
-            return None
-        if step == "time" and extract_time_from_message(message):
-            return None
-        if step == "select_service" and extract_service_type(message):
-            return None
-        if step == "name" and is_likely_full_name(message):
-            return None
-        if step == "phone":
-            phone_candidate = re.sub(r"[^\d+]", "", message)
-            if len(phone_candidate) >= 8:
-                return None
-        if step == "email" and ("@" in message and "." in message.split("@")[-1]):
-            return None
-        if step == "reason" and message.strip():
-            return None
-
-        # Answer the interrupting question
-        service_hint = decision.service_type or appointment_state.get("service_type") or suggested_service
-        if decision.primary_intent == IntentType.SERVICE_INFO and service_hint:
-            service_info = get_service_info(str(service_hint).lower())
-            if service_info:
-                current_service = appointment_state.get("service_type")
-                incoming_service = str(service_hint).lower()
-                if current_service and incoming_service != current_service:
-                    current_info = get_service_info(current_service)
-                    current_label = current_info["name"] if current_info else current_service
-                    context["pending_service_switch"] = incoming_service
-                    return (
-                        f"Glede na opis priporočam **{service_info['name']}** "
-                        f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
-                        f"Trenutno imate izbran **{current_label}**.\n"
-                        f"Želite preklopiti na **{service_info['name']}**? (DA / NE)"
-                    )
-
-        answer = resolve_interrupt_answer(
-            message=message,
-            primary_intent=decision.primary_intent,
-            service_hint=decision.service_type or suggested_service,
-            active_service=appointment_state.get("service_type"),
-            deps=INTERRUPT_FLOW_DEPS,
-        )
-
-        if answer:
-            return build_interrupt_response(answer, step, include_resume=True)
 
     # Handle BOOKING_APPOINTMENT intent
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:
