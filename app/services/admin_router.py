@@ -587,8 +587,8 @@ def delete_reservation(
 @router.post("/reservations/{reservation_id}/confirm")
 def confirm_reservation(
     reservation_id: int,
-    data: Optional[ConfirmReservationRequest] = None,
     request: Request,
+    data: Optional[ConfirmReservationRequest] = None,
     role: str = Depends(require_write),
 ):
     """Potrdi rezervacijo, preveri zasedenost sobe in pošlje email gostu."""
