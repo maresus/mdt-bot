@@ -1519,9 +1519,14 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
             return build_resume_prompt(step) or "V redu, nadaljujemo z naročilom."
 
     # Keep unified state in sync with legacy appointment state.
+    was_in_flow = is_in_flow(session_id)
     if appointment_state.get("step"):
         unified_state["flow"] = FlowType.APPOINTMENT.value
         unified_state["step"] = appointment_state.get("step")
+    elif appointment_state.get("service_type") or was_in_flow:
+        unified_state["flow"] = FlowType.APPOINTMENT.value
+        if unified_state.get("step") is None:
+            unified_state["step"] = FlowStep.DATE.value
     else:
         unified_state["flow"] = FlowType.IDLE.value
         unified_state["step"] = None
@@ -1540,6 +1545,26 @@ def handle_unified_routing(message: str, session_id: str) -> str | None:
 
     # Log decision for debugging
     print(f"[UNIFIED] Intent: {decision.primary_intent.value}, Confidence: {decision.confidence:.2f}, Action: {decision.action.value}, Service: {decision.service_type}")
+
+    # If user is answering the expected booking step, let booking flow handle it.
+    if is_in_flow(session_id):
+        step = appointment_state.get("step") or get_current_step(session_id)
+        if step == "date" and extract_date_from_message(message):
+            return None
+        if step == "time" and extract_time_from_message(message):
+            return None
+        if step == "select_service" and extract_service_type(message):
+            return None
+        if step == "name" and is_likely_full_name(message):
+            return None
+        if step == "phone":
+            cleaned = re.sub(r"[^\d+]", "", message)
+            if len(cleaned) >= 8:
+                return None
+        if step == "email" and ("@" in message and "." in message.split("@")[-1]):
+            return None
+        if step == "reason" and message.strip():
+            return None
 
     # Handle AFFIRMATIVE/NEGATIVE in booking flow
     if decision.primary_intent == IntentType.AFFIRMATIVE and is_in_flow(session_id):
