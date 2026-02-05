@@ -1755,13 +1755,13 @@ Ponujamo:
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
         info_key = pick_info_key(message)
-        if info_key in {"parkiranje", "delovni_cas", "lokacija"}:
-            return _rag_info_answer(message, info_key)
-        if info_key != "kontakt":
+        if info_key in CRITICAL_INFO_KEYS or info_key in {"parkiranje", "delovni_cas", "lokacija", "kontakt"}:
+            if info_key == "kontakt" and any(k in lowered for k in ["pridem", "pridemo", "pot"]):
+                return _get_info_response("lokacija")
             return _get_info_response(info_key)
-        if any(k in lowered for k in ["pridem", "pridemo", "pot"]):
-            return _rag_info_answer(message, "lokacija")
-        return _rag_info_answer(message, "kontakt")
+        if info_key:
+            return _rag_info_answer(message, info_key)
+        return _rag_info_answer(message, "storitve")
 
     # For other intents, fall back to legacy system
     return None

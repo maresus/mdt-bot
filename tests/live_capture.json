@@ -46,7 +46,7 @@
   {
     "name": "LC07_location_info",
     "dialog": [
-      {"message": "kje ste", "expect_contains_any": ["informacij", "medicinski center", "mc-betnava"]}
+      {"message": "kje ste", "expect_contains_any": ["Zdravstveni center", "zdravili", "Ljubljana", "lokacija"]}
     ]
   },
   {
@@ -80,7 +80,7 @@
   {
     "name": "LC12_info_contact",
     "dialog": [
-      {"message": "kontakt", "expect_contains_any": ["informacij", "dermatolog", "mc-betnava"]}
+      {"message": "kontakt", "expect_contains_any": ["telefon", "email", "kontakt", "01 234"]}
     ]
   },
   {
