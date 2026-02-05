@@ -52,6 +52,8 @@ Vloge: `viewer` (read), `editor` (write), `admin` (ADMIN_TOKEN).
 - POST /api/admin/reservations/{id}/confirm - Potrdi
 - POST /api/admin/reservations/{id}/reject - Zavrni
 - GET /api/admin/audit - Admin audit trail
+- GET /api/admin/kb/clinic_info - Clinic KB (parking/cenik/delovni čas/kontakt/lokacija)
+- PUT /api/admin/kb/clinic_info - Posodobi clinic KB
 
 ### Reservation Types
 - **appointment** - Zdravstveni termin (30 ali 60 min)

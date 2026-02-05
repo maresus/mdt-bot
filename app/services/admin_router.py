@@ -20,6 +20,7 @@ from app.services.sms_service import (
 from app.services.reservation_service import SERVICES, ReservationService
 from app.services.chat_history_service import get_chat_history_service
 from app.services.admin_audit import log_admin_action, list_admin_audit
+from app.services.clinic_kb_service import get_clinic_info, update_clinic_info
 
 # Compatibility aliases za admin panel
 ROOMS = SERVICES  # Storitve namesto sob
@@ -807,6 +808,31 @@ def get_admin_audit(limit: int = 200, offset: int = 0):
     """Vrne admin audit trail."""
     _log("audit", limit=limit, offset=offset)
     return {"items": list_admin_audit(limit=limit, offset=offset)}
+
+
+@router.get("/kb/clinic_info")
+def get_kb_clinic_info():
+    """Vrne urejene KB vsebine za clinic info."""
+    _log("kb_clinic_info")
+    return {"items": get_clinic_info()}
+
+
+@router.put("/kb/clinic_info")
+def update_kb_clinic_info(
+    payload: dict[str, str],
+    request: Request,
+    role: str = Depends(require_write),
+):
+    _log("kb_clinic_info_update")
+    items = update_clinic_info(payload)
+    log_admin_action(
+        action="kb_clinic_info_update",
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"keys": list(payload.keys())},
+    )
+    return {"ok": True, "items": items}
 
 
 @router.get("/export")

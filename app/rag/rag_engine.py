@@ -17,9 +17,14 @@ class RAGEngine:
             # Look for knowledge.jsonl in project root (2 dirs up from app/rag/)
             knowledge_path = Path(__file__).resolve().parents[2] / "knowledge.jsonl"
 
+        self.knowledge_path = knowledge_path
         self.items: List[KnowledgeItem] = []
-        if knowledge_path.exists():
-            with knowledge_path.open("r", encoding="utf-8") as f:
+        self._load()
+
+    def _load(self) -> None:
+        self.items = []
+        if self.knowledge_path.exists():
+            with self.knowledge_path.open("r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -36,6 +41,9 @@ class RAGEngine:
                     if not (url or title or content):
                         continue
                     self.items.append(KnowledgeItem(url=url, title=title, content=content))
+
+    def reload(self) -> None:
+        self._load()
 
     def _score(self, question: str, text: str) -> int:
         q = question.lower()
