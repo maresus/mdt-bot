@@ -16,14 +16,17 @@ try:
 except ImportError:
     HAS_OPENAI = False
 
+SUPPRESS_OPTIONAL_WARNINGS = os.getenv("OPTIONAL_DEP_WARNINGS", "0") != "1"
+
 try:
     from sentence_transformers import CrossEncoder
     HAS_CROSS_ENCODER = True
 except (ImportError, UnicodeDecodeError, Exception) as e:
     # Catch all errors including Python 3.14 compatibility issues
     HAS_CROSS_ENCODER = False
-    print(f"[RERANKER] Warning: Could not load sentence-transformers: {e}")
-    print(f"[RERANKER] Re-ranking will be disabled, but hybrid KB will still work")
+    if not SUPPRESS_OPTIONAL_WARNINGS:
+        print(f"[RERANKER] Warning: Could not load sentence-transformers: {e}")
+        print(f"[RERANKER] Re-ranking will be disabled, but hybrid KB will still work")
 
 
 # Slovenian stop words for BM25 tokenization

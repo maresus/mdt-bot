@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+SUPPRESS_OPTIONAL_WARNINGS = os.getenv("OPTIONAL_DEP_WARNINGS", "0") != "1"
+
 try:
     import chromadb
     from chromadb.config import Settings
@@ -14,7 +16,8 @@ try:
     CHROMA_AVAILABLE = True
 except ImportError:
     CHROMA_AVAILABLE = False
-    print("[chroma_service] ChromaDB ni nameščen. Poženi: pip install chromadb")
+    if not SUPPRESS_OPTIONAL_WARNINGS:
+        print("[chroma_service] ChromaDB ni nameščen. Poženi: pip install chromadb")
 
 # Pot do ChromaDB baze
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -118,7 +121,8 @@ def search_chroma(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         return formatted[:top_k]
 
     except Exception as e:
-        print(f"[chroma_service] Napaka pri iskanju: {e}")
+        if not SUPPRESS_OPTIONAL_WARNINGS:
+            print(f"[chroma_service] Napaka pri iskanju: {e}")
         return []
 
 
