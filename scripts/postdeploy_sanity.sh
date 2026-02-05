@@ -22,6 +22,7 @@ json_post() {
 }
 
 echo "[SANITY] BASE_URL=$BASE_URL"
+session_id="sanity-$(date +%s)"
 
 health_code=$(curl -sS -o /tmp/sanity_health.json -w "%{http_code}" "$BASE_URL/health")
 [[ "$health_code" == "200" ]] || fail "/health http=$health_code"
@@ -37,15 +38,15 @@ else
   echo "SKIP | admin reservations (ADMIN_TOKEN ni nastavljen)"
 fi
 
-booking_resp=$(json_post "/chat/" '{"message":"rad bi se narocil na ortopedski pregled","session_id":"sanity-booking"}')
+booking_resp=$(json_post "/chat/" "{\"message\":\"rad bi se narocil na ortopedski pregled\",\"session_id\":\"$session_id\"}")
 echo "$booking_resp" | rg -qi "ortoped|datum|termin|naro" || fail "booking flow response"
 pass "chat booking"
 
-interrupt_resp=$(json_post "/chat/" '{"message":"imam parking?","session_id":"sanity-booking"}')
+interrupt_resp=$(json_post "/chat/" "{\"message\":\"imam parking?\",\"session_id\":\"$session_id\"}")
 echo "$interrupt_resp" | rg -qi "parkir|parking" || fail "chat interrupt/info response"
 pass "chat interrupt/info"
 
-info_resp=$(json_post "/chat/" '{"message":"kdaj ste odprti?","session_id":"sanity-info"}')
+info_resp=$(json_post "/chat/" "{\"message\":\"kdaj ste odprti?\",\"session_id\":\"$session_id-info\"}")
 echo "$info_resp" | rg -qi "odprt|ponedelj|petek|delovni" || fail "chat general info response"
 pass "chat general info"
 
