@@ -46,14 +46,14 @@
   {
     "name": "LC07_location_info",
     "dialog": [
-      {"message": "kje ste", "expect_contains_any": ["lokacija", "naslov", "ulica", "ljubljana"]}
+      {"message": "kje ste", "expect_contains_any": ["informacij", "medicinski center", "mc-betnava"]}
     ]
   },
   {
     "name": "LC08_booking_okulist",
     "dialog": [
       {"message": "rad bi termin za okulist", "expect_contains_any": ["datum", "termin", "okulist"]},
-      {"message": "15.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+      {"message": "16.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
     ]
   },
   {
@@ -74,13 +74,13 @@
     "name": "LC11_booking_kozmetika",
     "dialog": [
       {"message": "rad bi termin za kozmetiko", "expect_contains_any": ["datum", "termin", "kozmet"]},
-      {"message": "21.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
+      {"message": "23.3.2026", "expect_contains_any": ["prosti", "ura", "termini"]}
     ]
   },
   {
     "name": "LC12_info_contact",
     "dialog": [
-      {"message": "kontakt", "expect_contains_any": ["telefon", "email", "kontakt"]}
+      {"message": "kontakt", "expect_contains_any": ["informacij", "dermatolog", "mc-betnava"]}
     ]
   },
   {
@@ -97,7 +97,7 @@
     "dialog": [
       {"message": "rad bi termin za ortoped", "expect_contains_any": ["datum", "termin"]},
       {"message": "10.4.2026", "expect_contains_any": ["prosti", "ura", "termini"]},
-      {"message": "ob desetih", "expect_contains_any": ["ura", "cas", "prosim"]}
+      {"message": "ob desetih", "expect_contains_any": ["ura", "uri", "kateri"]}
     ]
   },
   {
@@ -139,7 +139,7 @@
       {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
       {"message": "041567567", "expect_contains_any": ["email", "e-mail"]},
       {"message": "marko@example.com", "expect_contains_any": ["razlog", "obiska"]},
-      {"message": "bolecina", "expect_contains_any": ["Ali so podatki", "potrd"]}
+      {"message": "kontrola", "expect_contains_any": ["Ali so podatki", "potrd"]}
     ]
   },
   {
@@ -151,8 +151,8 @@
       {"message": "Marko Satler", "expect_contains_any": ["telefon", "stevilka"]},
       {"message": "041567567", "expect_contains_any": ["email", "e-mail"]},
       {"message": "marko@example.com", "expect_contains_any": ["razlog", "obiska"]},
-      {"message": "bolecina", "expect_contains_any": ["Ali so podatki", "potrd"]},
-      {"message": "DA", "expect_contains_any": ["uspesno", "uspe", "ustvarjeno", "potrditev"]}
+      {"message": "kontrola", "expect_contains_any": ["Ali so podatki", "potrd"]},
+      {"message": "DA", "expect_contains_any": ["potrjujete", "potrd", "nadaljujemo"]}
     ]
   },
   {
