@@ -1,0 +1,40 @@
+[
+  {"name": "FZ01 greeting hej", "message": "hej", "expected_intent": "GREETING"},
+  {"name": "FZ02 greeting zivjo", "message": "zivjo", "expected_intent": "GREETING"},
+  {"name": "FZ03 goodbye hvala lp", "message": "hvala, lp", "expected_intent": "GOODBYE"},
+
+  {"name": "FZ04 booking ortoped no diacritics", "message": "rad bi narocil termin za ortopeda", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+  {"name": "FZ05 booking dermatolog typo", "message": "rabim dermatalog", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+  {"name": "FZ06 booking okulist english", "message": "need an eye exam", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "OKULIST"},
+  {"name": "FZ07 booking laser slang", "message": "rad bi laser za zilice", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "LASERSKI_POSEG"},
+  {"name": "FZ08 booking estetski", "message": "rad bi termin za botox", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ESTETSKI_POSEG"},
+  {"name": "FZ09 booking kozmetika", "message": "rabim negu obraza", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "KOZMETIKA"},
+  {"name": "FZ10 booking generic", "message": "bi se naročil", "expected_intent": "BOOKING_APPOINTMENT"},
+
+  {"name": "FZ11 symptom koleno", "message": "koleno me boli", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+  {"name": "FZ12 symptom izpuscaj no diacritics", "message": "imam izpuscaj na kozi", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+  {"name": "FZ13 symptom eyes", "message": "slabo vidim", "expected_intent": "SERVICE_INFO", "expected_service": "OKULIST"},
+  {"name": "FZ14 service info botox", "message": "zanima me botox", "expected_intent": "SERVICE_INFO", "expected_service": "ESTETSKI_POSEG"},
+  {"name": "FZ15 service info laser", "message": "laserski poseg", "expected_intent": "SERVICE_INFO", "expected_service": "LASERSKI_POSEG"},
+
+  {"name": "FZ16 info parking", "message": "parkirisce?", "expected_intent": "INFO"},
+  {"name": "FZ17 info hours", "message": "kdaj mate odprto", "expected_intent": "INFO"},
+  {"name": "FZ18 info location", "message": "kaksen je naslov", "expected_intent": "INFO"},
+
+  {"name": "FZ19 price question slang", "message": "koliko stane", "expected_intent": "PRICE"},
+  {"name": "FZ20 cenik", "message": "cenik prosim", "expected_intent": "PRICE"},
+
+  {"name": "FZ21 urgency today", "message": "rabim termin danes", "expected_intent": "URGENCY"},
+  {"name": "FZ22 urgency asap", "message": "nujno rabim pregled", "expected_intent": "URGENCY"},
+
+  {"name": "FZ23 affirmative ja", "message": "ja", "expected_intent": "AFFIRMATIVE"},
+  {"name": "FZ24 negative ne hvala", "message": "ne hvala", "expected_intent": "NEGATIVE"},
+
+  {"name": "FZ25 in-flow price interrupt", "message": "koliko stane", "in_flow": true, "expected_intent": "PRICE", "expected_action": "soft_interrupt"},
+  {"name": "FZ26 in-flow parking interrupt", "message": "parking?", "in_flow": true, "expected_intent": "INFO", "expected_action": "soft_interrupt"},
+  {"name": "FZ27 in-flow urgency", "message": "nujno", "in_flow": true, "expected_intent": "URGENCY", "expected_action": "hard_switch"},
+
+  {"name": "FZ28 mixed language booking", "message": "rad bi appointment za ortoped", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+  {"name": "FZ29 info contact", "message": "telefon?", "expected_intent": "INFO"},
+  {"name": "FZ30 service inquiry", "message": "kaj zdravi dermatolog", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"}
+]
