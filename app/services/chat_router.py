@@ -1415,6 +1415,65 @@ def answer_health_query(message: str, preferred_service: Optional[str] = None) -
         return generate_health_advice(message)
 
 
+def _advice_only_headache() -> str:
+    return (
+        "Razumem, da je glavobol neprijeten. Poskusite z mirnim okoljem, dovolj tekocine in kratkimi odmori "
+        "od zaslonov. Pogosto pomaga tudi reden spanec in lahek obrok.\n\n"
+        "Ce se glavobol stopnjuje, traja vec dni ali se pojavi z dodatnimi znaki (npr. mocna omotica, "
+        "motnje vida, visoka vrocina), priporocam posvet z osebnim zdravnikom ali nujno obravnavo."
+    )
+
+
+def _advice_only(service: Optional[str]) -> str:
+    if service == "ORTOPED":
+        return (
+            "Pri bolecinah v sklepih ali misicah obicajno pomaga kratek pocitek in razbremenitev. "
+            "V prvih 24-48 urah lahko uporabite hladen obkladek (10-15 min veckrat na dan), nato pa "
+            "nežno razgibavanje v mejah brez bolecine.\n\n"
+            "Izogibajte se tezjim obremenitvam, dokler se stanje ne umiri. Ce bolecina traja vec dni, "
+            "se ponavlja ali ovira vsakdanje aktivnosti, je smiseln pregled pri ortopedu."
+        )
+    if service == "DERMATOLOG":
+        return (
+            "Pri kožnih težavah je koristno ohraniti kozo cisto in suho ter se izogibati praskanju. "
+            "Uporabljajte blage izdelke brez dišav in dražilnih snovi.\n\n"
+            "Ce se spremembe sirijo, srbijo, krvavijo ali trajajo vec dni, je priporocljiv dermatoloski "
+            "pregled za natančno oceno."
+        )
+    if service == "OKULIST":
+        return (
+            "Pri tezavah z vidom pomagajo odmori od zaslonov, dobra osvetlitev pri branju in umetne solze "
+            "pri suhosti.\n\n"
+            "Ce opazite nenadne spremembe vida, bolecino v oceh ali motnje vida, je smiselno opraviti "
+            "okulisticni pregled."
+        )
+    if service == "ESTETSKI_POSEG":
+        return (
+            "Pred estetskim posegom je dobro, da izogibate alkohol in intenzivno vadbo 24 ur pred in po "
+            "posegu ter se posvetujete o morebitnih zdravilih, ki redčijo kri.\n\n"
+            "Za varno izvedbo je pomembna individualna ocena in jasna razlaga pričakovanj ter omejitev."
+        )
+    if service == "LASERSKI_POSEG":
+        return (
+            "Pred laserskimi posegi se priporoca izogibati soncenju, po posegu pa je pomembna zascita "
+            "koze in upostevanje navodil izvajalca.\n\n"
+            "Ce imate specificne tezave (npr. žilice ali bradavice), je smiselna predhodna ocena, da "
+            "izberemo primeren poseg."
+        )
+    if service == "KOZMETIKA":
+        return (
+            "Za nego koze pomaga redno ciscenje z blagimi izdelki, hidracija in uporaba SPF, ce je koza "
+            "izpostavljena soncu.\n\n"
+            "Ce so prisotne trdovratne tezave (akne, razdrazena koza), je smiselno izbrati tretma, ki "
+            "je prilagojen vasemu tipu koze."
+        )
+    return (
+        "Razumem, da imate tezave. Poskusite s počitkom, dovolj tekocine in izogibanjem obremenitvam, "
+        "ki simptome poslabšajo.\n\n"
+        "Ce se stanje ne izboljsa v nekaj dneh ali se poslabsa, je priporočljiv posvet pri zdravniku."
+    )
+
+
 def extract_service_type(message: str) -> Optional[str]:
     """Extract service type from message using word boundary matching"""
     import re
@@ -1646,20 +1705,20 @@ Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši pr
 
     # Handle SERVICE_INFO (symptoms, service questions)
     if decision.primary_intent == IntentType.SERVICE_INFO:
+        if is_in_flow(session_id) and get_current_step(session_id) == "reason":
+            return None
         service = decision.service_type
         if service:
             unified_state.setdefault("context", {})["suggested_service"] = service
             appointment_state["service_type"] = service.lower()
             appointment_state["step"] = None
             if _looks_like_symptom_report(message):
-                service_info = get_service_info(service.lower())
-                if service_info:
-                    return (
-                        f"Razumem. Za zdaj svetujem počitek in brez večjih obremenitev.\n\n"
-                        f"Glede na opis priporočam **{service_info['name']}** "
-                        f"({service_info['duration_minutes']} min, {service_info['price_range']}).\n\n"
-                        "🎯 Želite termin? Povejte mi datum!"
-                    )
+                return _advice_only(service)
+        if _looks_like_symptom_report(message) and not service:
+            lowered = message.lower()
+            if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
+                return _advice_only_headache()
+            return _advice_only(None)
         if service == "DERMATOLOG":
             return """**Dermatologija** - pregledi kožnih težav
 

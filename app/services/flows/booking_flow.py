@@ -82,7 +82,7 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
         deps.reset_loop_count(session_id)
         return "V redu, rezervacije ne bom nadaljeval. Kaj vas še zanima?"
 
-    if deps.is_negative(message):
+    if deps.is_negative(message) and state.get("step") != "email":
         deps.reset_appointment_state(state)
         deps.reset_unified_state(session_id)
         deps.reset_loop_count(session_id)
@@ -207,6 +207,10 @@ Kako je vaše ime in priimek?"""
         return "Prosim vnesite veljavno telefonsko številko."
 
     if state.get("step") == "email" or state.get("email") is None:
+        if deps.is_negative(message):
+            state["email"] = None
+            state["step"] = "reason"
+            return "V redu, brez e-pošte. Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
         if "@" in message and "." in message.split("@")[1]:
             state["email"] = message.strip()
             state["step"] = "reason"
@@ -224,11 +228,12 @@ Kako je vaše ime in priimek?"""
             str(state.get("name") or ""),
         )
 
+        email_display = state.get("email") or "-"
         return f"""{summary}
 
 Razlog obiska: {state['reason']}
 Telefon: {state['phone']}
-Email: {state['email']}
+Email: {email_display}
 
 Ali so podatki pravilni? (DA / NE)"""
 
@@ -269,18 +274,23 @@ Ali so podatki pravilni? (DA / NE)"""
                 }
                 deps.send_notifications_async(appointment_data)
 
-                email = state["email"]
+                email = state.get("email")
                 date = state["date"]
                 time = state["time"]
 
                 deps.reset_appointment_state(state)
                 deps.reset_unified_state(session_id)
 
+                email_line = (
+                    f"Potrditev smo poslali na {email}."
+                    if email
+                    else "Potrditev po e-pošti ni bila zahtevana."
+                )
                 return f"""✅ **Naročilo uspešno ustvarjeno!**
 
 Številka naročila: #{res_id}
 
-Potrditev smo poslali na {email}.
+{email_line}
 Vidimo se {date} ob {time}!
 
 Če imate še kakšna vprašanja, mi jih lahko zastavite."""
