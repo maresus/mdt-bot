@@ -1503,6 +1503,18 @@ BOOKING_FLOW_DEPS = BookingFlowDeps(
     reset_appointment_state=reset_appointment_state,
     reset_unified_state=reset_unified_state,
     reset_loop_count=conversation_tracker.reset_loop_count,
+    set_step=lambda session_id, state, step: (
+        state.__setitem__("step", step),
+        StateManager(session_id).set_step(FlowStep(step)) if step in {s.value for s in FlowStep} else StateManager(session_id).set_step(None),
+    ),
+    set_appointment_field=lambda session_id, state, field, value: (
+        state.__setitem__(field, value),
+        StateManager(session_id).set_appointment_field(field, value),
+    ),
+    clear_appointment_data=lambda session_id, state: (
+        reset_appointment_state(state),
+        StateManager(session_id).clear_appointment_data(),
+    ),
     is_negative=is_negative,
     is_affirmative=is_affirmative,
     is_likely_full_name=is_likely_full_name,

@@ -16,6 +16,9 @@ class BookingFlowDeps:
     reset_appointment_state: Callable[[State], None]
     reset_unified_state: Callable[[str], None]
     reset_loop_count: Callable[[str], None]
+    set_step: Callable[[str, State, Optional[str]], None]
+    set_appointment_field: Callable[[str, State, str, Any], None]
+    clear_appointment_data: Callable[[str, State], None]
     is_negative: Callable[[str], bool]
     is_affirmative: Callable[[str], bool]
     is_likely_full_name: Callable[[str], bool]
@@ -77,13 +80,13 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
     lowered = message.lower()
 
     if any(word in lowered for word in ["prekliči", "prekini", "ne želim", "nazaj"]):
-        deps.reset_appointment_state(state)
+        deps.clear_appointment_data(session_id, state)
         deps.reset_unified_state(session_id)
         deps.reset_loop_count(session_id)
         return "V redu, rezervacije ne bom nadaljeval. Kaj vas še zanima?"
 
     if deps.is_negative(message) and state.get("step") != "email":
-        deps.reset_appointment_state(state)
+        deps.clear_appointment_data(session_id, state)
         deps.reset_unified_state(session_id)
         deps.reset_loop_count(session_id)
         return "V redu, naročilo sem preklical. Če želite, lahko začnemo znova."
@@ -91,11 +94,11 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
     if state.get("service_type") is not None and state.get("step") is None:
         date_str = deps.extract_date_from_message(message)
         if date_str:
-            state["step"] = "date"
+            deps.set_step(session_id, state, "date")
         else:
             service_info = deps.get_service_info(str(state.get("service_type") or ""))
             if service_info is None:
-                state["service_type"] = None
+                deps.set_appointment_field(session_id, state, "service_type", None)
                 return """Na kateri pregled se želite naročiti?
 
 - Dermatološki pregled
@@ -104,7 +107,7 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
 - Laserski poseg
 - Estetski poseg
 - Kozmetični salon"""
-            state["step"] = "date"
+            deps.set_step(session_id, state, "date")
             return f"""Super! 🩺 Naročilo na **{service_info['name']}**.
 
 📋 Trajanje: {service_info['duration_minutes']} minut
@@ -115,8 +118,8 @@ Kateri datum vas zanima? (npr. 15.3.2026)"""
     if state.get("step") in (None, "select_service") or state.get("service_type") is None:
         service_type = deps.extract_service_type(message)
         if service_type:
-            state["service_type"] = service_type
-            state["step"] = "date"
+            deps.set_appointment_field(session_id, state, "service_type", service_type)
+            deps.set_step(session_id, state, "date")
             service_info = deps.get_service_info(service_type)
             return f"""Odlično! Naročilo na **{service_info['name']}**.
 
@@ -124,7 +127,7 @@ Trajanje: {service_info['duration_minutes']} minut
 Cena: {service_info['price_range']}
 
 Kateri datum vas zanima? (npr. 15.3.2026)"""
-        state["step"] = "select_service"
+        deps.set_step(session_id, state, "select_service")
         return """Na kateri pregled se želite naročiti?
 
 - Dermatološki pregled
@@ -148,8 +151,8 @@ Kateri datum vas zanima? (npr. 15.3.2026)"""
             if not valid and "datum" in error.lower():
                 return f"❌ {error}\n\nProsim izberite drug datum."
 
-            state["date"] = date_str
-            state["step"] = "time"
+            deps.set_appointment_field(session_id, state, "date", date_str)
+            deps.set_step(session_id, state, "time")
 
             slots = deps.get_available_time_slots(date_str, str(state.get("service_type") or ""))
             if not slots:
@@ -183,8 +186,8 @@ Katera ura vam ustreza?"""
             if not valid:
                 return f"❌ {error}\n\nProsim izberite drug termin."
 
-            state["time"] = time_str
-            state["step"] = "name"
+            deps.set_appointment_field(session_id, state, "time", time_str)
+            deps.set_step(session_id, state, "name")
             return f"""Termin {state['date']} ob {time_str} je prost! ✅
 
 Kako je vaše ime in priimek?"""
@@ -193,33 +196,33 @@ Kako je vaše ime in priimek?"""
 
     if state.get("step") == "name" or state.get("name") is None:
         if deps.is_likely_full_name(message):
-            state["name"] = message.strip()
-            state["step"] = "phone"
+            deps.set_appointment_field(session_id, state, "name", message.strip())
+            deps.set_step(session_id, state, "phone")
             return "Hvala! Kakšna je vaša telefonska številka?"
         return "Prosim vnesite vaše ime in priimek."
 
     if state.get("step") == "phone" or state.get("phone") is None:
         phone = re.sub(r"[^\d+]", "", message)
         if len(phone) >= 8:
-            state["phone"] = phone
-            state["step"] = "email"
+            deps.set_appointment_field(session_id, state, "phone", phone)
+            deps.set_step(session_id, state, "email")
             return "Odlično! Kakšen je vaš email naslov? (za potrditev termina)"
         return "Prosim vnesite veljavno telefonsko številko."
 
     if state.get("step") == "email" or state.get("email") is None:
         if deps.is_negative(message):
-            state["email"] = None
-            state["step"] = "reason"
+            deps.set_appointment_field(session_id, state, "email", None)
+            deps.set_step(session_id, state, "reason")
             return "V redu, brez e-pošte. Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
         if "@" in message and "." in message.split("@")[1]:
-            state["email"] = message.strip()
-            state["step"] = "reason"
+            deps.set_appointment_field(session_id, state, "email", message.strip())
+            deps.set_step(session_id, state, "reason")
             return "Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
         return "Prosim vnesite veljaven email naslov."
 
     if state.get("step") == "reason" or state.get("reason") is None:
-        state["reason"] = message.strip()
-        state["step"] = "confirm"
+        deps.set_appointment_field(session_id, state, "reason", message.strip())
+        deps.set_step(session_id, state, "confirm")
 
         summary = deps.format_appointment_summary(
             str(state.get("date") or ""),
@@ -304,7 +307,7 @@ Prosim kontaktirajte nas na [telefonska številka] ali [email].
 Napaka: {str(e)}"""
 
         if any(word in lowered for word in ["ne", "no", "popravi"]):
-            deps.reset_appointment_state(state)
+            deps.clear_appointment_data(session_id, state)
             deps.reset_unified_state(session_id)
             return "Podatki razveljavljeni. Začnimo znova - na kateri pregled se želite naročiti?"
 

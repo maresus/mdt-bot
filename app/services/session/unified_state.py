@@ -50,23 +50,28 @@ class StateManager:
     def set_flow(self, flow_type: FlowType) -> None:
         state = self.get_state()
         state["flow"] = flow_type.value
+        self._log_change(f"flow={flow_type.value}")
 
     def set_step(self, step: Optional[FlowStep]) -> None:
         state = self.get_state()
         state["step"] = step.value if step else None
+        self._log_change(f"step={state['step']}")
 
     def start_flow(self, flow_type: FlowType, initial_step: FlowStep) -> None:
         state = self.get_state()
         state["flow"] = flow_type.value
         state["step"] = initial_step.value
+        self._log_change(f"start_flow={flow_type.value}:{initial_step.value}")
 
     def advance_step(self, next_step: FlowStep) -> None:
         state = self.get_state()
         state["step"] = next_step.value
+        self._log_change(f"advance_step={next_step.value}")
 
     def set_context_value(self, key: str, value: Any) -> None:
         ctx = self.ensure_context()
         ctx[key] = value
+        self._log_change(f"context[{key}]={value}")
 
     def get_context_value(self, key: str, default: Any = None) -> Any:
         return self.ensure_context().get(key, default)
@@ -75,6 +80,7 @@ class StateManager:
         ctx = self.ensure_context()
         if key in ctx:
             del ctx[key]
+            self._log_change(f"context[{key}]=<cleared>")
 
     def get_appointment_data(self) -> Dict[str, Any]:
         return self.get_state()["appointment_data"]
@@ -83,10 +89,21 @@ class StateManager:
         state = self.get_state()
         if field in state["appointment_data"]:
             state["appointment_data"][field] = value
+            self._log_change(f"appointment[{field}]={value}")
 
     def clear_appointment_data(self) -> None:
         state = self.get_state()
         state["appointment_data"] = blank_unified_state()["appointment_data"]
+        self._log_change("appointment=<cleared>")
+
+    def get_full_state(self) -> Dict[str, Any]:
+        import copy
+        return copy.deepcopy(self.get_state())
+
+    def _log_change(self, message: str) -> None:
+        state = self.get_state()
+        history = state.setdefault("history", [])
+        history.append(message)
 
 
 def blank_unified_state() -> Dict[str, Any]:
@@ -101,9 +118,11 @@ def blank_unified_state() -> Dict[str, Any]:
             "name": None,
             "phone": None,
             "email": None,
+            "reason": None,
         },
         "interrupt_stack": [],
         "context": {},
+        "history": [],
     }
 
 
