@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header, Request, Depends
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
@@ -19,6 +19,7 @@ from app.services.sms_service import (
 )
 from app.services.reservation_service import SERVICES, ReservationService
 from app.services.chat_history_service import get_chat_history_service
+from app.services.admin_audit import log_admin_action, list_admin_audit
 
 # Compatibility aliases za admin panel
 ROOMS = SERVICES  # Storitve namesto sob
@@ -37,7 +38,71 @@ VALID_TABLE_LOCATIONS = {
 }
 from app.services.imap_poll_service import load_state, preview_last_messages, resync_last_messages
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+def _auth_enabled() -> bool:
+    return any(
+        os.getenv(var)
+        for var in ("ADMIN_TOKEN", "ADMIN_READ_TOKEN", "ADMIN_WRITE_TOKEN")
+    )
+
+
+def _extract_bearer(authorization: Optional[str]) -> Optional[str]:
+    if not authorization:
+        return None
+    parts = authorization.split()
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1].strip()
+    return authorization.strip()
+
+
+def _resolve_role(authorization: Optional[str]) -> Optional[str]:
+    token = _extract_bearer(authorization)
+    if not token:
+        return None
+
+    admin_token = os.getenv("ADMIN_TOKEN")
+    write_token = os.getenv("ADMIN_WRITE_TOKEN")
+    read_token = os.getenv("ADMIN_READ_TOKEN")
+
+    if admin_token and token == admin_token:
+        return "admin"
+    if write_token and token == write_token:
+        return "editor"
+    if read_token and token == read_token:
+        return "viewer"
+    return None
+
+
+def require_read(authorization: Optional[str] = Header(None)) -> str:
+    if not _auth_enabled():
+        return "admin"
+    role = _resolve_role(authorization)
+    if not role:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return role
+
+
+def require_write(role: str = Depends(require_read)) -> str:
+    if role == "viewer":
+        raise HTTPException(status_code=403, detail="Insufficient role")
+    return role
+
+
+def _get_actor(request: Request) -> str:
+    return (
+        request.headers.get("X-Admin-User")
+        or os.getenv("ADMIN_EMAIL")
+        or "admin"
+    )
+
+
+def _get_ip(request: Request) -> Optional[str]:
+    try:
+        return request.client.host if request.client else None
+    except Exception:
+        return None
+
+
+router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_read)])
 service = ReservationService()
 
 ROOM_IDS = {r["id"] for r in ROOMS}
@@ -325,11 +390,22 @@ def get_missed_questions(limit: int = 5):
 
 
 @router.post("/knowledge_feedback")
-def create_knowledge_feedback(payload: KnowledgeFeedbackRequest):
+def create_knowledge_feedback(
+    payload: KnowledgeFeedbackRequest,
+    request: Request,
+    role: str = Depends(require_write),
+):
     _log("knowledge_feedback", question=payload.question[:60] if payload.question else "")
     feedback_id = service.create_knowledge_feedback(payload.question.strip(), payload.suggestion.strip())
     if not feedback_id:
         raise HTTPException(status_code=400, detail="Neveljaven predlog.")
+    log_admin_action(
+        action="knowledge_feedback",
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"question": payload.question[:120], "suggestion": payload.suggestion[:120]},
+    )
     return {"ok": True, "id": feedback_id}
 
 
@@ -392,7 +468,12 @@ def get_reservations(
 
 
 @router.put("/reservations/{reservation_id}")
-def update_reservation(reservation_id: int, data: ReservationUpdate):
+def update_reservation(
+    reservation_id: int,
+    data: ReservationUpdate,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Posodobi rezervacijo."""
     existing = service.get_reservation(reservation_id)
     if not existing:
@@ -426,11 +507,24 @@ def update_reservation(reservation_id: int, data: ReservationUpdate):
     )
     if not ok:
         raise HTTPException(status_code=404, detail="Rezervacija ni najdena")
+    log_admin_action(
+        action="reservation_update",
+        reservation_id=reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"status": data.status, "date": data.date, "time": data.time},
+    )
     return {"ok": True}
 
 
 @router.patch("/reservations/{reservation_id}")
-def patch_reservation(reservation_id: int, data: ReservationUpdate):
+def patch_reservation(
+    reservation_id: int,
+    data: ReservationUpdate,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Partial update rezervacije (status, admin_notes, kids)."""
     fields = {
         "status": data.status,
@@ -453,11 +547,23 @@ def patch_reservation(reservation_id: int, data: ReservationUpdate):
     ok = service.update_reservation(reservation_id, **fields)
     if not ok:
         raise HTTPException(status_code=404, detail="Rezervacija ni najdena")
+    log_admin_action(
+        action="reservation_patch",
+        reservation_id=reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={k: v for k, v in fields.items() if v is not None},
+    )
     return {"ok": True}
 
 
 @router.delete("/reservations/{reservation_id}")
-def delete_reservation(reservation_id: int):
+def delete_reservation(
+    reservation_id: int,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Izbriši rezervacijo."""
     _log("delete_reservation", reservation_id=reservation_id)
     res = service.get_reservation(reservation_id)
@@ -466,11 +572,24 @@ def delete_reservation(reservation_id: int):
     ok = service.delete_reservation(reservation_id)
     if not ok:
         raise HTTPException(status_code=500, detail="Napaka pri brisanju")
+    log_admin_action(
+        action="reservation_delete",
+        reservation_id=reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"name": res.get("name"), "date": res.get("date"), "time": res.get("time")},
+    )
     return {"ok": True, "deleted_id": reservation_id}
 
 
 @router.post("/reservations/{reservation_id}/confirm")
-def confirm_reservation(reservation_id: int, data: Optional[ConfirmReservationRequest] = None):
+def confirm_reservation(
+    reservation_id: int,
+    data: Optional[ConfirmReservationRequest] = None,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Potrdi rezervacijo, preveri zasedenost sobe in pošlje email gostu."""
     res = service.get_reservation(reservation_id)
     if not res:
@@ -519,11 +638,24 @@ def confirm_reservation(reservation_id: int, data: Optional[ConfirmReservationRe
         to_email=res.get("email") or "",
         message_id=None,
     )
+    if request:
+        log_admin_action(
+            action="reservation_confirm",
+            reservation_id=reservation_id,
+            actor=_get_actor(request),
+            role=role,
+            ip=_get_ip(request),
+            details={"location": requested_room or requested_location, "time": res.get("time")},
+        )
     return {"success": True, "email_sent": True, "sms_sent": sms_sent, "room": requested_room or requested_location}
 
 
 @router.post("/reservations/{reservation_id}/reject")
-def reject_reservation(reservation_id: int):
+def reject_reservation(
+    reservation_id: int,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Zavrne rezervacijo in pošlje email gostu."""
     res = service.get_reservation(reservation_id)
     if not res:
@@ -545,11 +677,23 @@ def reject_reservation(reservation_id: int):
         to_email=res.get("email") or "",
         message_id=None,
     )
+    log_admin_action(
+        action="reservation_reject",
+        reservation_id=reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"name": res.get("name"), "date": res.get("date")},
+    )
     return {"success": True, "email_sent": True, "sms_sent": sms_sent}
 
 
 @router.post("/send-message")
-def send_message(data: SendMessageRequest):
+def send_message(
+    data: SendMessageRequest,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Pošlje sporočilo gostu in opcijsko status nastavi na 'processing'."""
     if not data.email:
         raise HTTPException(status_code=400, detail="Email manjka")
@@ -571,6 +715,14 @@ def send_message(data: SendMessageRequest):
             status="processing",
             guest_message=data.body,
         )
+    log_admin_action(
+        action="send_message",
+        reservation_id=data.reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"email": data.email, "subject": subject},
+    )
     return {"ok": True}
 
 
@@ -588,8 +740,19 @@ def get_imap_status():
 
 
 @router.post("/imap_resync")
-def imap_resync(limit: int = 50):
+def imap_resync(
+    limit: int = 50,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Ročno prebere zadnjih N sporočil iz IMAP."""
+    log_admin_action(
+        action="imap_resync",
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"limit": limit},
+    )
     return resync_last_messages(limit=limit)
 
 
@@ -637,6 +800,13 @@ def get_stats():
         if rtype in counts["po_tipu"]:
             counts["po_tipu"][rtype] += 1
     return counts
+
+
+@router.get("/audit")
+def get_admin_audit(limit: int = 200, offset: int = 0):
+    """Vrne admin audit trail."""
+    _log("audit", limit=limit, offset=offset)
+    return {"items": list_admin_audit(limit=limit, offset=offset)}
 
 
 @router.get("/export")
@@ -774,7 +944,11 @@ def calendar_tables(month: int, year: int, location: Optional[str] = None):
 
 
 @router.post("/reservations")
-def create_admin_reservation(data: AdminCreateReservation):
+def create_admin_reservation(
+    data: AdminCreateReservation,
+    request: Request,
+    role: str = Depends(require_write),
+):
     """Ročno dodajanje rezervacije (admin)."""
     warning: Optional[str] = None
     valid_rooms = {"", None, "ALJAZ", "JULIJA", "ANA"}
@@ -832,6 +1006,14 @@ def create_admin_reservation(data: AdminCreateReservation):
         if created:
             sms_result = send_booking_received_sms(created)
             sms_sent = bool(sms_result.get("success"))
+    log_admin_action(
+        action="reservation_create",
+        reservation_id=new_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"name": data.name, "date": data.date, "time": data.time, "location": location},
+    )
     return {"success": True, "id": new_id, "warning": warning, "sms_sent": sms_sent}
 
 
@@ -1149,7 +1331,7 @@ from app.services.handoff_service import get_handoff_service
 
 
 @router.post("/handoff/create/{session_id}")
-async def create_handoff(session_id: str, use_llm: bool = True):
+async def create_handoff(session_id: str, use_llm: bool = True, role: str = Depends(require_write)):
     """
     Ustvari handoff paket za prenos pogovora na recepcijo.
 
@@ -1211,7 +1393,7 @@ class HandoffResolution(BaseModel):
 
 
 @router.post("/handoff/resolve/{session_id}")
-async def resolve_handoff(session_id: str, resolution: HandoffResolution = None):
+async def resolve_handoff(session_id: str, resolution: HandoffResolution = None, role: str = Depends(require_write)):
     """
     Označi handoff kot rešen.
 
@@ -1317,7 +1499,7 @@ from app.services.knowledge_graph import get_knowledge_graph
 
 
 @router.post("/knowledge-graph/query-symptoms")
-async def query_symptoms(text: str):
+async def query_symptoms(text: str, role: str = Depends(require_write)):
     """
     Analizira simptome in vrne priporočila.
 
@@ -1401,7 +1583,7 @@ from app.services.triage_service import get_triage_service
 
 
 @router.post("/triage/quick")
-async def quick_triage(symptoms: str):
+async def quick_triage(symptoms: str, role: str = Depends(require_write)):
     """
     Izvede hitro triažo na podlagi simptomov.
 
@@ -1421,7 +1603,7 @@ async def quick_triage(symptoms: str):
 
 
 @router.post("/triage/start/{session_id}")
-async def start_triage_session(session_id: str):
+async def start_triage_session(session_id: str, role: str = Depends(require_write)):
     """
     Začne novo triage sejo.
 
@@ -1442,7 +1624,7 @@ class TriageResponse(BaseModel):
 
 
 @router.post("/triage/respond/{session_id}")
-async def process_triage_response(session_id: str, data: TriageResponse):
+async def process_triage_response(session_id: str, data: TriageResponse, role: str = Depends(require_write)):
     """
     Procesira odgovor v triage seji.
 

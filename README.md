@@ -28,11 +28,16 @@ uvicorn main:app --reload --port 8000
 | OPENAI_API_KEY | OpenAI API ključ | DA |
 | DATABASE_URL | PostgreSQL connection string | DA (production) |
 | ADMIN_TOKEN | Token za admin API | DA |
+| ADMIN_READ_TOKEN | Read-only token za admin API | NE |
+| ADMIN_WRITE_TOKEN | Write token za admin API | NE |
 | RESEND_API_KEY | Resend API za email | DA |
 | TWILIO_ACCOUNT_SID | Twilio SID za SMS | NE |
 | TWILIO_AUTH_TOKEN | Twilio auth token | NE |
 | TWILIO_PHONE_NUMBER | Twilio sender številka | NE |
 | SMS_MOCK_MODE | `true`/`false` (priporočeno `false` v produkciji) | NE |
+
+Če je katerikoli admin token nastavljen, je admin API zaščiten in zahteva `Authorization: Bearer <token>`.
+Vloge: `viewer` (read), `editor` (write), `admin` (ADMIN_TOKEN).
 
 ## 📡 API Endpoints
 
@@ -46,6 +51,7 @@ uvicorn main:app --reload --port 8000
 - PATCH /api/admin/reservations/{id} - Posodobi termin
 - POST /api/admin/reservations/{id}/confirm - Potrdi
 - POST /api/admin/reservations/{id}/reject - Zavrni
+- GET /api/admin/audit - Admin audit trail
 
 ### Reservation Types
 - **appointment** - Zdravstveni termin (30 ali 60 min)

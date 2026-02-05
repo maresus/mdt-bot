@@ -639,6 +639,7 @@
   <header class="header">
     <h1>🏥 Zdravstveni center</h1>
     <div class="header-actions">
+      <button class="btn btn-secondary" onclick="setAdminToken()">🔐 Token</button>
       <button class="btn btn-secondary" onclick="loadData()">🔄 Osveži</button>
       <button class="btn btn-primary" onclick="openNewModal()">+ Novo naročilo</button>
     </div>
@@ -1095,12 +1096,36 @@
 
   <script>
     const API = '/api/admin';
+    const ADMIN_TOKEN_KEY = 'admin_token';
     let currentDate = new Date();
     let selectedDate = new Date(); // Za day view
     let currentFilter = 'VSE';
     let searchTerm = '';
     let allReservations = [];
     let calendarData = {};
+
+    function setAdminToken() {
+      const current = localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+      const next = prompt('Vnesi admin token (Bearer ni potreben):', current);
+      if (next === null) return;
+      if (next.trim()) {
+        localStorage.setItem(ADMIN_TOKEN_KEY, next.trim());
+      } else {
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+      }
+      alert('Token posodobljen.');
+    }
+
+    const _rawFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      init.headers = headers;
+      return _rawFetch(input, init);
+    };
 
     const DAYS = ['Pon', 'Tor', 'Sre', 'Čet', 'Pet', 'Sob', 'Ned'];
     const MONTHS = ['Januar', 'Februar', 'Marec', 'April', 'Maj', 'Junij', 'Julij', 'Avgust', 'September', 'Oktober', 'November', 'December'];

@@ -546,6 +546,36 @@ def _get_info_response(key: str) -> str:
         return random.choice(variants)
     return INFO_RESPONSES.get(key, "Kako vam lahko pomagam?")
 
+
+def _rag_info_answer(question: str, fallback_key: str) -> str:
+    """Return KB/RAG-backed answer for info queries, fallback to hardcoded info."""
+    try:
+        results = rag_engine.search(question, top_k=3)
+    except Exception as e:
+        print(f"[RAG] Search failed: {e}")
+        results = []
+
+    if not results:
+        return _get_info_response(fallback_key)
+
+    best = results[0]
+    content = (best.content or "").strip()
+    if not content:
+        return _get_info_response(fallback_key)
+
+    max_len = 700
+    if len(content) > max_len:
+        snippet = content[:max_len]
+        last_dot = snippet.rfind(".")
+        if last_dot > 200:
+            snippet = snippet[: last_dot + 1]
+    else:
+        snippet = content
+
+    if best.url:
+        return f"{snippet}\n\nVeč informacij: {best.url}"
+    return snippet
+
 # Kritični ključi
 BOOKING_RELEVANT_KEYS = {"dermatolog", "ortoped", "okulist", "laserski_poseg", "estetski_poseg", "kozmetika", "storitve", "prosti_termini"}
 CRITICAL_INFO_KEYS = {
@@ -1731,17 +1761,19 @@ Ponujamo:
         if service:
             service_key = service.lower()
             return _service_price_info(service_key)
-        return _get_info_response("cene")
+        return _rag_info_answer(message, "cene")
 
     # Handle INFO
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
         info_key = pick_info_key(message)
+        if info_key in {"parkiranje", "delovni_cas", "lokacija"}:
+            return _rag_info_answer(message, info_key)
         if info_key != "kontakt":
             return _get_info_response(info_key)
         if any(k in lowered for k in ["pridem", "pridemo", "pot"]):
-            return INFO_RESPONSES.get("lokacija")
-        return _get_info_response("kontakt")
+            return _rag_info_answer(message, "lokacija")
+        return _rag_info_answer(message, "kontakt")
 
     # For other intents, fall back to legacy system
     return None

@@ -345,6 +345,7 @@
         <div class="title">🏥 Zdravstveni center - Naročila pregledov</div>
         <div class="subtitle" id="current-date"></div>
       </div>
+      <button class="btn secondary" onclick="setAdminToken()">🔐 Token</button>
     </header>
 
     <div class="tabs" id="view-tabs">
@@ -966,6 +967,7 @@
 
   <script>
     const API_BASE = '/api/admin';
+    const ADMIN_TOKEN_KEY = 'admin_token';
     const APPOINTMENT_TYPES = [
       'Ortopedski pregled',
       'Dermatološki pregled',
@@ -982,6 +984,29 @@
     let calendarYear = new Date().getFullYear();
     let calendarMonth = new Date().getMonth(); // 0-indexed
     const TABLE_CAP = 50;
+
+    function setAdminToken() {
+      const current = localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+      const next = prompt('Vnesi admin token (Bearer ni potreben):', current);
+      if (next === null) return;
+      if (next.trim()) {
+        localStorage.setItem(ADMIN_TOKEN_KEY, next.trim());
+      } else {
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+      }
+      alert('Token posodobljen.');
+    }
+
+    const _rawFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      init.headers = headers;
+      return _rawFetch(input, init);
+    };
 
     function todayISO() {
       const d = new Date();
