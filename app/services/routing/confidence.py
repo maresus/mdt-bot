@@ -391,7 +391,7 @@ def _contains_word(message: str, words: set[str]) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", message, re.IGNORECASE) for w in words)
 
 
-def _detect_service_type(text: str) -> str | None:
+def _detect_service_type(text: str, service_map: dict | None = None) -> str | None:
     """Detect specific service type from message."""
     # Order matters - more specific first, then check word-boundary matches
     if any(k in text for k in DERMATOLOGY_KEYWORDS):
@@ -539,7 +539,7 @@ def compute_confidence(message: str, intent: str) -> float:
     return 0.0
 
 
-def detect_intents(message: str) -> Dict[str, float]:
+def detect_intents(message: str, service_map: dict | None = None) -> Dict[str, float]:
     """Score all intents for given message."""
     intents = [
         "BOOKING_APPOINTMENT",
@@ -565,6 +565,6 @@ def pick_primary_secondary(scores: Dict[str, float]) -> Tuple[str, str | None, f
     return primary, secondary, primary_conf
 
 
-def detect_service_type(message: str) -> str | None:
+def detect_service_type(message: str, service_map: dict | None = None) -> str | None:
     """Public function to detect service type."""
-    return _detect_service_type(message.lower())
+    return _detect_service_type(message.lower(), service_map=service_map)
