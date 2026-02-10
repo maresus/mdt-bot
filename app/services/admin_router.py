@@ -17,7 +17,7 @@ from app.services.sms_service import (
     send_cancellation_sms,
     send_confirmation_sms,
 )
-from app.services.reservation_service import SERVICES, ReservationService
+from app.services.reservation_service import ReservationService
 from app.services.chat_history_service import get_chat_history_service
 from app.services.admin_audit import log_admin_action, list_admin_audit
 from app.services.clinic_kb_service import get_clinic_info, update_clinic_info
@@ -30,7 +30,6 @@ from app.services.clinic_config import (
 )
 
 # Compatibility aliases za admin panel
-ROOMS = SERVICES  # Storitve namesto sob
 TOTAL_TABLE_CAPACITY = 0  # Ni miz
 
 # Veljavne vrste pregledov/posegov za zdravstveni center (za validacijo)
@@ -156,7 +155,11 @@ def _get_ip(request: Request) -> Optional[str]:
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_read)])
 service = ReservationService()
 
-ROOM_IDS = {r["id"] for r in ROOMS}
+def _current_room_ids() -> set[str]:
+    try:
+        return {r.get("id") for r in service._rooms() if r.get("id")}
+    except Exception:
+        return set()
 
 
 def _log(event: str, **kwargs) -> None:
@@ -185,7 +188,7 @@ def _normalize_room_id(room: Optional[str]) -> Optional[str]:
     if not room:
         return None
     upper = room.strip().upper()
-    for rid in ROOM_IDS:
+    for rid in _current_room_ids():
         if rid in upper or upper in rid:
             return rid
     return None
