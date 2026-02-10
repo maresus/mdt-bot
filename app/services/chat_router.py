@@ -807,6 +807,11 @@ def handle_unified_routing(
     if policy_response:
         return policy_response
 
+    # Do not allow info/price detours while user is providing visit reason.
+    if is_in_flow(session_id) and get_current_step(session_id) == FlowStep.REASON.value:
+        if decision.primary_intent in {IntentType.INFO, IntentType.PRICE, IntentType.SERVICE_INFO}:
+            return None
+
     # Handle AFFIRMATIVE/NEGATIVE in booking flow
     if decision.primary_intent == IntentType.AFFIRMATIVE and is_in_flow(session_id):
         step = get_current_step(session_id)
