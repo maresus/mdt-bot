@@ -1,0 +1,62 @@
+version: 1
+flow:
+  service:
+    prompt: |
+      Na kateri pregled se želite naročiti?
+      - Dermatolog
+      - Ortoped
+      - Okulist
+      - Laserski poseg
+      - Estetski poseg
+      - Kozmetika
+
+  date:
+    prompt: |
+      Kateri datum vam ustreza?
+      Prosimo v formatu DD.MM.YYYY (npr. 12.06.2026)
+
+  time:
+    prompt: |
+      Katera ura vam ustreza? (npr. 10:30)
+
+  name:
+    prompt: |
+      Kako je vaše ime in priimek?
+
+  phone:
+    prompt: |
+      Kakšna je vaša telefonska številka?
+
+  email:
+    prompt: |
+      Kakšen je vaš email naslov? (za potrditev termina)
+
+  reason:
+    prompt: |
+      Kakšen je razlog obiska? (npr. bolečine v kolenu)
+
+  confirm:
+    prompt: |
+      Ali so podatki pravilni? (DA / NE)
+
+messages:
+  start_with_date:
+    text: "Odlično! Naročilo za {service_type}. Kateri datum vam ustreza? (npr. 15.2.2026)"
+
+  start_with_service:
+    text: "Na kateri pregled se želite naročiti?\n\n- Dermatolog\n- Ortoped\n- Okulist\n- Laserski poseg\n- Estetski poseg\n- Kozmetika"
+
+  service_switch_confirmed:
+    text: |
+      Super, preklopim na **{service_name}**.
+
+      📋 Trajanje: {duration_minutes} minut
+      💰 Cena: {price_range}
+
+      Kateri datum vas zanima? (npr. 15.3.2026)
+
+  service_switch_confirmed_noinfo:
+    text: "Super, preklopim storitev. Kateri datum vas zanima? (npr. 15.3.2026)"
+
+  resume_prompt:
+    text: "V redu, nadaljujemo z naročilom."

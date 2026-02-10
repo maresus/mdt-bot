@@ -17,6 +17,7 @@ class ClinicConfigProvider:
             base_dir = Path(__file__).resolve().parents[2] / "config" / "clinics"
         self.base_dir = base_dir
         self._cache: dict[str, dict[str, Any]] = {}
+        self._domain_cache: dict[tuple[str, str], dict[str, Any]] = {}
         self._registry: set[str] | None = None
 
     def _scan_registry(self) -> set[str]:
@@ -26,6 +27,9 @@ class ClinicConfigProvider:
         if self.base_dir.exists():
             for path in self.base_dir.glob("*.yaml"):
                 registry.add(path.stem)
+            for path in self.base_dir.iterdir():
+                if path.is_dir():
+                    registry.add(path.name)
         self._registry = registry
         return registry
 
@@ -60,6 +64,20 @@ class ClinicConfigProvider:
         self._cache[clinic_id] = config
         return config
 
+    def get_domain_config(self, clinic_id: str, domain: str) -> dict[str, Any]:
+        cache_key = (clinic_id, domain)
+        if cache_key in self._domain_cache:
+            return self._domain_cache[cache_key]
+        config: dict[str, Any] = {}
+        domain_path = self.base_dir / clinic_id / f"{domain}.yaml"
+        if domain_path.exists():
+            try:
+                config = yaml.safe_load(domain_path.read_text(encoding="utf-8")) or {}
+            except Exception:
+                config = {}
+        self._domain_cache[cache_key] = config
+        return config
+
     def get_info_response(self, clinic_id: str, key: str, default: Any | None = None) -> Any:
         config = self.get_config(clinic_id)
         responses = config.get("info_responses", {}) if isinstance(config, dict) else {}
@@ -72,6 +90,58 @@ class ClinicConfigProvider:
         if value is None:
             return default
         return value
+
+    def get_domain_response(
+        self,
+        clinic_id: str,
+        domain: str,
+        key: str,
+        default: Any | None = None,
+    ) -> Any:
+        def _resolve_path(data: Any, path: str) -> Any | None:
+            if not isinstance(data, dict):
+                return None
+            current = data
+            for part in path.split("."):
+                if not isinstance(current, dict):
+                    return None
+                current = current.get(part)
+            if isinstance(current, dict) and "text" in current:
+                return current.get("text")
+            return current
+
+        if domain == "info":
+            info_cfg = self.get_domain_config(clinic_id, "info")
+            facts = info_cfg.get("facts", {}) if isinstance(info_cfg, dict) else {}
+            entry = facts.get(key) if isinstance(facts, dict) else None
+            if isinstance(entry, dict):
+                response = entry.get("response")
+                if response is not None:
+                    return response
+            return self.get_info_response(clinic_id, key, default)
+
+        if domain == "general":
+            general_cfg = self.get_domain_config(clinic_id, "general")
+            messages = general_cfg.get("messages", {}) if isinstance(general_cfg, dict) else {}
+            resolved = _resolve_path(messages, key)
+            return resolved if resolved is not None else default
+
+        if domain == "booking":
+            booking_cfg = self.get_domain_config(clinic_id, "booking")
+            if isinstance(booking_cfg, dict):
+                messages = booking_cfg.get("messages", {})
+                resolved = _resolve_path(messages, key)
+                if resolved is not None:
+                    return resolved
+                flow = booking_cfg.get("flow", {})
+                resolved = _resolve_path(flow, key)
+                if resolved is not None:
+                    if isinstance(resolved, dict) and "prompt" in resolved:
+                        return resolved.get("prompt")
+                    return resolved
+            return default
+
+        return default
 
 
 _provider = ClinicConfigProvider()
@@ -118,3 +188,63 @@ def get_info_response(
 ) -> Any:
     resolved = resolve_clinic_id(clinic_id)
     return _provider.get_info_response(resolved, key, default)
+
+
+def get_domain_response(
+    domain: str,
+    key: str,
+    default: Any | None = None,
+    clinic_id: str | None = None,
+) -> Any:
+    resolved = resolve_clinic_id(clinic_id)
+    return _provider.get_domain_response(resolved, domain, key, default)
+
+
+def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str, Any] | None:
+    resolved = resolve_clinic_id(clinic_id)
+    info_cfg = _provider.get_domain_config(resolved, "info")
+    facts = info_cfg.get("facts", {}) if isinstance(info_cfg, dict) else {}
+    if not isinstance(facts, dict):
+        return None
+    lowered = message.lower()
+    try:
+        from thefuzz import fuzz  # type: ignore
+    except Exception:
+        fuzz = None
+    for key, entry in facts.items():
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("priority", "")).lower() != "fast":
+            continue
+        keywords = entry.get("keywords", [])
+        if isinstance(keywords, str):
+            keywords = [keywords]
+        if not isinstance(keywords, list):
+            continue
+        for kw in keywords:
+            if not kw:
+                continue
+            kw_lower = str(kw).lower()
+            if kw_lower in lowered:
+                response = entry.get("response")
+                if isinstance(response, str) and response.strip():
+                    return {
+                        "response": response,
+                        "category": entry.get("category"),
+                        "key": key,
+                        "match": kw_lower,
+                        "score": 100,
+                    }
+            if fuzz is not None:
+                score = fuzz.partial_ratio(kw_lower, lowered)
+                if score >= 85:
+                    response = entry.get("response")
+                    if isinstance(response, str) and response.strip():
+                        return {
+                            "response": response,
+                            "category": entry.get("category"),
+                            "key": key,
+                            "match": kw_lower,
+                            "score": score,
+                        }
+    return None

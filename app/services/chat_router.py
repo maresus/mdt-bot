@@ -28,6 +28,8 @@ from app.services.chat_history_service import get_chat_history_service
 from app.services.clinic_config import (
     get_clinic_config,
     get_info_response as clinic_get_info_response,
+    get_domain_response,
+    get_fast_pass_match,
     list_available_clinics,
     resolve_clinic_id,
     set_current_clinic_id,
@@ -53,6 +55,64 @@ from app.services.routing.state_manager import ConversationTracker, SimpleCache
 from app.services.routing.intent_engine import classify_intent_llm
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
 from app.services.routing.advice import advice_only, advice_only_headache
+from app.services.routing.intent_labels import (
+    INTENT_BOOK_GENERAL,
+    INTENT_CHECK_AVAILABILITY,
+    INTENT_GREETING,
+    INTENT_HEALTH_SYMPTOMS,
+    INTENT_INFO_CONTACT,
+    INTENT_INFO_HOURS,
+    INTENT_INFO_NAROCANJE,
+    INTENT_INFO_PRICES,
+    INTENT_INFO_SERVICES,
+    INTENT_INFO_TEAM,
+    INTENT_QUESTION,
+    INTENT_THANKS,
+)
+from app.services.routing.response_keys import (
+    INFO_KEY_CONTACT,
+    INFO_KEY_HOURS,
+    INFO_KEY_LOCATION,
+    INFO_KEY_PARKING,
+    INFO_KEY_PRICES,
+    INFO_KEY_SERVICES,
+    INFO_KEYS_DIRECT,
+    INFO_CONTACT_SHORT,
+    INFO_SERVICE_DERMATOLOG,
+    INFO_SERVICE_ESTETSKI_POSEG,
+    INFO_SERVICE_FIZIOTERAPIJA,
+    INFO_SERVICE_KOZMETIKA,
+    INFO_SERVICE_LASERSKI_POSEG,
+    INFO_SERVICE_OKULIST,
+    INFO_SERVICE_ORTOPED,
+)
+from app.services.routing.locale_sl import (
+    AVAILABILITY_PHRASES,
+    AVAILABILITY_WORDS,
+    BOOKING_INFO_PHRASES,
+    BOOKING_KEYWORDS,
+    BOOKING_KEYWORDS_EXTENDED,
+    BOOKING_RELEVANT_KEYS,
+    CONTACT_WORDS,
+    CONTACT_ROUTE_WORDS,
+    CRITICAL_INFO_KEYS,
+    FULL_NAME_BLOCKED_SINGLE,
+    FULL_NAME_BLOCKED_TOKENS,
+    GREETING_WORDS,
+    HOURS_WORDS,
+    PRICE_WORDS,
+    QUESTION_MARKERS,
+    RELATIVE_DATES,
+    SERVICE_INFO_TOKENS,
+    SERVICE_KEYWORDS,
+    SERVICE_LIST_WORDS,
+    SYMPTOM_MARKERS,
+    SYMPTOM_PATTERNS,
+    SYMPTOM_WORDS,
+    SKIP_SERVICE_KEYWORDS,
+    TEAM_WORDS,
+    THANKS_WORDS,
+)
 from app.services.knowledge.hybrid_kb import answer_with_hybrid_kb
 from app.core.response_formatter import format_response
 from app.services.flows.booking_flow import (
@@ -69,7 +129,7 @@ from app.services.flows.booking_interrupt_policy import (
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
-USE_FULL_KB_LLM = False  # False = RAG (hitro), True = full KB (počasno)
+USE_FULL_KB_LLM = False  # False = RAG (fast), True = full KB (slow)
 # D4: legacy kill - unified router is always enabled.
 USE_UNIFIED_ROUTER = True
 SHORT_MODE = os.getenv("SHORT_MODE", "true").strip().lower() in {"1", "true", "yes", "on"}
@@ -121,8 +181,33 @@ def save_chat_message(
         print(f"[CHAT_HISTORY] Failed to save message: {e}")
 
 # ========== ZDRAVSTVENI CENTER INFO ODGOVORI (YAML) ==========
+def _default_help_prompt(clinic_id: str | None = None) -> str:
+    return get_domain_response(
+        "general",
+        "help_prompt",
+        default="How can I help?",
+        clinic_id=clinic_id,
+    )
+
+
 def _get_info_response(key: str, clinic_id: str | None = None) -> str:
-    return clinic_get_info_response(key, "Kako vam lahko pomagam?", clinic_id=clinic_id)
+    return clinic_get_info_response(key, _default_help_prompt(clinic_id=clinic_id), clinic_id=clinic_id)
+
+def get_response(key: str, clinic_id: str | None = None, **kwargs: Any) -> str:
+    """Temporary response lookup wrapper for cleanup work."""
+    if "." in key:
+        domain, rest = key.split(".", 1)
+        response = get_domain_response(domain, rest, default=None, clinic_id=clinic_id)
+        if isinstance(response, str):
+            return response.format_map({**kwargs})
+    if key.startswith("info."):
+        info_key = key.split(".", 1)[1]
+        return get_domain_response("info", info_key, default=_get_info_response(info_key, clinic_id=clinic_id), clinic_id=clinic_id)
+    return _get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)
+
+
+def _get_uncertain_marker(clinic_id: str | None = None) -> str:
+    return get_domain_response("general", "uncertain_marker", default="I'm not sure", clinic_id=clinic_id)
 
 
 def _rag_info_answer(question: str, fallback_key: str, clinic_id: str | None = None) -> str:
@@ -151,15 +236,14 @@ def _rag_info_answer(question: str, fallback_key: str, clinic_id: str | None = N
         snippet = content
 
     if best.url:
-        return f"{snippet}\n\nVeč informacij: {best.url}"
+        label = get_domain_response(
+            "general",
+            "more_info_label",
+            default="More info:",
+            clinic_id=clinic_id,
+        )
+        return f"{snippet}\n\n{label} {best.url}"
     return snippet
-
-# Kritični ključi
-BOOKING_RELEVANT_KEYS = {"dermatolog", "ortoped", "okulist", "laserski_poseg", "estetski_poseg", "kozmetika", "storitve", "prosti_termini"}
-CRITICAL_INFO_KEYS = {
-    "delovni_cas", "kontakt", "cene", "storitve", "prosti_termini",
-    "dermatolog", "ortoped", "okulist", "laserski_poseg", "estetski_poseg", "kozmetika"
-}
 
 def _send_reservation_emails_async(payload: dict) -> None:
     """Send appointment notifications asynchronously (email + SMS)."""
@@ -235,15 +319,7 @@ def _service_mentioned_in_message(message: str, service: str) -> bool:
     """Check if service is explicitly mentioned in the message (word boundary check)"""
     import re
     lowered = message.lower()
-    service_keywords = {
-        "ortoped": ["ortoped", "ortopedski", "ortopedija"],
-        "dermatolog": ["dermatolog", "dermatološki", "dermatologija"],
-        "okulist": ["okulist", "okulistični", "oftalmolog", "očesni"],  # Removed "oči" - too short, matches "naročil"
-        "kozmetika": ["kozmetik", "kozmetični"],
-        "estetski_poseg": ["estetski", "botox", "filer"],
-        "laserski_poseg": ["laser", "laserski"],
-    }
-    keywords = service_keywords.get(service, [])
+    keywords = SERVICE_KEYWORDS.get(service, [])
     # Use word boundary matching to avoid substring issues
     for kw in keywords:
         if re.search(r'\b' + re.escape(kw), lowered):
@@ -255,23 +331,28 @@ def classify_intent(message: str, history: list = None, clinic_id: str | None = 
     """Classify intent - FAST rules first, LLM only for complex cases"""
 
     # Hard guard: booking keywords without explicit service -> book_general (avoid LLM guessing)
-    has_price_kw = any(word in message.lower() for word in ["cena", "cene", "cenik", "koliko", "stane"])
+    has_price_kw = any(word in message.lower() for word in PRICE_WORDS)
     if _has_booking_keywords(message) and not has_price_kw and extract_service_type(message, clinic_id=clinic_id) is None and not any(
         phrase in message.lower()
-        for phrase in [
-            "kako se naročim", "kako se narocim", "kako poteka naročanje", "kako poteka narocanje",
-            "kako rezerviram", "kako rezervirati", "kako do termina", "kako pridem do termina",
-        ]
+        for phrase in BOOKING_INFO_PHRASES
     ):
-        return "book_general"
+        return INTENT_BOOK_GENERAL
 
     # FAST PATH: Try rules-based classification first (no API call!)
     rules_intent = classify_intent_rules(message, history, clinic_id=clinic_id)
 
     # If rules found a clear intent, use it immediately
-    if rules_intent in ["greeting", "thanks", "info_hours", "info_contact", "info_prices",
-                        "info_services", "check_availability", "info_narocanje",
-                        "health_symptoms"]:
+    if rules_intent in [
+        INTENT_GREETING,
+        INTENT_THANKS,
+        INTENT_INFO_HOURS,
+        INTENT_INFO_CONTACT,
+        INTENT_INFO_PRICES,
+        INTENT_INFO_SERVICES,
+        INTENT_CHECK_AVAILABILITY,
+        INTENT_INFO_NAROCANJE,
+        INTENT_HEALTH_SYMPTOMS,
+    ]:
         return rules_intent
 
     # If rules found a booking intent, use it
@@ -288,61 +369,38 @@ def classify_intent(message: str, history: list = None, clinic_id: str | None = 
     if intent == "booking":
         if service and _service_mentioned_in_message(message, service):
             return f"book_{service}"
-        return "book_general"
+        return INTENT_BOOK_GENERAL
     elif intent == "health_advice":
-        return "question"  # Let it go through normal RAG flow
+        return INTENT_QUESTION  # Let it go through normal RAG flow
     elif intent == "question":
-        return "question"
-    elif intent == "info_narocanje":
-        return "info_narocanje"
-    elif intent == "info_services":
-        return "info_services"
-    elif intent == "info_prices":
-        return "info_prices"
-    elif intent == "info_contact":
-        return "info_contact"
-    elif intent == "info_hours":
-        return "info_hours"
-    elif intent == "greeting":
-        return "greeting"
+        return INTENT_QUESTION
+    elif intent == INTENT_INFO_NAROCANJE:
+        return INTENT_INFO_NAROCANJE
+    elif intent == INTENT_INFO_SERVICES:
+        return INTENT_INFO_SERVICES
+    elif intent == INTENT_INFO_PRICES:
+        return INTENT_INFO_PRICES
+    elif intent == INTENT_INFO_CONTACT:
+        return INTENT_INFO_CONTACT
+    elif intent == INTENT_INFO_HOURS:
+        return INTENT_INFO_HOURS
+    elif intent == INTENT_GREETING:
+        return INTENT_GREETING
     else:
-        return "question"
+        return INTENT_QUESTION
 
 
 # Keep for backward compatibility - booking keywords
 def _has_booking_keywords(message: str) -> bool:
     lowered = message.lower()
-    return any(word in lowered for word in [
-        "naroči", "naročilo", "naroci", "narocilo", "termin", "rezerv",
-        "naročil", "naročila", "narocil", "narocila",
-        "rad bi", "rada bi", "bi rad", "bi rada",
-        "želel", "želela", "zelim", "želim",
-        "hočem", "hocem",
-    ])
+    return any(word in lowered for word in BOOKING_KEYWORDS)
 
 
 def _looks_like_symptom_report(message: str) -> bool:
     """Heuristic: user reports symptoms (not asking informational question)."""
     lowered = message.lower()
-    symptom_markers = [
-        "boli",
-        "boleč",
-        "bolec",
-        "bolečin",
-        "bolecin",
-        "težav",
-        "tezav",
-        "srbi",
-        "izpuščaj",
-        "izpuscaj",
-        "otekl",
-        "slabo vidim",
-        "imam",
-        "me ",
-    ]
-    question_markers = ["?", "kaj", "kako", "kateri", "katere", "koliko", "kdaj", "kje", "ali "]
-    has_symptom = any(marker in lowered for marker in symptom_markers)
-    asks_question = any(marker in lowered for marker in question_markers)
+    has_symptom = any(marker in lowered for marker in SYMPTOM_MARKERS)
+    asks_question = any(marker in lowered for marker in QUESTION_MARKERS)
     return has_symptom and not asks_question
 
 
@@ -375,100 +433,81 @@ def classify_intent_rules(message: str, history: list = None, clinic_id: str | N
     service_map = get_service_map(clinic_id=clinic_id)
 
     # ===== HEALTH SYMPTOMS: Check FIRST before service keywords =====
-    # Detect pain/symptom patterns like "boli me X", "imam težave z X", "boli X"
-    symptom_patterns = ["boli me", "boli mi", "imam težave", "imam tezave", "me boli", "mi boli",
-                        "bolečine v", "bolecine v", "srbečica", "srbecica", "otekl", "izpuščaj",
-                        "srbi", "srbi me", "srbeče", "srbeco", "znamenje", "kožno znamenje", "kozni madez",
-                        "kožni madež", "glavobol", "migrena", "omotica"]
-    if any(pattern in lowered for pattern in symptom_patterns):
-        return "health_symptoms"
+    # Detect pain/symptom patterns like "pain in X" or "I have trouble with X"
+    if any(pattern in lowered for pattern in SYMPTOM_PATTERNS):
+        return INTENT_HEALTH_SYMPTOMS
 
     # Also check for standalone symptom keywords without booking intent
-    symptom_words = ["boli", "bolec", "boleč", "bolečin", "težav", "simptom", "srbi", "srbe", "srbeč", "srbec",
-                     "izpuščaj", "izpuscaj", "znamenje", "madež", "madez", "koža", "koza",
-                     "glavobol", "migrena", "omotica"]
-    has_symptom = any(word in lowered for word in symptom_words)
-    has_booking = any(word in lowered for word in ["naroči", "termin", "rezerv", "želim naročiti"])
+    has_symptom = any(word in lowered for word in SYMPTOM_WORDS)
+    has_booking = any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED)
     if has_symptom and not has_booking:
-        return "health_symptoms"
+        return INTENT_HEALTH_SYMPTOMS
 
     # Info about booking process (should NOT start booking)
-    if any(phrase in lowered for phrase in [
-        "kako se naročim", "kako se narocim", "kako poteka naročanje", "kako poteka narocanje",
-        "kako rezerviram", "kako rezervirati", "kako do termina", "kako pridem do termina"
-    ]):
-        return "info_narocanje"
+    if any(phrase in lowered for phrase in BOOKING_INFO_PHRASES):
+        return INTENT_INFO_NAROCANJE
 
     # Availability checks should be handled explicitly
-    if any(phrase in lowered for phrase in ["proste termine", "prosti termini", "razpoložljivi termini", "razpolozljivi termini"]):
-        return "check_availability"
+    if any(phrase in lowered for phrase in AVAILABILITY_PHRASES):
+        return INTENT_CHECK_AVAILABILITY
 
     # Mixed intent: booking + price -> answer price info first
-    has_price = any(word in lowered for word in ["cena", "cene", "cenik", "koliko", "stane"])
-    has_booking_kw = any(word in lowered for word in [
-        "naroči", "naročilo", "naroci", "narocilo", "termin", "rezerv",
-        "želim", "zelim", "potrebujem", "rad bi", "rada bi", "bi rad", "bi rada",
-        "naročil", "naročila", "narocil", "narocila", "hočem", "hocem", "želel", "želela"
-    ])
+    has_price = any(word in lowered for word in PRICE_WORDS)
+    has_booking_kw = any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED)
     if has_price and has_booking_kw:
-        return "info_prices"
+        return INTENT_INFO_PRICES
 
     # Appointment booking intents (with and without diacritics)
-    if any(word in lowered for word in [
-        "naroči", "naročilo", "naroci", "narocilo", "termin", "rezerv",
-        "želim", "zelim", "potrebujem", "rad bi", "rada bi", "bi rad", "bi rada",
-        "naročil", "naročila", "narocil", "narocila", "hočem", "hocem", "želel", "želela"
-    ]):
+    if any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED):
         # Check which service
         for service_key, variations in service_map.items():
             if any(var in lowered for var in variations):
                 return f"book_{service_key}"
-        return "book_general"
+        return INTENT_BOOK_GENERAL
 
     # Working hours - check BEFORE availability because "kdaj ste odprti" contains "kdaj"
-    if any(word in lowered for word in ["delovni čas", "delovni cas", "odprto", "odprti", "kdaj ste odprti", "do kdaj", "od kdaj"]):
-        return "info_hours"
+    if any(word in lowered for word in HOURS_WORDS):
+        return INTENT_INFO_HOURS
 
     # Check available slots
-    if any(word in lowered for word in ["prost", "razpoložljiv", "razpolozljiv", "kdaj", "termin"]):
-        return "check_availability"
+    if any(word in lowered for word in AVAILABILITY_WORDS):
+        return INTENT_CHECK_AVAILABILITY
 
     # Service information or booking (heuristic)
     for service_key in services.keys():
         if service_key in lowered or any(var in lowered for var in service_map.get(service_key, [])):
             # If user likely wants to book (no info/price question), start booking
-            info_tokens = ["cena", "cene", "koliko", "stane", "opis", "kaj", "ponudba", "storitve", "kakšne", "kaksne"]
-            if "?" not in lowered and not any(tok in lowered for tok in info_tokens):
+            if "?" not in lowered and not any(tok in lowered for tok in SERVICE_INFO_TOKENS):
                 return f"book_{service_key}"
             return f"info_{service_key}"
 
     # General service list
-    if any(word in lowered for word in ["storitve", "pregled", "ponudba", "kaj ponujate"]):
-        return "info_services"
+    if any(word in lowered for word in SERVICE_LIST_WORDS):
+        return INTENT_INFO_SERVICES
 
     # Prices
-    if any(word in lowered for word in ["cena", "cene", "cenik", "koliko", "stane"]):
-        return "info_prices"
+    if any(word in lowered for word in PRICE_WORDS):
+        return INTENT_INFO_PRICES
 
     # Team / leadership
-    if any(word in lowered for word in ["šef", "sef", "vodja", "vodstvo", "direktor", "kdo vodi", "kdo je glavni", "ekipa", "zdravniki", "kdo dela pri vas"]):
-        return "info_ekipa"
+    if any(word in lowered for word in TEAM_WORDS):
+        return INTENT_INFO_TEAM
 
     # Contact / Location
-    if any(word in lowered for word in ["kontakt", "telefon", "email", "naslov", "lokacija", "nahaja", "kje ste", "kje se", "naslovom", "pridi", "pridem", "parkir", "parking", "parkiri"]):
-        return "info_contact"
+    if any(word in lowered for word in CONTACT_WORDS):
+        return INTENT_INFO_CONTACT
 
     # Thanks
-    if any(word in lowered for word in ["hvala", "najlepša hvala", "hvala lepa", "thanks", "thx"]):
-        return "thanks"
+    if any(word in lowered for word in THANKS_WORDS):
+        return INTENT_THANKS
 
     # Greeting (with and without diacritics)
-    if any(word in lowered for word in ["pozdravljeni", "živjo", "zivjo", "dober dan", "zdravo", "hej", "halo", "bok"]):
-        return "greeting"
+    if any(word in lowered for word in GREETING_WORDS):
+        return INTENT_GREETING
 
     # Health symptoms → let RAG/knowledge base handle (has health info)
     # Don't intercept - return "question" so it goes through RAG
-    return "question"
+    return INTENT_QUESTION
 
 def extract_date_from_message(message: str) -> Optional[str]:
     """Extract date from message (DD.MM.YYYY format)"""
@@ -482,12 +521,9 @@ def extract_date_from_message(message: str) -> Optional[str]:
     lowered = message.lower()
     today = datetime.now()
 
-    if "danes" in lowered:
-        return today.strftime("%d.%m.%Y")
-    if "jutri" in lowered:
-        return (today + timedelta(days=1)).strftime("%d.%m.%Y")
-    if "pojutrišnjem" in lowered:
-        return (today + timedelta(days=2)).strftime("%d.%m.%Y")
+    for token, offset in RELATIVE_DATES.items():
+        if token in lowered:
+            return (today + timedelta(days=offset)).strftime("%d.%m.%Y")
 
     return None
 
@@ -536,25 +572,7 @@ def is_likely_full_name(text: str) -> bool:
     if len(stripped) < 3 or "?" in stripped:
         return False
     lowered = stripped.lower()
-    blocked_tokens = [
-        "koliko",
-        "stane",
-        "cena",
-        "cenik",
-        "parking",
-        "park",
-        "kako",
-        "kje",
-        "kontakt",
-        "ura",
-        "termin",
-        "pregled",
-        "storitev",
-        "delate",
-        "sobota",
-        "nedelja",
-    ]
-    if any(token in lowered for token in blocked_tokens):
+    if any(token in lowered for token in FULL_NAME_BLOCKED_TOKENS):
         return False
     if any(char.isdigit() for char in stripped):
         return False
@@ -563,31 +581,28 @@ def is_likely_full_name(text: str) -> bool:
         return True
     # Allow single-word names (e.g., "Miha") but avoid symptoms/services
     single = parts[0].lower() if parts else ""
-    blocked_single = [
-        "koleno", "hrbet", "glava", "izpuščaj", "izpuscaj", "znamenje", "koža", "koza",
-        "bolečina", "bolečine", "bolecina", "bolecine", "srbi", "srbe", "srbeč", "srbec",
-        "dermatološki", "ortopedski", "okulistični", "okulisticni", "laser", "laserski",
-        "estetski", "kozmetični", "kozmeticni", "pregled", "termin",
-    ]
-    if single in blocked_single:
+    if single in FULL_NAME_BLOCKED_SINGLE:
         return False
     return len(single) >= 3
 
 
 def _short_contact_info() -> str:
-    return (
-        "🚗 Parking: brezplačen pred objektom\n"
-        "📞 Telefon: 01 234 56 78\n"
-        "📧 Email: info@zdravstveni-center.si"
-    )
+    return get_response(INFO_CONTACT_SHORT)
 
 
 def _service_price_info(service_type: Optional[str], clinic_id: str | None = None) -> str:
     info = get_service_info(service_type or "", clinic_id=clinic_id)
     if not info:
-        return _get_info_response("cene", clinic_id=clinic_id)
+        return _get_info_response(INFO_KEY_PRICES, clinic_id=clinic_id)
     label = service_type or ""
-    return f"💰 {label.capitalize()} – {info['name']}: Cena {info['price_range']} · {info['duration_minutes']} min"
+    return get_response(
+        "general.service_price",
+        clinic_id=clinic_id,
+        label=label.capitalize(),
+        name=info["name"],
+        price_range=info["price_range"],
+        duration_minutes=info["duration_minutes"],
+    )
 
 
 def extract_service_type(message: str, clinic_id: str | None = None) -> Optional[str]:
@@ -597,7 +612,7 @@ def extract_service_type(message: str, clinic_id: str | None = None) -> Optional
     service_map = get_service_map(clinic_id=clinic_id)
 
     # Skip short keywords that cause false positives
-    skip_keywords = {"oči", "oci"}  # "oči" matches "naročil"
+    skip_keywords = SKIP_SERVICE_KEYWORDS
 
     for service_key, variations in service_map.items():
         for var in variations:
@@ -737,18 +752,19 @@ def handle_unified_routing(
             state_mgr.clear_context_key("pending_service_switch")
 
             if pending_info:
-                return (
-                    f"Super, preklopim na **{pending_info['name']}**.\n\n"
-                    f"📋 Trajanje: {pending_info['duration_minutes']} minut\n"
-                    f"💰 Cena: {pending_info['price_range']}\n\n"
-                    "Kateri datum vas zanima? (npr. 15.3.2026)"
+                return get_response(
+                    "booking.service_switch_confirmed",
+                    clinic_id=clinic_id,
+                    service_name=pending_info["name"],
+                    duration_minutes=pending_info["duration_minutes"],
+                    price_range=pending_info["price_range"],
                 )
-            return "Super, preklopim storitev. Kateri datum vas zanima? (npr. 15.3.2026)"
+            return get_response("booking.service_switch_confirmed_noinfo", clinic_id=clinic_id)
 
         if is_negative(message):
             state_mgr.clear_context_key("pending_service_switch")
             step = appointment_state.get("step") or get_current_step(session_id)
-            return build_resume_prompt(step) or "V redu, nadaljujemo z naročilom."
+            return build_resume_prompt(step) or get_response("booking.resume_prompt", clinic_id=clinic_id)
 
     # Keep unified state in sync with legacy appointment state.
     was_in_flow = is_in_flow(session_id)
@@ -812,15 +828,15 @@ def handle_unified_routing(
 
     if decision.primary_intent == IntentType.NEGATIVE and is_in_flow(session_id):
         reset_unified_state(session_id)
-        return "V redu, naročilo preklicano. Kako vam lahko drugače pomagam?"
+        return get_response("general.booking_cancelled", clinic_id=clinic_id)
 
     # Handle GREETING
     if decision.primary_intent == IntentType.GREETING:
-        return _get_info_response("pozdrav", clinic_id=clinic_id)
+        return get_response("general.greeting", clinic_id=clinic_id)
 
     # Handle GOODBYE
     if decision.primary_intent == IntentType.GOODBYE:
-        return _get_info_response("hvala", clinic_id=clinic_id)
+        return get_response("general.goodbye", clinic_id=clinic_id)
 
     # Handle BOOKING_APPOINTMENT intent
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:
@@ -830,21 +846,21 @@ def handle_unified_routing(
             if service_type:
                 state_mgr.transition_to_booking(service_type=service_type, legacy_state=appointment_state)
                 start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-                return f"Odlično! Naročilo za {service_type.lower()}. Kateri datum vam ustreza? (npr. 15.2.2026)"
+                return get_response(
+                    "booking.start_with_date",
+                    clinic_id=clinic_id,
+                    service_type=service_type.lower(),
+                )
             else:
                 state_mgr.transition_to_booking(service_type=None, legacy_state=appointment_state)
                 start_flow(session_id, FlowType.APPOINTMENT, FlowStep.SERVICE)
-                return "Na kateri pregled se želite naročiti?\n\n- Dermatolog\n- Ortoped\n- Okulist\n- Laserski poseg\n- Estetski poseg\n- Kozmetika"
+                return get_response("booking.start_with_service", clinic_id=clinic_id)
         # Already in flow - fall back to legacy step handling
         return None
 
     # Handle URGENCY
     if decision.primary_intent == IntentType.URGENCY:
-        return """⚠️ **Če gre za nujni primer, prosim pokličite:**
-- Urgenca: 112
-- Zdravstveni center: 01 234 56 78
-
-Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši prosti termin?"""
+        return get_response("general.urgency", clinic_id=clinic_id)
 
     # Handle SERVICE_INFO (symptoms, service questions)
     if decision.primary_intent == IntentType.SERVICE_INFO:
@@ -861,87 +877,22 @@ Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši pr
                 return advice_only_headache()
             return advice_only(None)
         if service == "DERMATOLOG":
-            return """**Dermatologija** - pregledi kožnih težav
-
-Zdravimo:
-- Izpuščaje, akne, ekceme
-- Luskavico, psoriaze
-- Kožne spremembe, madeže
-- Glivične okužbe
-
-🔬 **Dermatološki pregled** (30 min, 25-150 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_DERMATOLOG, clinic_id=clinic_id)
         elif service == "ORTOPED":
-            return """**Ortopedija** - pregledi gibalnega sistema
-
-Zdravimo:
-- Bolečine v hrbtu, kolenih, ramenih
-- Športne poškodbe
-- Težave s sklepi
-- Poškodbe mišic in vezi
-
-🦴 **Ortopedski pregled** (30 min, 40-80 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_ORTOPED, clinic_id=clinic_id)
         elif service == "OKULIST":
-            return """**Oftalmologija** - pregledi oči
-
-Zdravimo:
-- Težave z vidom
-- Očesne bolezni
-- Predpis očal in kontaktnih leč
-
-👁️ **Očesni pregled** (30 min, 35-70 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_OKULIST, clinic_id=clinic_id)
         elif service == "ESTETSKI_POSEG":
-            return """**Estetski posegi**
-
-Ponujamo:
-- Botox
-- Fillerji
-- Biorevitalizacija kože
-
-💉 **Estetski poseg** (30 min, 80-300 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_ESTETSKI_POSEG, clinic_id=clinic_id)
         elif service == "LASERSKI_POSEG":
-            return """**Laserski posegi**
-
-Ponujamo:
-- Odstranjevanje žilic
-- Odstranjevanje bradavic
-- Zdravljenje glivic nohtov
-
-⚡ **Laserski poseg** (30 min, 50-200 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_LASERSKI_POSEG, clinic_id=clinic_id)
         elif service == "FIZIOTERAPIJA":
-            return """**Fizioterapija**
-
-Ponujamo:
-- Rehabilitacija po poškodbah
-- Masaže
-- Razgibalne vaje
-
-💆 **Fizioterapija** (60 min, 40-80 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_FIZIOTERAPIJA, clinic_id=clinic_id)
         elif service == "KOZMETIKA":
-            return """**Kozmetični salon**
-
-Ponujamo:
-- Profesionalna nega obraza
-- Tretmaji kože
-- Kozmetični posegi
-
-✨ **Kozmetični tretma** (60 min, 40-100 €)
-
-🎯 Želite termin? Povejte mi datum!"""
+            return get_response(INFO_SERVICE_KOZMETIKA, clinic_id=clinic_id)
         else:
             # General service info
-            return _get_info_response("storitve", clinic_id=clinic_id)
+            return _get_info_response(INFO_KEY_SERVICES, clinic_id=clinic_id)
 
     # Handle UNSUPPORTED_SYMPTOM (empathetic fallback)
     if decision.primary_intent == IntentType.UNSUPPORTED_SYMPTOM:
@@ -950,10 +901,7 @@ Ponujamo:
         if unsupported:
             response_text = unsupported.get("response") or unsupported.get("message")
         if not response_text:
-            response_text = (
-                "Žal mi je, da imate težave. V našem centru nimamo ustreznega specialista, "
-                "lahko pa ponudimo splošni posvet. Želite, da preverim proste termine?"
-            )
+            response_text = get_response("general.unsupported_symptom_default", clinic_id=clinic_id)
         ui_override = unsupported.get("ui_override") if isinstance(unsupported, dict) else None
         if isinstance(ui_override, dict):
             state_mgr.set_context_value("ui_override", ui_override)
@@ -962,10 +910,12 @@ Ponujamo:
             if isinstance(unsupported, dict):
                 quick_replies = unsupported.get("quick_replies")
             if not quick_replies:
-                quick_replies = [
-                    {"label": "Da, prosim", "value": "DA"},
-                    {"label": "Ne, hvala", "value": "NE"},
-                ]
+                quick_replies = get_domain_response(
+                    "general",
+                    "quick_replies_default",
+                    default=None,
+                    clinic_id=clinic_id,
+                )
             data: list[dict[str, str]] = []
             if isinstance(quick_replies, list):
                 for item in quick_replies:
@@ -988,19 +938,19 @@ Ponujamo:
         if service:
             service_key = service.lower()
             return _service_price_info(service_key, clinic_id=clinic_id)
-        return _rag_info_answer(message, "cene", clinic_id=clinic_id)
+        return _rag_info_answer(message, INFO_KEY_PRICES, clinic_id=clinic_id)
 
     # Handle INFO
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
         info_key = pick_info_key(message)
-        if info_key in CRITICAL_INFO_KEYS or info_key in {"parkiranje", "delovni_cas", "lokacija", "kontakt"}:
-            if info_key == "kontakt" and any(k in lowered for k in ["pridem", "pridemo", "pot"]):
-                return _get_info_response("lokacija", clinic_id=clinic_id)
+        if info_key in CRITICAL_INFO_KEYS or info_key in INFO_KEYS_DIRECT:
+            if info_key == INFO_KEY_CONTACT and any(k in lowered for k in CONTACT_ROUTE_WORDS):
+                return _get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)
             return _get_info_response(info_key, clinic_id=clinic_id)
         if info_key:
             return _rag_info_answer(message, info_key, clinic_id=clinic_id)
-        return _rag_info_answer(message, "storitve", clinic_id=clinic_id)
+        return _rag_info_answer(message, INFO_KEY_SERVICES, clinic_id=clinic_id)
 
     # For other intents, fall back to legacy system
     return None
@@ -1027,7 +977,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
         if not message:
             payload = format_response(
-                "Prosim napišite sporočilo, da vam lahko pomagam.",
+                get_response("general.empty_message", clinic_id=clinic_id),
                 state_manager=state_mgr,
                 metadata={"contract_version": "v0.1", "router": "unified_only"},
             )
@@ -1049,19 +999,33 @@ async def chat(request: ChatRequest) -> ChatResponse:
             if loop_count >= 2:
                 conversation_tracker.reset_loop_count(session_id)
                 payload = format_response(
-                    "Mislim, da je prišlo do nesporazuma. Začniva znova. Kako vam lahko pomagam?",
+                    get_response("general.anti_loop.apology", clinic_id=clinic_id),
                     state_manager=state_mgr,
                     metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
                 )
                 return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
             payload = format_response(
-                "Opazil sem ponavljanje. Prosim povejte konkretno: pregled + datum.",
+                get_response("general.anti_loop.warning", clinic_id=clinic_id),
                 state_manager=state_mgr,
                 metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
             )
             return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         conversation_tracker.add_message(session_id, message)
+
+        fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
+        if fast_pass:
+            payload = format_response(
+                str(fast_pass.get("response", "")),
+                state_manager=state_mgr,
+                metadata={
+                    "contract_version": "v0.1",
+                    "router": "unified_only",
+                    "fast_pass": True,
+                    "category": fast_pass.get("category"),
+                },
+            )
+            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         # Primary path: unified routing handler
         response_text = handle_unified_routing(message, session_id, clinic_id=clinic_id)
@@ -1086,11 +1050,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
                             session_id=session_id,
                             clinic_id=clinic_id,
                         )
-                    if len(response_text) > 50 and "Nisem prepričan" not in response_text:
+                    if len(response_text) > 50 and _get_uncertain_marker(clinic_id=clinic_id) not in response_text:
                         response_cache.set(message, response_text)
                 except Exception as e:
                     print(f"[UNIFIED_FALLBACK] Error: {e}")
-                    response_text = "Lahko pomagam z naročilom, cenami, lokacijo in termini."
+                    response_text = get_response("general.fallback_short", clinic_id=clinic_id)
 
         # Persist lightweight history + metadata
         conversation_history.append({"role": "user", "content": message})
@@ -1167,17 +1131,10 @@ async def voice_input(
     clinic_id: str = None
 ):
     """
-    Sprejme glasovno sporočilo, transkribira z Whisper in vrne odgovor.
+    Accepts a voice message, transcribes with Whisper, and returns a reply.
 
-    Podprti formati: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg
-    Maksimalna velikost: 25 MB
-
-    Returns:
-        {
-            "transcription": str,
-            "reply": str,
-            "session_id": str
-        }
+    Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg
+    Max size: 25 MB
     """
     from app.services.voice_service import get_voice_service
 
@@ -1187,7 +1144,7 @@ async def voice_input(
     if not voice_service.is_available():
         return {
             "success": False,
-            "error": "Voice service ni na voljo. Prosimo pišite sporočilo.",
+            "error": get_response("general.voice_unavailable", clinic_id=clinic_id),
             "transcription": None,
             "reply": None
         }
@@ -1215,7 +1172,7 @@ async def voice_input(
         if not result["success"]:
             return {
                 "success": False,
-                "error": result.get("error", "Napaka pri transkripciji"),
+                "error": result.get("error", get_response("general.voice_transcription_error", clinic_id=clinic_id)),
                 "transcription": None,
                 "reply": None
             }
@@ -1245,7 +1202,7 @@ async def voice_input(
         print(f"[VOICE] Error: {e}")
         return {
             "success": False,
-            "error": f"Napaka pri obdelavi: {str(e)}",
+            "error": get_response("general.voice_processing_error", clinic_id=clinic_id, error=str(e)),
             "transcription": None,
             "reply": None
         }
@@ -1258,14 +1215,14 @@ async def sms_webhook(
     MessageSid: str = Form(default=""),
 ):
     """
-    Webhook za Twilio - procesira odgovore pacientov na SMS opomnike.
+    Twilio webhook - processes patient SMS responses to reminders.
 
-    Pacienti lahko odgovorijo:
-    - DA / PRIDEM / OK → Potrditev termina
-    - PRESTAVI → Želim nov termin
-    - ODPOVEJ / NE → Preklic termina
+    Patients can reply:
+    - YES / OK → Confirm appointment
+    - RESCHEDULE → Request a new time
+    - CANCEL / NO → Cancel appointment
 
-    Uporaba v Twilio Console:
+    Twilio Console:
     - Webhook URL: https://yourdomain.com/chat/sms-webhook
     - HTTP Method: POST
     """
@@ -1278,11 +1235,11 @@ async def sms_webhook(
         # Procesiraj odgovor
         result = handle_sms_response(From, Body)
 
-        # Pošlji odgovor pacientu
+        # Send reply to patient
         if result.get("response_message"):
             send_sms(From, result["response_message"])
 
-        # Twilio TwiML response (prazen - ne pošiljamo novega SMS-a preko TwiML)
+        # Twilio TwiML response (empty - no outbound SMS via TwiML)
         twiml = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
         return Response(content=twiml, media_type="application/xml")
 
