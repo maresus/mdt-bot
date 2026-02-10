@@ -55,8 +55,9 @@ def handle_booking_interrupt(
         return None
     if step == "time" and deps.extract_time_from_message(message):
         return None
-    if step == "select_service" and deps.extract_service_type(message):
-        return None
+    if step in {"service", "select_service", None} and not appointment_data.get("service_type"):
+        if deps.extract_service_type(message):
+            return None
     if step == "name" and deps.is_likely_full_name(message):
         return None
     if step == "phone":
