@@ -83,17 +83,17 @@ async def receive_wordpress_reservation(
             if not provided_token or provided_token != expected:
                 raise HTTPException(status_code=401, detail="Invalid webhook token")
 
-    # rate limit per IP
-    ip = request.client.host if request.client else "unknown"
-    now = time.time()
-    history = rate_limit_log.get(ip, [])
-    history = [ts for ts in history if now - ts < RATE_LIMIT_WINDOW]
-    if len(history) >= RATE_LIMIT_MAX:
-        raise HTTPException(status_code=429, detail="Too Many Requests")
-    history.append(now)
-    rate_limit_log[ip] = history
+        # rate limit per IP
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        history = rate_limit_log.get(ip, [])
+        history = [ts for ts in history if now - ts < RATE_LIMIT_WINDOW]
+        if len(history) >= RATE_LIMIT_MAX:
+            raise HTTPException(status_code=429, detail="Too Many Requests")
+        history.append(now)
+        rate_limit_log[ip] = history
 
-    # signature verification (skip if secret not set)
+        # signature verification (skip if secret not set)
         secret = WEBHOOK_SECRET or ""
         if secret and not expected:
             raw_body = await request.body()
