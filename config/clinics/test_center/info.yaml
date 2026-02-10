@@ -1,0 +1,206 @@
+version: 1
+facts:
+  lokacija:
+    priority: fast
+    category: LOKACIJA_INFO
+    keywords:
+      - kje
+      - kje ste
+      - kje vas najdemo
+      - naslov
+      - lokacija
+      - nahajate
+      - pridem
+      - pridem do vas
+    response: |
+      Najdete nas na naslovu [Naslov klinike].
+      Parkiranje je na voljo pred objektom.
+
+  kontakt:
+    priority: fast
+    category: KONTAKT_INFO
+    keywords:
+      - kontakt
+      - telefon
+      - telefonska
+      - email
+      - e-pošta
+      - eposta
+    response: |
+      Telefon: 01 234 56 78
+      Email: info@test-center.si
+
+  contact_short:
+    priority: medium
+    category: KONTAKT_INFO
+    keywords:
+      - kratek kontakt
+    response: |
+      🚗 Parking: brezplačen pred objektom
+      📞 Telefon: 01 234 56 78
+      📧 Email: info@test-center.si
+
+  delovni_cas:
+    priority: fast
+    category: DELOVNI_CAS_INFO
+    keywords:
+      - delovni čas
+      - delovni cas
+      - odprti
+      - odprto
+      - kdaj ste odprti
+    response: |
+      Delamo od ponedeljka do petka, 08:00–18:00.
+
+  parkiranje:
+    priority: medium
+    category: PARKIRANJE_INFO
+    keywords:
+      - parking
+      - parkiranje
+      - parkirišče
+      - parkirisce
+    response: |
+      Parkiranje je brezplačno pred objektom.
+
+  cene:
+    priority: fast
+    category: CENE_INFO
+    keywords:
+      - cena
+      - cene
+      - cenik
+      - koliko stane
+      - kolk stane
+    response: |
+      Cene pregledov so odvisne od storitve.
+      Povejte, za katero storitev vas zanima cena.
+
+  service_dermatolog:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - dermatolog
+      - dermatologija
+    response: |
+      **Dermatologija** - pregledi kožnih težav
+
+      Zdravimo:
+      - Izpuščaje, akne, ekceme
+      - Luskavico, psoriaze
+      - Kožne spremembe, madeže
+      - Glivične okužbe
+
+      🔬 **Dermatološki pregled** (30 min, 25-150 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_ortoped:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - ortoped
+      - ortopedija
+    response: |
+      **Ortopedija** - pregledi gibalnega sistema
+
+      Zdravimo:
+      - Bolečine v hrbtu, kolenih, ramenih
+      - Športne poškodbe
+      - Težave s sklepi
+      - Poškodbe mišic in vezi
+
+      🦴 **Ortopedski pregled** (30 min, 40-80 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_okulist:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - okulist
+      - oftalmolog
+      - očesni
+    response: |
+      **Oftalmologija** - pregledi oči
+
+      Zdravimo:
+      - Težave z vidom
+      - Očesne bolezni
+      - Predpis očal in kontaktnih leč
+
+      👁️ **Očesni pregled** (30 min, 35-70 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_estetski_poseg:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - estetski
+      - botox
+      - filler
+    response: |
+      **Estetski posegi**
+
+      Ponujamo:
+      - Botox
+      - Fillerji
+      - Biorevitalizacija kože
+
+      💉 **Estetski poseg** (30 min, 80-300 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_laserski_poseg:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - laser
+      - laserski
+    response: |
+      **Laserski posegi**
+
+      Ponujamo:
+      - Odstranjevanje žilic
+      - Odstranjevanje bradavic
+      - Zdravljenje glivic nohtov
+
+      ⚡ **Laserski poseg** (30 min, 50-200 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_fizioterapija:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - fizioterapija
+    response: |
+      **Fizioterapija**
+
+      Ponujamo:
+      - Rehabilitacija po poškodbah
+      - Masaže
+      - Razgibalne vaje
+
+      💆 **Fizioterapija** (60 min, 40-80 €)
+
+      🎯 Želite termin? Povejte mi datum!
+
+  service_kozmetika:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - kozmetika
+      - kozmetični
+    response: |
+      **Kozmetični salon**
+
+      Ponujamo:
+      - Profesionalna nega obraza
+      - Tretmaji kože
+      - Kozmetični posegi
+
+      ✨ **Kozmetični tretma** (60 min, 40-100 €)
+
+      🎯 Želite termin? Povejte mi datum!

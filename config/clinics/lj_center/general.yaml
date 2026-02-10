@@ -1,0 +1,61 @@
+version: 1
+messages:
+  greeting:
+    text: "Pozdravljeni! Kako vam lahko pomagam?"
+
+  goodbye:
+    text: "Hvala za zaupanje. Lep dan!"
+
+  fallback:
+    text: "Oprostite, tega nisem razumel. Lahko vprašanje preoblikujete?"
+
+  help_prompt:
+    text: "Kako vam lahko pomagam?"
+
+  more_info_label:
+    text: "Več informacij:"
+
+  empty_message:
+    text: "Prosim napišite sporočilo, da vam lahko pomagam."
+
+  anti_loop:
+    warning: "Opazil sem ponavljanje. Prosim povejte konkretno: pregled + datum."
+    apology: "Mislim, da je prišlo do nesporazuma. Začniva znova. Kako vam lahko pomagam?"
+
+  booking_cancelled:
+    text: "V redu, naročilo preklicano. Kako vam lahko drugače pomagam?"
+
+  urgency:
+    text: |
+      ⚠️ **Če gre za nujni primer, prosim pokličite:**
+      - Urgenca: 112
+      - Zdravstveni center: 01 234 56 78
+
+      Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši prosti termin?
+
+  unsupported_symptom_default:
+    text: "Žal mi je, da imate težave. V našem centru nimamo ustreznega specialista, lahko pa ponudimo splošni posvet. Želite, da preverim proste termine?"
+
+  fallback_short:
+    text: "Lahko pomagam z naročilom, cenami, lokacijo in termini."
+
+  service_price:
+    text: "💰 {label} – {name}: Cena {price_range} · {duration_minutes} min"
+
+  voice_unavailable:
+    text: "Voice service ni na voljo. Prosimo pišite sporočilo."
+
+  voice_transcription_error:
+    text: "Napaka pri transkripciji"
+
+  voice_processing_error:
+    text: "Napaka pri obdelavi: {error}"
+
+  uncertain_marker:
+    text: "Nisem prepričan"
+
+  quick_replies_default:
+    - label: "Da, prosim"
+      value: "DA"
+    - label: "Ne, hvala"
+      value: "NE"

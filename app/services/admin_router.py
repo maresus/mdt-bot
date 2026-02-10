@@ -21,6 +21,13 @@ from app.services.reservation_service import SERVICES, ReservationService
 from app.services.chat_history_service import get_chat_history_service
 from app.services.admin_audit import log_admin_action, list_admin_audit
 from app.services.clinic_kb_service import get_clinic_info, update_clinic_info
+from app.services.clinic_config import (
+    get_clinic_config,
+    list_available_clinics,
+    resolve_clinic_id,
+    set_current_clinic_id,
+    reset_current_clinic_id,
+)
 
 # Compatibility aliases za admin panel
 ROOMS = SERVICES  # Storitve namesto sob
@@ -42,8 +49,32 @@ from app.services.imap_poll_service import load_state, preview_last_messages, re
 def _auth_enabled() -> bool:
     return any(
         os.getenv(var)
-        for var in ("ADMIN_TOKEN", "ADMIN_READ_TOKEN", "ADMIN_WRITE_TOKEN")
+        for var in ("ADMIN_TOKEN", "ADMIN_READ_TOKEN", "ADMIN_WRITE_TOKEN", "STRICT_ADMIN_AUTH")
     )
+
+
+def _resolve_clinic_from_request(
+    request: Request,
+    x_clinic_id: Optional[str],
+) -> str:
+    strict_clinic = os.getenv("STRICT_CLINIC_ID", "false").strip().lower() in {"1", "true", "yes", "on"}
+    try:
+        return resolve_clinic_id(x_clinic_id or request.query_params.get("clinic_id"), strict=strict_clinic)
+    except ValueError:
+        available = list_available_clinics()
+        raise HTTPException(status_code=400, detail={"error": "unknown_clinic_id", "available": available})
+
+
+def admin_context(
+    request: Request,
+    x_clinic_id: Optional[str] = Header(None, alias="X-Clinic-Id"),
+):
+    clinic_id = _resolve_clinic_from_request(request, x_clinic_id)
+    token = set_current_clinic_id(clinic_id)
+    try:
+        yield clinic_id
+    finally:
+        reset_current_clinic_id(token)
 
 
 def _extract_bearer(authorization: Optional[str]) -> Optional[str]:
@@ -73,9 +104,28 @@ def _resolve_role(authorization: Optional[str]) -> Optional[str]:
     return None
 
 
-def require_read(authorization: Optional[str] = Header(None)) -> str:
+def require_read(
+    authorization: Optional[str] = Header(None),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+    clinic_id: str = Depends(admin_context),
+) -> str:
     if not _auth_enabled():
         return "admin"
+
+    config = get_clinic_config(clinic_id=clinic_id)
+    auth_cfg = config.get("auth", {}) if isinstance(config, dict) else {}
+    expected = auth_cfg.get("admin_api_key")
+    provided = _extract_bearer(x_admin_token or authorization)
+
+    if expected:
+        if not provided or provided != expected:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        return "admin"
+
+    strict_admin = os.getenv("STRICT_ADMIN_AUTH", "false").strip().lower() in {"1", "true", "yes", "on"}
+    if strict_admin:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     role = _resolve_role(authorization)
     if not role:
         raise HTTPException(status_code=401, detail="Unauthorized")

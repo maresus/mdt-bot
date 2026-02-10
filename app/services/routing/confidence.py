@@ -37,6 +37,10 @@ APPOINTMENT_KEYWORDS = {
     "narocilo",
     "rezerv",
     "pregled",
+    "poseg",
+    "posege",
+    "tretma",
+    "tretmaji",
     "kontrola",
     "kontrolo",
     "obisk",
@@ -96,8 +100,6 @@ DERMATOLOGY_KEYWORDS = {
     "melanom",
     "znamenje",
     "znamnje",   # typo
-    "bradavic",
-    "glivic",
     "skin",
     "rash",
     "mole",
@@ -194,6 +196,8 @@ LASER_KEYWORDS = {
     "žilic",
     "zilic",
     "kapilare",
+    "bradavic",
+    "glivic",
 }
 
 PHYSIOTHERAPY_KEYWORDS = {
@@ -259,6 +263,29 @@ SERVICE_INQUIRY_KEYWORDS = {
     "vprasat",        # sleng
 }
 
+# Symptom keywords to trigger SERVICE_INFO (health advice path)
+SYMPTOM_KEYWORDS = {
+    "boli",
+    "boleč",
+    "bolec",
+    "bolečin",
+    "bolecin",
+    "glava",
+    "glavobol",
+    "migrena",
+    "srbi",
+    "srbec",
+    "srbeč",
+    "srbe",
+    "izpuščaj",
+    "izpuscaj",
+    "otekl",
+    "otekla",
+    "oteklo",
+    "slabo vidim",
+    "vidim slabše",
+    "slabse vidim",
+}
 # ============ INFO KEYWORDS ============
 
 INFO_KEYWORDS = {
@@ -378,6 +405,30 @@ URGENCY_KEYWORDS = {
 QUESTION_MARKERS = {"?", "ali", "a ", "a imate", "imate", "kaj", "koliko", "kdaj", "kje"}
 
 
+def _ascii_fold(text: str) -> str:
+    return (
+        text.replace("š", "s")
+        .replace("č", "c")
+        .replace("ž", "z")
+        .replace("đ", "d")
+    )
+
+
+def _build_service_keywords(service_map: Dict[str, list[str]] | None) -> set[str]:
+    keywords: set[str] = set(SERVICE_KEYWORDS)
+    if not service_map:
+        return keywords
+    for values in service_map.values():
+        for kw in values:
+            if isinstance(kw, str) and kw:
+                token = kw.lower()
+                keywords.add(token)
+                folded = _ascii_fold(token)
+                if folded and folded != token:
+                    keywords.add(folded)
+    return keywords
+
+
 def _score_from_keywords(message: str, keywords: set[str]) -> float:
     return 0.4 if any(k in message for k in keywords) else 0.0
 
@@ -391,8 +442,34 @@ def _contains_word(message: str, words: set[str]) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", message, re.IGNORECASE) for w in words)
 
 
-def _detect_service_type(text: str, service_map: dict | None = None) -> str | None:
+def _detect_service_type(text: str, service_map: Dict[str, list[str]] | None = None) -> str | None:
     """Detect specific service type from message."""
+    if service_map:
+        matches: dict[str, int] = {}
+        folded_text = _ascii_fold(text)
+        for service_key, keywords in service_map.items():
+            if not isinstance(keywords, list):
+                continue
+            count = 0
+            for kw in keywords:
+                if not isinstance(kw, str):
+                    continue
+                token = kw.lower()
+                token_folded = _ascii_fold(token)
+                if len(token) <= 3:
+                    if _contains_word(text, {token}) or _contains_word(folded_text, {token_folded}):
+                        count += 1
+                elif token in text or token_folded in folded_text:
+                    count += 1
+            if count:
+                matches[service_key] = count
+        if matches:
+            # Prefer laser if any laser-specific keyword appears
+            if "laserski_poseg" in matches and any(k in text for k in {"laser", "lasersk"}):
+                return "LASERSKI_POSEG"
+            best = max(matches.items(), key=lambda item: item[1])[0]
+            return best.upper()
+
     # Order matters - more specific first, then check word-boundary matches
     if any(k in text for k in DERMATOLOGY_KEYWORDS):
         return "DERMATOLOG"
@@ -418,13 +495,18 @@ def _detect_service_type(text: str, service_map: dict | None = None) -> str | No
     return None
 
 
-def compute_confidence(message: str, intent: str) -> float:
+def compute_confidence(
+    message: str,
+    intent: str,
+    service_keywords: set[str] | None = None,
+) -> float:
     """Compute confidence score for given intent."""
     text = message.lower()
+    service_keywords = service_keywords or SERVICE_KEYWORDS
 
     # Pre-compute common signals
     has_appointment_kw = any(k in text for k in APPOINTMENT_KEYWORDS)
-    has_service_kw = any(k in text for k in SERVICE_KEYWORDS)
+    has_service_kw = any(k in text for k in service_keywords)
     has_booking_hint = any(k in text for k in BOOKING_HINTS)
     has_greeting_kw = any(k in text for k in GREETING_KEYWORDS) or _contains_word(text, GREETING_WORDS)
     has_price_kw = any(k in text for k in PRICE_KEYWORDS)
@@ -472,10 +554,17 @@ def compute_confidence(message: str, intent: str) -> float:
 
         # Strong signal: explicit appointment + service type
         if has_appointment_kw and has_service_kw:
+            if not has_booking_hint and not any(k in text for k in {"naroč", "naroc", "rezerv", "termin"}):
+                return 0.4
             return 0.95
 
         # Strong signal: booking hint + service type
         if has_booking_hint and has_service_kw:
+            # If no explicit appointment keyword, favor SERVICE_INFO over booking
+            if not has_appointment_kw:
+                if any(k in text for k in {"rabim", "potrebujem", "hočem", "hocem", "rad bi", "rada bi", "bi rad", "bi rada", "appointment", "book", "booking"}):
+                    return 0.85
+                return 0.45
             return 0.9
 
         # Strong signal: booking hint + appointment keyword
@@ -498,24 +587,33 @@ def compute_confidence(message: str, intent: str) -> float:
 
     if intent == "SERVICE_INFO":
         # Questions about services (not booking)
-        has_service_kw = any(k in text for k in SERVICE_KEYWORDS)
+        has_service_kw = any(k in text for k in service_keywords)
         has_inquiry_kw = any(k in text for k in SERVICE_INQUIRY_KEYWORDS)
-        has_booking_hint = any(k in text for k in BOOKING_HINTS) or any(k in text for k in APPOINTMENT_KEYWORDS)
+        has_booking_hint = any(k in text for k in BOOKING_HINTS)
+        has_symptom_kw = any(k in text for k in SYMPTOM_KEYWORDS)
 
         # Strong signal: service + inquiry keyword (e.g., "kaj zdravi dermatolog?")
         if has_service_kw and has_inquiry_kw:
             return 0.9
 
+        # Strong signal: symptom report (e.g., "boli me glava")
+        if has_symptom_kw:
+            return 0.9
+
         # Medium signal: just inquiry keywords (e.g., "katere bolezni zdravite?")
         if has_inquiry_kw:
+            if "storitve" in text and not has_service_kw and "ponujate" not in text:
+                return 0.4
             return 0.85
 
-        # Service keyword without booking hint
-        if has_service_kw and not has_booking_hint:
+        # Service keyword without appointment keyword -> info intent
+        if has_service_kw and not has_appointment_kw:
             return 0.8
 
-        # Service keyword with booking hint = likely BOOKING_APPOINTMENT
-        if has_service_kw:
+        # Service keyword with appointment keyword = likely BOOKING_APPOINTMENT
+        if has_service_kw and has_appointment_kw:
+            if not has_booking_hint and not any(k in text for k in {"naroč", "naroc", "rezerv", "termin"}):
+                return 0.6
             return 0.3
 
         return 0.0
@@ -526,7 +624,7 @@ def compute_confidence(message: str, intent: str) -> float:
         return 0.0
 
     if intent == "INFO":
-        if any(k in text for k in INFO_KEYWORDS):
+        if any(k in text for k in INFO_KEYWORDS) or "storitve" in text:
             return 0.8
         base = _score_question_marker(text)
         return min(base, 1.0)
@@ -539,8 +637,9 @@ def compute_confidence(message: str, intent: str) -> float:
     return 0.0
 
 
-def detect_intents(message: str, service_map: dict | None = None) -> Dict[str, float]:
+def detect_intents(message: str, service_map: Dict[str, list[str]] | None = None) -> Dict[str, float]:
     """Score all intents for given message."""
+    service_keywords = _build_service_keywords(service_map)
     intents = [
         "BOOKING_APPOINTMENT",
         "SERVICE_INFO",
@@ -550,7 +649,7 @@ def detect_intents(message: str, service_map: dict | None = None) -> Dict[str, f
         "GREETING",
         "GOODBYE",
     ]
-    return {intent: compute_confidence(message, intent) for intent in intents}
+    return {intent: compute_confidence(message, intent, service_keywords=service_keywords) for intent in intents}
 
 
 def pick_primary_secondary(scores: Dict[str, float]) -> Tuple[str, str | None, float]:
@@ -565,6 +664,6 @@ def pick_primary_secondary(scores: Dict[str, float]) -> Tuple[str, str | None, f
     return primary, secondary, primary_conf
 
 
-def detect_service_type(message: str, service_map: dict | None = None) -> str | None:
+def detect_service_type(message: str, service_map: Dict[str, list[str]] | None = None) -> str | None:
     """Public function to detect service type."""
     return _detect_service_type(message.lower(), service_map=service_map)
