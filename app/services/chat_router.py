@@ -788,11 +788,13 @@ def handle_unified_routing(
 
     # If user provides a date after service info prompt, start booking immediately
     date_str = extract_date_from_message(message)
-    if date_str and suggested_service and not is_in_flow(session_id):
-        state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
-        start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-        state_mgr.clear_context_key("suggested_service")
-        return handle_appointment_booking(message, session_id)
+    if date_str and suggested_service:
+        current_step = get_current_step(session_id)
+        if not is_in_flow(session_id) or current_step in {FlowStep.SERVICE.value, FlowStep.SELECT_SERVICE.value, None}:
+            state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
+            start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+            state_mgr.clear_context_key("suggested_service")
+            return handle_appointment_booking(message, session_id)
 
     # Log decision for debugging
     print(f"[UNIFIED] Intent: {decision.primary_intent.value}, Confidence: {decision.confidence:.2f}, Action: {decision.action.value}, Service: {decision.service_type}")
@@ -869,8 +871,12 @@ def handle_unified_routing(
 
     # Handle SERVICE_INFO (symptoms, service questions)
     if decision.primary_intent == IntentType.SERVICE_INFO:
-        if is_in_flow(session_id) and get_current_step(session_id) == "reason":
+        current_step = get_current_step(session_id)
+        if is_in_flow(session_id) and current_step == FlowStep.REASON.value:
             return None
+        if is_in_flow(session_id) and current_step in {FlowStep.SERVICE.value, FlowStep.SELECT_SERVICE.value}:
+            if extract_service_type(message, clinic_id=clinic_id):
+                return None
         service = decision.service_type
         if service:
             state_mgr.set_context_value("suggested_service", service)
