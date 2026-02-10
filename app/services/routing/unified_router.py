@@ -15,6 +15,7 @@ from .confidence import (
     SwitchAction,
     detect_service_type,
 )
+from app.services.clinic_config import get_clinic_config
 
 
 class IntentType(str, Enum):
@@ -22,6 +23,7 @@ class IntentType(str, Enum):
     SERVICE_INFO = "SERVICE_INFO"
     PRICE = "PRICE"
     INFO = "INFO"
+    UNSUPPORTED_SYMPTOM = "UNSUPPORTED_SYMPTOM"
     URGENCY = "URGENCY"
     GREETING = "GREETING"
     GOODBYE = "GOODBYE"
@@ -104,8 +106,36 @@ def route(message: str, unified_state: Dict[str, Any]) -> Decision:
             action=SwitchAction.IGNORE,
         )
 
-    # 2. Score all intents through unified system
-    scores = detect_intents(message)
+    context = unified_state.get("context", {}) if isinstance(unified_state, dict) else {}
+    clinic_id = context.get("clinic_id") if isinstance(context, dict) else None
+    clinic_config = get_clinic_config(clinic_id=clinic_id)
+    service_map = clinic_config.get("service_map") if isinstance(clinic_config, dict) else None
+
+    # 2. YAML-driven unsupported symptom guard (highest priority for symptom triage)
+    unsupported_symptoms = []
+    if isinstance(clinic_config, dict):
+        unsupported_symptoms = clinic_config.get("unsupported_symptoms", []) or []
+    if isinstance(unsupported_symptoms, dict):
+        unsupported_symptoms = list(unsupported_symptoms.values())
+    if isinstance(unsupported_symptoms, list) and unsupported_symptoms:
+        lowered = message.lower()
+        for entry in unsupported_symptoms:
+            if not isinstance(entry, dict):
+                continue
+            keywords = entry.get("keywords", [])
+            if isinstance(keywords, str):
+                keywords = [keywords]
+            if not isinstance(keywords, list):
+                continue
+            if any(str(kw).lower() in lowered for kw in keywords if kw):
+                return Decision(
+                    primary_intent=IntentType.UNSUPPORTED_SYMPTOM,
+                    confidence=1.0,
+                    action=SwitchAction.IGNORE,
+                )
+
+    # 3. Score all intents through unified system
+    scores = detect_intents(message, service_map=service_map)
     primary, secondary, confidence = pick_primary_secondary(scores)
     primary_intent = IntentType(primary) if primary in IntentType._value2member_map_ else IntentType.GENERAL
     secondary_intent = (
@@ -113,7 +143,7 @@ def route(message: str, unified_state: Dict[str, Any]) -> Decision:
     )
 
     # 3. Detect service type if applicable
-    service_type = detect_service_type(message)
+    service_type = detect_service_type(message, service_map=service_map)
 
     # 4. Determine action based on current flow
     flow = unified_state.get("flow", "idle")
