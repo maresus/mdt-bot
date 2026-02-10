@@ -1024,7 +1024,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
         conversation_tracker.add_message(session_id, message)
 
-        fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
+        if not is_in_flow(session_id):
+            fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
+        else:
+            fast_pass = None
         if fast_pass:
             payload = format_response(
                 str(fast_pass.get("response", "")),

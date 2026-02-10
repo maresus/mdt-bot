@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import random
+import re
 from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Dict
@@ -206,7 +207,10 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
     facts = info_cfg.get("facts", {}) if isinstance(info_cfg, dict) else {}
     if not isinstance(facts, dict):
         return None
-    lowered = message.lower()
+    lowered = message.lower().strip()
+    if len(lowered) < 3:
+        return None
+    tokens = re.findall(r"[a-zčšž0-9]+", lowered, flags=re.IGNORECASE)
     try:
         from thefuzz import fuzz  # type: ignore
     except Exception:
@@ -225,6 +229,19 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
             if not kw:
                 continue
             kw_lower = str(kw).lower()
+            # Short single-word keywords should match tokens, not substrings.
+            if " " not in kw_lower and len(kw_lower) <= 3:
+                if kw_lower in tokens:
+                    response = entry.get("response")
+                    if isinstance(response, str) and response.strip():
+                        return {
+                            "response": response,
+                            "category": entry.get("category"),
+                            "key": key,
+                            "match": kw_lower,
+                            "score": 100,
+                        }
+                continue
             if kw_lower in lowered:
                 response = entry.get("response")
                 if isinstance(response, str) and response.strip():
@@ -235,7 +252,7 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
                         "match": kw_lower,
                         "score": 100,
                     }
-            if fuzz is not None:
+            if fuzz is not None and len(kw_lower) >= 5 and len(lowered) >= 5:
                 score = fuzz.partial_ratio(kw_lower, lowered)
                 if score >= 85:
                     response = entry.get("response")
