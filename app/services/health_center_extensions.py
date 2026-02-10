@@ -11,7 +11,7 @@ Storitve:
 """
 from datetime import datetime, timedelta
 import os
-from typing import Optional, Tuple, List, Set
+from typing import Optional, Tuple, List, Set, Dict, Any
 
 # Variacije imen storitev za prepoznavo v besedilu.
 SERVICE_NAME_MAP = {
@@ -69,22 +69,10 @@ SERVICES = {
     },
 }
 
-# Optional clinic config override (multi-tenancy)
 try:
     from app.services.clinic_config import get_clinic_config
-
-    _clinic_config = get_clinic_config(
-        defaults={
-            "services": SERVICES,
-            "service_map": SERVICE_NAME_MAP,
-        }
-    )
-    if isinstance(_clinic_config.get("services"), dict):
-        SERVICES = _clinic_config["services"]
-    if isinstance(_clinic_config.get("service_map"), dict):
-        SERVICE_NAME_MAP = _clinic_config["service_map"]
-except Exception:
-    pass
+except Exception:  # pragma: no cover - safe fallback for legacy imports
+    get_clinic_config = None
 
 # Delovni čas
 WORKING_HOURS = {
@@ -94,6 +82,28 @@ WORKING_HOURS = {
 
 # Dni v tednu (0=ponedeljek, 6=nedelja)
 WORKING_DAYS = {0, 1, 2, 3, 4}  # Pon-Pet
+
+
+def get_services(clinic_id: Optional[str] = None) -> Dict[str, Any]:
+    if get_clinic_config is None:
+        return SERVICES
+    config = get_clinic_config(
+        clinic_id=clinic_id,
+        defaults={"services": SERVICES, "service_map": SERVICE_NAME_MAP},
+    )
+    services = config.get("services") if isinstance(config, dict) else None
+    return services if isinstance(services, dict) else SERVICES
+
+
+def get_service_map(clinic_id: Optional[str] = None) -> Dict[str, List[str]]:
+    if get_clinic_config is None:
+        return SERVICE_NAME_MAP
+    config = get_clinic_config(
+        clinic_id=clinic_id,
+        defaults={"services": SERVICES, "service_map": SERVICE_NAME_MAP},
+    )
+    service_map = config.get("service_map") if isinstance(config, dict) else None
+    return service_map if isinstance(service_map, dict) else SERVICE_NAME_MAP
 
 
 def _get_booked_slots(date_str: str) -> Set[str]:
@@ -137,7 +147,7 @@ def _get_booked_slots(date_str: str) -> Set[str]:
         return set()  # Return empty set on error (show all slots)
 
 
-def get_available_time_slots(date_str: str, service_type: str) -> List[str]:
+def get_available_time_slots(date_str: str, service_type: str, clinic_id: Optional[str] = None) -> List[str]:
     """
     Vrne seznam prostih terminov za izbran dan in storitev.
 
@@ -159,11 +169,13 @@ def get_available_time_slots(date_str: str, service_type: str) -> List[str]:
     if date.weekday() not in WORKING_DAYS:
         return []
 
+    services = get_services(clinic_id)
+
     # Get service duration
-    if service_type not in SERVICES:
+    if service_type not in services:
         return []
 
-    duration = SERVICES[service_type]["duration_minutes"]
+    duration = services[service_type]["duration_minutes"]
 
     # Get already booked slots from database
     booked_slots = _get_booked_slots(date_str)
@@ -205,6 +217,7 @@ def validate_appointment_rules(
     service_type: str,
     patient_name: Optional[str] = None,
     patient_phone: Optional[str] = None,
+    clinic_id: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """
     Validira pravila za rezervacijo termina.
@@ -242,8 +255,9 @@ def validate_appointment_rules(
         return False, "Zdravstveni center je odprt od ponedeljka do petka. Prosimo izberite drug datum."
 
     # Check service type
-    if service_type not in SERVICES:
-        available = ", ".join([s["name"] for s in SERVICES.values()])
+    services = get_services(clinic_id)
+    if service_type not in services:
+        available = ", ".join([s["name"] for s in services.values()])
         return False, f"Neveljaven tip storitve. Na voljo: {available}"
 
     # Parse time
@@ -262,7 +276,7 @@ def validate_appointment_rules(
         return False, "Termini so na voljo ob polni in pol uri (npr. 9:00, 9:30, 10:00, ...)."
 
     # Check if appointment fits before closing
-    duration = SERVICES[service_type]["duration_minutes"]
+    duration = services[service_type]["duration_minutes"]
     end_hour = hour + (minute + duration) // 60
     end_minute = (minute + duration) % 60
 
@@ -279,11 +293,13 @@ def format_appointment_summary(
     time: str,
     service_type: str,
     patient_name: Optional[str] = None,
+    clinic_id: Optional[str] = None,
 ) -> str:
     """
     Formatira povzetek rezervacije termina za prikaz uporabniku.
     """
-    service = SERVICES.get(service_type, {"name": service_type, "duration_minutes": 30, "price_range": "Na voljo ob potrditvi"})
+    services = get_services(clinic_id)
+    service = services.get(service_type, {"name": service_type, "duration_minutes": 30, "price_range": "Na voljo ob potrditvi"})
 
     patient_info = f"\n👤 Pacient: {patient_name}" if patient_name else ""
 
@@ -306,23 +322,25 @@ def format_appointment_summary(
 """.strip()
 
 
-def get_service_info(service_type: str) -> Optional[dict]:
+def get_service_info(service_type: str, clinic_id: Optional[str] = None) -> Optional[dict]:
     """
     Vrne informacije o storitvi.
 
     Returns:
         {"name": str, "duration_minutes": int, "price_range": str, "description": str} or None
     """
-    return SERVICES.get(service_type)
+    services = get_services(clinic_id)
+    return services.get(service_type)
 
 
-def format_all_services_summary() -> str:
+def format_all_services_summary(clinic_id: Optional[str] = None) -> str:
     """
     Formatira seznam vseh razpoložljivih storitev.
     """
     lines = ["🏥 **Zdravstveni center - Storitve**\n"]
 
-    for service_type, info in SERVICES.items():
+    services = get_services(clinic_id)
+    for service_type, info in services.items():
         lines.append(f"**{info['name']}**")
         lines.append(f"⏱️ Trajanje: {info['duration_minutes']} min")
         lines.append(f"💰 Cena: {info['price_range']}")

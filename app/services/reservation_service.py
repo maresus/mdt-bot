@@ -14,36 +14,15 @@ except ImportError:
     HAS_POSTGRES = False
 
 from app.models.reservation import ReservationRecord
+from app.services.health_center_extensions import get_services
+from app.services.clinic_config import get_current_clinic_id
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# BETNAVA - Zdravstvene storitve (ordinacije)
-# Vsaka storitev deluje kot "soba" z neomejeno kapaciteto (sloti)
-SERVICES = [
-    {"id": "DERMATOLOG", "name": "Dermatološki pregled", "duration_minutes": 30},
-    {"id": "ORTOPED", "name": "Ortopedski pregled", "duration_minutes": 30},
-    {"id": "OKULIST", "name": "Okulistični pregled", "duration_minutes": 30},
-    {"id": "LASERSKI_POSEG", "name": "Laserski poseg", "duration_minutes": 30},
-    {"id": "ESTETSKI_POSEG", "name": "Estetski poseg", "duration_minutes": 30},
-    {"id": "KOZMETIKA", "name": "Kozmetični salon", "duration_minutes": 60},
-]
-
-SERVICE_NAME_MAP = {
-    "dermatolog": "DERMATOLOG",
-    "dermatološki": "DERMATOLOG",
-    "ortoped": "ORTOPED",
-    "ortopedski": "ORTOPED",
-    "okulist": "OKULIST",
-    "okulistični": "OKULIST",
-    "očesni": "OKULIST",
-    "laserski": "LASERSKI_POSEG",
-    "laser": "LASERSKI_POSEG",
-    "estetski": "ESTETSKI_POSEG",
-    "botox": "ESTETSKI_POSEG",
-    "filler": "ESTETSKI_POSEG",
-    "kozmetika": "KOZMETIKA",
-    "kozmetični": "KOZMETIKA",
-}
+# Legacy room/table constants (kept minimal for safety).
+ROOM_NAME_MAP: dict[str, str] = {}
+ROOM_CLOSED_DAYS = {5, 6}  # Sat, Sun
+MAX_NIGHTS = 30
 
 # Delovni dnevi in čas
 WORKING_DAYS = {0, 1, 2, 3, 4}  # Pon-Pet (0=Pon, 6=Ned)
@@ -70,6 +49,21 @@ class ReservationService:
 
         self._ensure_db()
         self._import_csv_if_empty()
+
+    def _rooms(self) -> list[dict[str, Any]]:
+        """Return current clinic services as room-like resources."""
+        clinic_id = get_current_clinic_id()
+        services = get_services(clinic_id)
+        rooms: list[dict[str, Any]] = []
+        for key, info in services.items():
+            rooms.append(
+                {
+                    "id": str(key).upper(),
+                    "name": info.get("name", str(key).title()),
+                    "duration_minutes": info.get("duration_minutes", 30),
+                }
+            )
+        return rooms
 
     # --- DB helpers ------------------------------------------------------
     def _conn(self):
@@ -422,7 +416,8 @@ class ReservationService:
 
     def _room_calendar(self) -> dict[str, set[str]]:
         """Vrne slovar room_id -> set datumov (dd.mm.yyyy) ki so zasedeni."""
-        calendar: dict[str, set[str]] = {r["id"]: set() for r in ROOMS}
+        rooms = self._rooms()
+        calendar: dict[str, set[str]] = {r["id"]: set() for r in rooms}
         for reservation in self._fetch_reservations():
             if reservation.reservation_type != "room":
                 continue
@@ -439,7 +434,7 @@ class ReservationService:
                 continue
             dates = [(arrival + timedelta(days=offset)).strftime("%d.%m.%Y") for offset in range(reservation.nights)]
             assigned = self._normalize_room_location(reservation.location)
-            rooms_to_mark = assigned if assigned else [r["id"] for r in ROOMS]
+            rooms_to_mark = assigned if assigned else [r["id"] for r in rooms]
             rooms_needed = reservation.rooms or self._rooms_needed(reservation.people)
             # če nimamo točne sobe, zapolnimo prve proste
             filled = 0
@@ -453,7 +448,7 @@ class ReservationService:
                     filled += 1
             # če še vedno kaj manjka, zapolnimo preostale
             if filled < rooms_needed:
-                for room_id in [r["id"] for r in ROOMS]:
+                for room_id in [r["id"] for r in rooms]:
                     if filled >= rooms_needed:
                         break
                     if all(date not in calendar[room_id] for date in dates):
@@ -469,7 +464,7 @@ class ReservationService:
         dates = [(arrival + timedelta(days=offset)).strftime("%d.%m.%Y") for offset in range(nights)]
         calendar = self._room_calendar()
         free = []
-        for room_id in [r["id"] for r in ROOMS]:
+        for room_id in [r["id"] for r in self._rooms()]:
             occupied = calendar.get(room_id, set())
             if all(d not in occupied for d in dates):
                 free.append(room_id)
@@ -544,14 +539,15 @@ class ReservationService:
         if people <= 0:
             return False, None
         rooms_needed = rooms or self._rooms_needed(people)
-        if rooms_needed > len(ROOMS):
+        rooms_list = self._rooms()
+        if rooms_needed > len(rooms_list):
             return False, None
 
         occupancy = self._room_occupancy()
         for offset in range(nights):
             day = (arrival + timedelta(days=offset)).strftime("%d.%m.%Y")
             used = occupancy.get(day, 0)
-            if used + rooms_needed > len(ROOMS):
+            if used + rooms_needed > len(rooms_list):
                 alternative = self.suggest_room_alternative(arrival, nights, rooms_needed)
                 return False, alternative
         return True, None
@@ -570,7 +566,7 @@ class ReservationService:
             fits = True
             for offset in range(nights):
                 day = (candidate + timedelta(days=offset)).strftime("%d.%m.%Y")
-                if occupancy.get(day, 0) + rooms_needed > len(ROOMS):
+                if occupancy.get(day, 0) + rooms_needed > len(self._rooms()):
                     fits = False
                     break
             if fits:
