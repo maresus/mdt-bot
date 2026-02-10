@@ -68,6 +68,8 @@ def handle_booking_interrupt(
         return None
     if step == "reason" and message.strip():
         return None
+    if step == "confirm" and decision_intent in {IntentType.AFFIRMATIVE, IntentType.NEGATIVE}:
+        return None
 
     current_service = appointment_data.get("service_type")
     incoming_service = (service_hint or "").lower() if service_hint else None
