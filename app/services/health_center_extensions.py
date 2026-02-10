@@ -86,6 +86,42 @@ try:
 except Exception:
     pass
 
+
+def _resolve_services(clinic_id: Optional[str] = None) -> dict:
+    if clinic_id:
+        try:
+            from app.services.clinic_config import get_clinic_config
+
+            config = get_clinic_config(clinic_id=clinic_id)
+            services = config.get("services") if isinstance(config, dict) else None
+            if isinstance(services, dict):
+                return services
+        except Exception:
+            pass
+    return SERVICES
+
+
+def _resolve_service_map(clinic_id: Optional[str] = None) -> dict:
+    if clinic_id:
+        try:
+            from app.services.clinic_config import get_clinic_config
+
+            config = get_clinic_config(clinic_id=clinic_id)
+            service_map = config.get("service_map") if isinstance(config, dict) else None
+            if isinstance(service_map, dict):
+                return service_map
+        except Exception:
+            pass
+    return SERVICE_NAME_MAP
+
+
+def get_services(clinic_id: Optional[str] = None) -> dict:
+    return _resolve_services(clinic_id=clinic_id)
+
+
+def get_service_map(clinic_id: Optional[str] = None) -> dict:
+    return _resolve_service_map(clinic_id=clinic_id)
+
 # Delovni čas
 WORKING_HOURS = {
     "start": 8,  # 8:00
@@ -306,14 +342,15 @@ def format_appointment_summary(
 """.strip()
 
 
-def get_service_info(service_type: str) -> Optional[dict]:
+def get_service_info(service_type: str, clinic_id: Optional[str] = None) -> Optional[dict]:
     """
     Vrne informacije o storitvi.
 
     Returns:
         {"name": str, "duration_minutes": int, "price_range": str, "description": str} or None
     """
-    return SERVICES.get(service_type)
+    services = _resolve_services(clinic_id=clinic_id)
+    return services.get(service_type)
 
 
 def format_all_services_summary() -> str:
