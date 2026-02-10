@@ -790,7 +790,7 @@ def handle_unified_routing(
     date_str = extract_date_from_message(message)
     if date_str and suggested_service:
         current_step = get_current_step(session_id)
-        if not is_in_flow(session_id) or current_step in {FlowStep.SERVICE.value, FlowStep.SELECT_SERVICE.value, None}:
+        if not is_in_flow(session_id) or current_step in {FlowStep.SERVICE.value, "select_service", None}:
             state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
             start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
             state_mgr.clear_context_key("suggested_service")
@@ -874,7 +874,7 @@ def handle_unified_routing(
         current_step = get_current_step(session_id)
         if is_in_flow(session_id) and current_step == FlowStep.REASON.value:
             return None
-        if is_in_flow(session_id) and current_step in {FlowStep.SERVICE.value, FlowStep.SELECT_SERVICE.value}:
+        if is_in_flow(session_id) and current_step in {FlowStep.SERVICE.value, "select_service"}:
             if extract_service_type(message, clinic_id=clinic_id):
                 return None
         service = decision.service_type
