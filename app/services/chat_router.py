@@ -878,6 +878,10 @@ def handle_unified_routing(
             if extract_service_type(message, clinic_id=clinic_id):
                 return None
         service = decision.service_type
+        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
+        if service and awaiting_price_service and not is_in_flow(session_id):
+            state_mgr.clear_context_key("awaiting_price_service")
+            return _service_price_info(service.lower(), clinic_id=clinic_id)
         if service:
             state_mgr.set_context_value("suggested_service", service)
             if _looks_like_symptom_report(message):
@@ -947,8 +951,10 @@ def handle_unified_routing(
     if decision.primary_intent == IntentType.PRICE:
         service = decision.service_type or suggested_service or appointment_state.get("service_type")
         if service:
+            state_mgr.clear_context_key("awaiting_price_service")
             service_key = service.lower()
             return _service_price_info(service_key, clinic_id=clinic_id)
+        state_mgr.set_context_value("awaiting_price_service", True)
         return _rag_info_answer(message, INFO_KEY_PRICES, clinic_id=clinic_id)
 
     # Handle INFO

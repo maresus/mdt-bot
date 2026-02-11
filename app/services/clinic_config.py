@@ -99,6 +99,14 @@ class ClinicConfigProvider:
         key: str,
         default: Any | None = None,
     ) -> Any:
+        def _pick_variant(value: Any) -> Any:
+            if isinstance(value, list):
+                options = [item for item in value if item is not None]
+                if options:
+                    return random.choice(options)
+                return None
+            return value
+
         def _resolve_path(data: Any, path: str) -> Any | None:
             if not isinstance(data, dict):
                 return None
@@ -107,8 +115,18 @@ class ClinicConfigProvider:
                 if not isinstance(current, dict):
                     return None
                 current = current.get(part)
-            if isinstance(current, dict) and "text" in current:
-                return current.get("text")
+            if isinstance(current, dict):
+                variants = current.get("variants")
+                if isinstance(variants, list) and variants:
+                    return _pick_variant(variants)
+                text = current.get("text")
+                if isinstance(text, list):
+                    return _pick_variant(text)
+                if text is not None:
+                    return text
+                return current
+            if isinstance(current, list):
+                return _pick_variant(current)
             return current
 
         if domain == "info":

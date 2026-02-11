@@ -1,7 +1,10 @@
 version: 1
 messages:
   greeting:
-    text: "Pozdravljeni! Kako vam lahko pomagam?"
+    variants:
+      - "Pozdravljeni! Kako vam lahko pomagam?"
+      - "Dober dan. Povejte, s čim vam lahko pomagam."
+      - "Živjo. Sem tukaj za naročila, cene, termine in informacije."
 
   goodbye:
     text: "Hvala za zaupanje. Lep dan!"
@@ -10,7 +13,10 @@ messages:
     text: "Oprostite, tega nisem razumel. Lahko vprašanje preoblikujete?"
 
   help_prompt:
-    text: "Kako vam lahko pomagam?"
+    variants:
+      - "Kako vam lahko pomagam?"
+      - "Kaj vas danes zanima?"
+      - "Povejte, kaj želite preveriti."
 
   more_info_label:
     text: "Več informacij:"
@@ -37,7 +43,10 @@ messages:
     text: "Žal mi je, da imate težave. V našem centru nimamo ustreznega specialista, lahko pa ponudimo splošni posvet. Želite, da preverim proste termine?"
 
   fallback_short:
-    text: "Lahko pomagam z naročilom, cenami, lokacijo in termini."
+    variants:
+      - "Lahko pomagam z naročilom, cenami, lokacijo in termini."
+      - "Pomagam pri naročanju, cenah, delovnem času in kontaktu."
+      - "Na voljo sem za termine, storitve, cene in osnovne informacije."
 
   service_price:
     text: "💰 {label} – {name}: Cena {price_range} · {duration_minutes} min"

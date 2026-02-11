@@ -76,6 +76,19 @@ facts:
       Cene pregledov so odvisne od storitve.
       Povejte, za katero storitev vas zanima cena.
 
+  vodstvo:
+    priority: fast
+    category: PODJETJE_INFO
+    keywords:
+      - direktor
+      - kdo je direktor
+      - kdo vodi
+      - vodja
+      - vodstvo
+    response: |
+      Trenutno nimam zanesljivega podatka o vodstvu podjetja.
+      Za uradno informacijo preverite kontaktno stran ali pokličite recepcijo.
+
   service_dermatolog:
     priority: low
     category: STORITVE_INFO
