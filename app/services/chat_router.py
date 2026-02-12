@@ -454,6 +454,14 @@ def _symptom_booking_nudge(service_key: str | None, clinic_id: str | None = None
     return "Če želite, lahko takoj preverim prost termin pri ustreznem specialistu."
 
 
+def _append_nudge_if_missing(advice_text: str, nudge: str) -> str:
+    """Avoid duplicated CTAs when advice template already includes booking prompt."""
+    lowered = advice_text.lower()
+    if ("termin" in lowered and ("preverim" in lowered or "naro" in lowered)):
+        return advice_text
+    return f"{advice_text}\n\n{nudge}"
+
+
 # Old rule-based classify_intent kept as fallback
 def classify_intent_rules(message: str, history: list = None, clinic_id: str | None = None) -> str:
     """Rule-based fallback for intent classification"""
@@ -971,12 +979,15 @@ def handle_unified_routing(
             state_mgr.set_context_value("suggested_service", service)
             if _looks_like_symptom_report(message):
                 nudge = _symptom_booking_nudge(service, clinic_id=clinic_id)
-                return f"{advice_only(service)}\n\n{nudge}"
+                return _append_nudge_if_missing(advice_only(service), nudge)
         if _looks_like_symptom_report(message) and not service:
             lowered = message.lower()
             if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
                 return advice_only_headache()
-            return f"{advice_only(None)}\n\n{_symptom_booking_nudge(None, clinic_id=clinic_id)}"
+            return _append_nudge_if_missing(
+                advice_only(None),
+                _symptom_booking_nudge(None, clinic_id=clinic_id),
+            )
         if service == "DERMATOLOG":
             return get_response(INFO_SERVICE_DERMATOLOG, clinic_id=clinic_id)
         elif service == "ORTOPED":
