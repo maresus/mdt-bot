@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -9,125 +10,157 @@ from app.services.chat_router import router as chat_router
 
 
 @dataclass(frozen=True)
-class Step:
-    session_id: str
-    message: str
-    expect_any: tuple[str, ...] = ()
+class Scenario:
+    scenario_id: str
+    turns: tuple[str, ...]
+    expect_any_final: tuple[str, ...]
 
 
-def _build_client() -> TestClient:
+@pytest.fixture(scope="module")
+def client() -> TestClient:
     app = FastAPI()
     app.include_router(chat_router)
     return TestClient(app)
 
 
-def _conversation_1() -> list[Step]:
-    # Booking + topic switch + resume + confirmation
+def _base_scenarios() -> list[Scenario]:
     return [
-        Step("e2e-s1", "zdravo", ("pomagam", "zanima")),
-        Step("e2e-s1", "rad bi se narocil", ("na kateri pregled", "kateri datum")),
-        Step("e2e-s1", "ortoped", ("ortopedija", "kateri datum", "prosti termini")),
-        Step("e2e-s1", "kje ste", ("naslov", "parkiranje", "kako vam lahko pomagam")),
-        Step("e2e-s1", "23.3.2026", ("prosti termini", "izberite drug datum")),
-        Step("e2e-s1", "12:00", ("ime in priimek", "prosim povejte uro")),
-        Step("e2e-s1", "Marko Satler", ("telefonska", "telefonsko")),
-        Step("e2e-s1", "041444444", ("email", "e-po")),
-        Step("e2e-s1", "satlermarko@gmail.com", ("razlog",)),
-        Step("e2e-s1", "bolecina v kolenu", ("ali so podatki pravilni",)),
-        Step("e2e-s1", "DA", ("naročilo uspešno", "nadaljujemo z naročilom")),
-        Step("e2e-s1", "hvala", ("hvala", "lep dan", "pomagam")),
+        Scenario(
+            "FLOW_BOOKING_BASIC",
+            ("zdravo", "rad bi se narocil", "ortoped"),
+            ("ortopedija", "kateri datum", "prosti termini"),
+        ),
+        Scenario(
+            "FLOW_BOOKING_WITH_DATE",
+            ("rad bi termin", "dermatolog", "24.3.2026"),
+            ("prosti termini", "izberite drug datum"),
+        ),
+        Scenario(
+            "FLOW_BOOKING_EMAIL_REASON",
+            ("rad bi termin", "okulist", "24.3.2026", "10:00", "Ana Novak", "040111222", "ana@example.com", "slabsi vid"),
+            ("ali so podatki pravilni", "prosim vnesite veljaven"),
+        ),
+        Scenario(
+            "FLOW_BOOKING_NEGATIVE_BRANCH",
+            ("rad bi termin", "ortoped", "24.3.2026", "09:00", "Miha Kralj", "031123123", "ne"),
+            ("razlog", "potrditev po e-pošti", "email"),
+        ),
+        Scenario(
+            "FLOW_INTERRUPTED_LOCATION",
+            ("rad bi termin", "ortoped", "kje ste", "24.3.2026"),
+            ("prosti termini", "izberite drug datum", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "FLOW_INTERRUPTED_PRICE",
+            ("rad bi termin", "dermatolog", "koliko stane pregled", "24.3.2026"),
+            ("prosti termini", "izberite drug datum", "cene"),
+        ),
+        Scenario(
+            "INFO_FUZZY_LOCATION",
+            ("kje se nahajaet",),
+            ("naslov", "parkiranje", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "INFO_FUZZY_HOURS",
+            ("kaksn delovn cas",),
+            ("08:00", "delamo", "ponedeljka"),
+        ),
+        Scenario(
+            "INFO_CONTACT",
+            ("kontakt pls",),
+            ("telefon", "email", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "INFO_PRICE_GENERIC",
+            ("kolk stane pregled",),
+            ("cene", "storitev"),
+        ),
+        Scenario(
+            "INFO_PRICE_WITH_SERVICE",
+            ("kolk stane ortoped",),
+            ("cena", "40", "80"),
+        ),
+        Scenario(
+            "INFO_COMPANY_DIRECTOR",
+            ("kdo je direktor",),
+            ("uradno informacijo", "recepcijo", "vodstvu"),
+        ),
+        Scenario(
+            "INTERRUPT_SYMPTOM_HEADACHE",
+            ("boli me glava",),
+            ("glavobol", "zdravnikom", "nujno obravnavo", "splošni posvet", "proste termine", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "INTERRUPT_SYMPTOM_SKIN",
+            ("imam srbec izpuscaj",),
+            ("dermatolo", "kož", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "INTERRUPT_URGENCY",
+            ("nujno je",),
+            ("112", "nujni primer", "na kateri pregled"),
+        ),
+        Scenario(
+            "LOOP_REPEAT_GREETING",
+            ("zdravo", "zdravo", "zdravo"),
+            ("ponavljanje", "nesporazuma", "pomagam"),
+        ),
+        Scenario(
+            "LOOP_REPEAT_SERVICE",
+            ("rad bi termin", "ortoped", "ortoped"),
+            ("kateri datum", "prosti termini", "ponavljanje", "ortopedija"),
+        ),
+        Scenario(
+            "MIX_TOPIC_SWITCH_BACK",
+            ("zdravo", "kje ste", "rad bi se narocil", "ortoped", "25.3.2026"),
+            ("prosti termini", "izberite drug datum"),
+        ),
+        Scenario(
+            "MIX_PRICE_THEN_BOOK",
+            ("koliko stane pregled", "ortoped", "rad bi termin", "ortoped"),
+            ("ortopedija", "kateri datum", "prosti termini", "cena"),
+        ),
+        Scenario(
+            "MIX_GOODBYE_REENTRY",
+            ("hvala", "zdravo", "kaksen je kontakt"),
+            ("telefon", "email", "pomagam", "lep dan"),
+        ),
     ]
 
 
-def _conversation_2() -> list[Step]:
-    # Slang + typo + repeated switches while booking
-    return [
-        Step("e2e-s2", "ej zivjo", ("pomagam", "zanima")),
-        Step("e2e-s2", "narocu bi se", ("na kateri pregled", "kateri datum")),
-        Step("e2e-s2", "dermatolog", ("dermatologija", "kateri datum", "prosti termini")),
-        Step("e2e-s2", "kaki mate cene", ("cene", "storitve")),
-        Step("e2e-s2", "25.3.2026", ("prosti termini", "izberite drug datum")),
-        Step("e2e-s2", "10:30", ("ime in priimek", "prosim povejte uro")),
-        Step("e2e-s2", "Miha Novak", ("telefonska", "telefonsko")),
-        Step("e2e-s2", "031123123", ("email", "e-po")),
-        Step("e2e-s2", "ne", ("razlog", "brez e-pošte", "potrditev po e-pošti", "email")),
-        Step("e2e-s2", "srbec izpuscaj", ("ali so podatki pravilni", "dermatološki", "potrditev po e-pošti", "email")),
-        Step("e2e-s2", "NE", ("prosim popravite", "preklicano", "na kateri pregled", "kateri datum", "potrditev po e-pošti", "email")),
-        Step("e2e-s2", "okulist", ("okul", "kateri datum", "prosti termini")),
-    ]
+def _build_100() -> list[Scenario]:
+    base = _base_scenarios()
+    scenarios: list[Scenario] = []
+    batch = 1
+    while len(scenarios) < 100:
+        for item in base:
+            if len(scenarios) >= 100:
+                break
+            scenarios.append(
+                Scenario(
+                    scenario_id=f"{item.scenario_id}_{batch:02d}",
+                    turns=item.turns,
+                    expect_any_final=item.expect_any_final,
+                )
+            )
+        batch += 1
+    return scenarios
 
 
-def _conversation_3() -> list[Step]:
-    # Info-heavy user with typos and slang
-    return [
-        Step("e2e-s3", "kje se nahajaet", ("naslov", "parkiranje")),
-        Step("e2e-s3", "kaksn delovn cas", ("ponedeljka", "08:00", "delamo")),
-        Step("e2e-s3", "kolk stane ortoped", ("cena", "40", "80")),
-        Step("e2e-s3", "kdo je direktor", ("vodstvu", "uradno informacijo", "recepcijo")),
-        Step("e2e-s3", "maste parking", ("parkiranje", "parkiri", "kako vam lahko pomagam")),
-        Step("e2e-s3", "kontakt pls", ("telefon", "email")),
-        Step("e2e-s3", "prosti termini", ("prosti", "termin", "na kateri pregled")),
-        Step("e2e-s3", "nujno je", ("112", "nujni primer", "na kateri pregled")),
-        Step("e2e-s3", "boli me glava", ("nevrologa", "splošni posvet", "proste termine", "kako vam lahko pomagam")),
-        Step("e2e-s3", "da", ("pomagam", "naročilom", "storitvah", "lokacijo", "na kateri pregled")),
-        Step("e2e-s3", "ok hvala", ("hvala", "lep dan", "pomagam", "na kateri pregled")),
-        Step("e2e-s3", "kje ste", ("naslov", "parkiranje", "kako vam lahko pomagam")),
-    ]
+SCENARIOS = _build_100()
 
 
-def _conversation_4() -> list[Step]:
-    # Repeats + loop pressure + flow recovery
-    return [
-        Step("e2e-s4", "zdravo", ("pomagam", "zanima")),
-        Step("e2e-s4", "zdravo", ("pomagam", "ponavljanje", "nesporazuma")),
-        Step("e2e-s4", "zdravo", ("pomagam", "ponavljanje", "nesporazuma")),
-        Step("e2e-s4", "rad bi termin", ("na kateri pregled", "kateri datum")),
-        Step("e2e-s4", "ortoped", ("ortopedija", "kateri datum", "prosti termini")),
-        Step("e2e-s4", "ortoped", ("kateri datum", "prosti termini", "ponavljanje", "ortopedija")),
-        Step("e2e-s4", "26.3.2026", ("prosti termini", "izberite drug datum")),
-        Step("e2e-s4", "08:00", ("ime in priimek", "prosim povejte uro")),
-        Step("e2e-s4", "Ana Kralj", ("telefonska", "telefonsko")),
-        Step("e2e-s4", "040111222", ("email", "e-po")),
-        Step("e2e-s4", "ana@example.com", ("razlog",)),
-        Step("e2e-s4", "bolečina v hrbtu", ("ali so podatki pravilni",)),
-        Step("e2e-s4", "DA", ("naročilo uspešno", "nadaljujemo z naročilom")),
-    ]
+@pytest.mark.parametrize("scenario", SCENARIOS, ids=[s.scenario_id for s in SCENARIOS])
+def test_e2e_100_complex_chat_scenarios(client: TestClient, scenario: Scenario) -> None:
+    session_id = f"e2e-{scenario.scenario_id.lower()}"
 
-
-def _extra_noise() -> list[Step]:
-    # 51 extra one-shot turns to reach exactly 100 turns total.
-    pool = [
-        ("e2e-n1", "kje ste"),
-        ("e2e-n2", "kaksen je kontakt"),
-        ("e2e-n3", "kolk stane pregled"),
-        ("e2e-n4", "ortoped"),
-        ("e2e-n5", "kdo vodi podjetje"),
-        ("e2e-n6", "hvala"),
-        ("e2e-n7", "nujno"),
-        ("e2e-n8", "prosti termini"),
-        ("e2e-n9", "zdravo"),
-    ]
-    steps: list[Step] = []
-    idx = 0
-    while len(steps) < 51:
-        sid, msg = pool[idx % len(pool)]
-        steps.append(Step(f"{sid}-{idx}", msg))
-        idx += 1
-    return steps
-
-
-def test_e2e_100_complex_chat_scenarios() -> None:
-    client = _build_client()
-
-    scenarios = _conversation_1() + _conversation_2() + _conversation_3() + _conversation_4() + _extra_noise()
-    assert len(scenarios) == 100
-
-    for step in scenarios:
+    final_reply = ""
+    for message in scenario.turns:
         response = client.post(
             "/chat/",
             json={
-                "message": step.message,
-                "session_id": step.session_id,
+                "message": message,
+                "session_id": session_id,
                 "clinic_id": "test_center",
             },
         )
@@ -142,7 +175,9 @@ def test_e2e_100_complex_chat_scenarios() -> None:
         assert "internal server error" not in lowered
         assert "traceback" not in lowered
 
-        if step.expect_any:
-            assert any(expected in lowered for expected in step.expect_any), (
-                f"Unexpected reply for message={step.message!r}, reply={reply!r}"
-            )
+        final_reply = lowered
+
+    assert final_reply
+    assert any(expected in final_reply for expected in scenario.expect_any_final), (
+        f"Unexpected final reply for {scenario.scenario_id}: {final_reply!r}"
+    )
