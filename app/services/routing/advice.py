@@ -85,7 +85,8 @@ def _advice_only_headache() -> str:
         "Razumem, da je glavobol neprijeten. Poskusite z mirnim okoljem, dovolj tekocine in kratkimi odmori "
         "od zaslonov. Pogosto pomaga tudi reden spanec in lahek obrok.\n\n"
         "Ce se glavobol stopnjuje, traja vec dni ali se pojavi z dodatnimi znaki (npr. mocna omotica, "
-        "motnje vida, visoka vrocina), priporocam posvet z osebnim zdravnikom ali nujno obravnavo."
+        "motnje vida, visoka vrocina), priporocam posvet z osebnim zdravnikom ali nujno obravnavo.\n\n"
+        "Ce zelite, lahko pri nas preverim najhitrejsi prosti termin za zacetni pregled."
     )
 
 
@@ -140,7 +141,19 @@ def _advice_only(service: Optional[str]) -> str:
 
 
 def advice_only(service: Optional[str]) -> str:
-    return _advice_only(service)
+    base = _advice_only(service)
+    cta_by_service = {
+        "ORTOPED": "Ce zelite, vas lahko zdaj narocim na ortopedski pregled.",
+        "DERMATOLOG": "Ce zelite, vas lahko zdaj narocim na dermatoloski pregled.",
+        "OKULIST": "Ce zelite, vas lahko zdaj narocim na okulisticni pregled.",
+        "ESTETSKI_POSEG": "Ce zelite, lahko skupaj preveriva prost termin za estetski poseg.",
+        "LASERSKI_POSEG": "Ce zelite, lahko takoj preverim prost termin za laserski poseg.",
+        "KOZMETIKA": "Ce zelite, lahko zdaj preverim prost termin za kozmeticni tretma.",
+        "FIZIOTERAPIJA": "Ce zelite, vas lahko zdaj narocim na fizioterapijo.",
+    }
+    normalized = service.upper() if service else None
+    cta = cta_by_service.get(normalized, "Ce zelite, lahko zdaj preverim najhitrejsi prosti termin.")
+    return f"{base}\n\n{cta}"
 
 
 def advice_only_headache() -> str:
