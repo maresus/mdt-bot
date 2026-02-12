@@ -12,9 +12,16 @@ facts:
       - nahajate
       - pridem
       - pridem do vas
-    response: |
-      Najdete nas na naslovu [Naslov klinike].
-      Parkiranje je na voljo pred objektom.
+    response:
+      - |
+        Najdete nas na naslovu [Naslov klinike].
+        Parkiranje je na voljo pred objektom.
+      - |
+        Smo na naslovu [Naslov klinike].
+        Pred vhodom je na voljo parkiranje.
+      - |
+        Naša lokacija je [Naslov klinike].
+        Parkiranje je urejeno tik ob objektu.
 
   kontakt:
     priority: fast
@@ -49,8 +56,13 @@ facts:
       - odprti
       - odprto
       - kdaj ste odprti
-    response: |
-      Delamo od ponedeljka do petka, 08:00–18:00.
+    response:
+      - |
+        Delamo od ponedeljka do petka, 08:00–18:00.
+      - |
+        Na voljo smo med ponedeljkom in petkom, od 08:00 do 18:00.
+      - |
+        Ordinacija obratuje od ponedeljka do petka: 08:00–18:00.
 
   parkiranje:
     priority: medium
@@ -72,9 +84,16 @@ facts:
       - cenik
       - koliko stane
       - kolk stane
-    response: |
-      Cene pregledov so odvisne od storitve.
-      Povejte, za katero storitev vas zanima cena.
+    response:
+      - |
+        Cene pregledov so odvisne od storitve.
+        Povejte, za katero storitev vas zanima cena.
+      - |
+        Cenik je vezan na vrsto pregleda.
+        Napišite storitev (npr. ortoped, dermatolog), pa vam takoj povem ceno.
+      - |
+        Cena je odvisna od izbrane storitve.
+        Sporočite, kateri pregled vas zanima, in dobite točen razpon.
 
   vodstvo:
     priority: fast
@@ -85,9 +104,13 @@ facts:
       - kdo vodi
       - vodja
       - vodstvo
-    response: |
-      Trenutno nimam zanesljivega podatka o vodstvu podjetja.
-      Za uradno informacijo preverite kontaktno stran ali pokličite recepcijo.
+    response:
+      - |
+        Trenutno nimam zanesljivega podatka o vodstvu podjetja.
+        Za uradno informacijo preverite kontaktno stran ali pokličite recepcijo.
+      - |
+        Podatka o direktorju trenutno nimam potrjenega.
+        Najbolje je, da za uradne informacije pokličete recepcijo.
 
   service_dermatolog:
     priority: low

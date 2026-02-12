@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import random
 import re
 from contextvars import ContextVar
 from pathlib import Path
@@ -20,6 +19,18 @@ class ClinicConfigProvider:
         self._cache: dict[str, dict[str, Any]] = {}
         self._domain_cache: dict[tuple[str, str], dict[str, Any]] = {}
         self._registry: set[str] | None = None
+        self._variant_cursor: dict[str, int] = {}
+
+    def _pick_variant(self, value: Any, selector_key: str) -> Any:
+        if isinstance(value, list):
+            options = [item for item in value if item is not None]
+            if not options:
+                return None
+            idx = self._variant_cursor.get(selector_key, 0)
+            choice = options[idx % len(options)]
+            self._variant_cursor[selector_key] = idx + 1
+            return choice
+        return value
 
     def _scan_registry(self) -> set[str]:
         if self._registry is not None:
@@ -84,10 +95,10 @@ class ClinicConfigProvider:
         responses = config.get("info_responses", {}) if isinstance(config, dict) else {}
         variants = responses.get(f"{key}_variants")
         if isinstance(variants, list) and variants:
-            return random.choice(variants)
+            return self._pick_variant(variants, f"{clinic_id}:legacy_info:{key}:variants")
         value = responses.get(key)
         if isinstance(value, list) and value:
-            return random.choice(value)
+            return self._pick_variant(value, f"{clinic_id}:legacy_info:{key}:value")
         if value is None:
             return default
         return value
@@ -99,15 +110,7 @@ class ClinicConfigProvider:
         key: str,
         default: Any | None = None,
     ) -> Any:
-        def _pick_variant(value: Any) -> Any:
-            if isinstance(value, list):
-                options = [item for item in value if item is not None]
-                if options:
-                    return random.choice(options)
-                return None
-            return value
-
-        def _resolve_path(data: Any, path: str) -> Any | None:
+        def _resolve_path(data: Any, path: str, selector_prefix: str) -> Any | None:
             if not isinstance(data, dict):
                 return None
             current = data
@@ -118,15 +121,15 @@ class ClinicConfigProvider:
             if isinstance(current, dict):
                 variants = current.get("variants")
                 if isinstance(variants, list) and variants:
-                    return _pick_variant(variants)
+                    return self._pick_variant(variants, f"{selector_prefix}:{path}:variants")
                 text = current.get("text")
                 if isinstance(text, list):
-                    return _pick_variant(text)
+                    return self._pick_variant(text, f"{selector_prefix}:{path}:text")
                 if text is not None:
                     return text
                 return current
             if isinstance(current, list):
-                return _pick_variant(current)
+                return self._pick_variant(current, f"{selector_prefix}:{path}:list")
             return current
 
         if domain == "info":
@@ -136,24 +139,24 @@ class ClinicConfigProvider:
             if isinstance(entry, dict):
                 response = entry.get("response")
                 if response is not None:
-                    return response
+                    return self._pick_variant(response, f"{clinic_id}:info:{key}:response")
             return self.get_info_response(clinic_id, key, default)
 
         if domain == "general":
             general_cfg = self.get_domain_config(clinic_id, "general")
             messages = general_cfg.get("messages", {}) if isinstance(general_cfg, dict) else {}
-            resolved = _resolve_path(messages, key)
+            resolved = _resolve_path(messages, key, f"{clinic_id}:general")
             return resolved if resolved is not None else default
 
         if domain == "booking":
             booking_cfg = self.get_domain_config(clinic_id, "booking")
             if isinstance(booking_cfg, dict):
                 messages = booking_cfg.get("messages", {})
-                resolved = _resolve_path(messages, key)
+                resolved = _resolve_path(messages, key, f"{clinic_id}:booking:messages")
                 if resolved is not None:
                     return resolved
                 flow = booking_cfg.get("flow", {})
-                resolved = _resolve_path(flow, key)
+                resolved = _resolve_path(flow, key, f"{clinic_id}:booking:flow")
                 if resolved is not None:
                     if isinstance(resolved, dict) and "prompt" in resolved:
                         return resolved.get("prompt")
@@ -233,6 +236,17 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
         from thefuzz import fuzz  # type: ignore
     except Exception:
         fuzz = None
+
+    def _pick_fast_response(entry: dict[str, Any], key: str) -> str | None:
+        response = entry.get("response")
+        if isinstance(response, str) and response.strip():
+            return response
+        if isinstance(response, list):
+            picked = _provider._pick_variant(response, f"{resolved}:info:{key}:fastpass")
+            if isinstance(picked, str) and picked.strip():
+                return picked
+        return None
+
     for key, entry in facts.items():
         if not isinstance(entry, dict):
             continue
@@ -250,8 +264,8 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
             # Short single-word keywords should match tokens, not substrings.
             if " " not in kw_lower and len(kw_lower) <= 3:
                 if kw_lower in tokens:
-                    response = entry.get("response")
-                    if isinstance(response, str) and response.strip():
+                    response = _pick_fast_response(entry, key)
+                    if response:
                         return {
                             "response": response,
                             "category": entry.get("category"),
@@ -261,8 +275,8 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
                         }
                 continue
             if kw_lower in lowered:
-                response = entry.get("response")
-                if isinstance(response, str) and response.strip():
+                response = _pick_fast_response(entry, key)
+                if response:
                     return {
                         "response": response,
                         "category": entry.get("category"),
@@ -273,8 +287,8 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
             if fuzz is not None and len(kw_lower) >= 5 and len(lowered) >= 5:
                 score = fuzz.partial_ratio(kw_lower, lowered)
                 if score >= 85:
-                    response = entry.get("response")
-                    if isinstance(response, str) and response.strip():
+                    response = _pick_fast_response(entry, key)
+                    if response:
                         return {
                             "response": response,
                             "category": entry.get("category"),
