@@ -34,7 +34,7 @@ messages:
       Za nujne primere nudimo prednostne termine. Želite, da preverim najhitrejši prosti termin?
 
   unsupported_symptom_default:
-    text: "Žal mi je, da imate težave. V našem centru nimamo ustreznega specialista, lahko pa ponudimo splošni posvet. Želite, da preverim proste termine?"
+    text: "Žal mi je, da imate težave. V našem centru nimamo ustreznega specialista, lahko pa ponudimo splošni posvet. Želite, da preverim proste termine za splošni posvet?"
 
   fallback_short:
     text: "Lahko pomagam z naročilom, cenami, lokacijo in termini."
