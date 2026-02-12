@@ -1038,7 +1038,47 @@ async def chat(request: ChatRequest) -> ChatResponse:
             reset_unified_state(session_id)
         last_interaction = now
 
-        # Keep anti-loop guard (unified mode only)
+        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
+        if awaiting_price_service:
+            service_from_message = extract_service_type(message, clinic_id=clinic_id)
+            if service_from_message:
+                conversation_tracker.add_message(session_id, message)
+                state_mgr.clear_context_key("awaiting_price_service")
+                response_text = _service_price_info(service_from_message, clinic_id=clinic_id)
+                payload = format_response(
+                    response_text,
+                    state_manager=state_mgr,
+                    metadata={
+                        "contract_version": "v0.1",
+                        "router": "unified_only",
+                        "price_followup": True,
+                    },
+                )
+                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
+
+        fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
+        if fast_pass:
+            conversation_tracker.add_message(session_id, message)
+            fast_reply = str(fast_pass.get("response", ""))
+            if is_in_flow(session_id):
+                fast_reply = build_interrupt_response(
+                    fast_reply,
+                    get_current_step(session_id),
+                    True,
+                )
+            payload = format_response(
+                fast_reply,
+                state_manager=state_mgr,
+                metadata={
+                    "contract_version": "v0.1",
+                    "router": "unified_only",
+                    "fast_pass": True,
+                    "category": fast_pass.get("category"),
+                },
+            )
+            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
+
+        # Keep anti-loop guard for non-fast-pass traffic only.
         if conversation_tracker.detect_loop(session_id, message):
             loop_count = conversation_tracker.get_loop_count(session_id)
             conversation_tracker.add_message(session_id, message)
@@ -1058,44 +1098,6 @@ async def chat(request: ChatRequest) -> ChatResponse:
             return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         conversation_tracker.add_message(session_id, message)
-
-        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
-        if awaiting_price_service:
-            service_from_message = extract_service_type(message, clinic_id=clinic_id)
-            if service_from_message:
-                state_mgr.clear_context_key("awaiting_price_service")
-                response_text = _service_price_info(service_from_message, clinic_id=clinic_id)
-                payload = format_response(
-                    response_text,
-                    state_manager=state_mgr,
-                    metadata={
-                        "contract_version": "v0.1",
-                        "router": "unified_only",
-                        "price_followup": True,
-                    },
-                )
-                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-
-        fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
-        if fast_pass:
-            fast_reply = str(fast_pass.get("response", ""))
-            if is_in_flow(session_id):
-                fast_reply = build_interrupt_response(
-                    fast_reply,
-                    get_current_step(session_id),
-                    True,
-                )
-            payload = format_response(
-                fast_reply,
-                state_manager=state_mgr,
-                metadata={
-                    "contract_version": "v0.1",
-                    "router": "unified_only",
-                    "fast_pass": True,
-                    "category": fast_pass.get("category"),
-                },
-            )
-            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         # Primary path: unified routing handler
         response_text = handle_unified_routing(message, session_id, clinic_id=clinic_id)

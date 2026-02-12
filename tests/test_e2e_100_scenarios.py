@@ -152,6 +152,11 @@ def _base_scenarios() -> list[Scenario]:
             ("cena", "40", "80", "imate že termin"),
         ),
         Scenario(
+            "FASTPASS_REPEAT_NO_LOOP",
+            ("koliko stane pregled", "koliko stane pregled", "koliko stane pregled"),
+            ("cene pregledov", "cenik je vezan", "cena je odvisna"),
+        ),
+        Scenario(
             "MIX_GOODBYE_REENTRY",
             ("hvala", "zdravo", "kaksen je kontakt"),
             ("telefon", "email", "pomagam", "lep dan"),
