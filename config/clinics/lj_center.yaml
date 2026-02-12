@@ -75,12 +75,25 @@ unsupported_symptoms:
       - "glavobol"
       - "migrena"
       - "boli me glava"
-    response: |
-      Žal mi je, da imate težave z glavobolom. 😊
+    response:
+      - |
+        Žal mi je, da imate težave z glavobolom. 😊
 
-      V našem centru nimamo specialista nevrologa, lahko pa ponudimo **splošni posvet** za začetno oceno.
+        V našem centru nimamo specialista nevrologa, lahko pa preverim, kateri od naših specialistov bi bil glede opisa najprimernejši.
 
-      Želite, da preverim, kateri od naših specialistov bi bil najbolj primeren za vaše težave?
+        Želite, da preverim možnosti?
+      - |
+        Razumem, glavobol je lahko zelo neprijeten.
+
+        Ker nimamo nevrologa, vam lahko predlagam najbolj smiseln pregled pri enem od naših specialistov.
+
+        Želite, da preverim, kam bi vas najhitreje uvrstili?
+      - |
+        Hvala za opis težave.
+
+        Nevrologa pri nas žal nimamo, lahko pa skupaj preveriva, kateri specialist pri nas je najbolj primeren za začetno obravnavo.
+
+        Želite, da preverim razpoložljive možnosti?
     quick_replies:
       - label: "Da, predlagajte specialista"
         value: "DA"

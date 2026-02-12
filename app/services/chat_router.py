@@ -935,7 +935,17 @@ def handle_unified_routing(
         unsupported = _match_unsupported_symptom(message, clinic_id=clinic_id)
         response_text = None
         if unsupported:
-            response_text = unsupported.get("response") or unsupported.get("message")
+            raw_response = unsupported.get("response") or unsupported.get("message")
+            if isinstance(raw_response, list):
+                options = [str(item).strip() for item in raw_response if str(item).strip()]
+                if options:
+                    variant_id = str(unsupported.get("id") or "default")
+                    counter_key = f"unsupported_response_variant:{variant_id}"
+                    idx = int(state_mgr.get_context_value(counter_key, 0) or 0)
+                    response_text = options[idx % len(options)]
+                    state_mgr.set_context_value(counter_key, idx + 1)
+            elif isinstance(raw_response, str):
+                response_text = raw_response
         if not response_text:
             response_text = get_response("general.unsupported_symptom_default", clinic_id=clinic_id)
         ui_override = unsupported.get("ui_override") if isinstance(unsupported, dict) else None
