@@ -1045,6 +1045,12 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 conversation_tracker.add_message(session_id, message)
                 state_mgr.clear_context_key("awaiting_price_service")
                 response_text = _service_price_info(service_from_message, clinic_id=clinic_id)
+                if is_in_flow(session_id):
+                    response_text = build_interrupt_response(
+                        response_text,
+                        get_current_step(session_id),
+                        True,
+                    )
                 payload = format_response(
                     response_text,
                     state_manager=state_mgr,
@@ -1058,6 +1064,36 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
         fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
         if fast_pass:
+            fast_key = str(fast_pass.get("key") or "")
+            if fast_key == INFO_KEY_PRICES and is_in_flow(session_id):
+                unified_service = str(get_appointment_data(session_id).get("service_type") or "").strip()
+                legacy_service = str(get_appointment_state(session_id).get("service_type") or "").strip()
+                suggested_service = str(state_mgr.get_context_value("suggested_service") or "").strip()
+                service_for_price = (unified_service or legacy_service or suggested_service).lower()
+
+                if service_for_price:
+                    conversation_tracker.add_message(session_id, message)
+                    response_text = _service_price_info(service_for_price, clinic_id=clinic_id)
+                    response_text = build_interrupt_response(
+                        response_text,
+                        get_current_step(session_id),
+                        True,
+                    )
+                    payload = format_response(
+                        response_text,
+                        state_manager=state_mgr,
+                        metadata={
+                            "contract_version": "v0.1",
+                            "router": "unified_only",
+                            "fast_pass": True,
+                            "category": fast_pass.get("category"),
+                            "price_context_service": service_for_price,
+                        },
+                    )
+                    return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
+
+                state_mgr.set_context_value("awaiting_price_service", True)
+
             conversation_tracker.add_message(session_id, message)
             fast_reply = str(fast_pass.get("response", ""))
             if is_in_flow(session_id):

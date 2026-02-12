@@ -66,6 +66,11 @@ def _base_scenarios() -> list[Scenario]:
             ("prosti termini", "izberite drug datum", "cene"),
         ),
         Scenario(
+            "FLOW_PRICE_DURING_NAME_AND_SERVICE_FOLLOWUP",
+            ("rad bi termin", "dermatolo", "27.3.2026", "08:30", "koliko stane pregled", "dermatolog"),
+            ("cena", "25", "150", "nadaljujemo z naročilom"),
+        ),
+        Scenario(
             "INFO_FUZZY_LOCATION",
             ("kje se nahajaet",),
             ("naslov", "parkiranje", "kako vam lahko pomagam"),
