@@ -191,6 +191,10 @@ def _default_help_prompt(clinic_id: str | None = None) -> str:
 
 
 def _get_info_response(key: str, clinic_id: str | None = None) -> str:
+    # Prefer domain-configured info facts (config/clinics/<id>/info.yaml), then legacy clinic config.
+    domain_value = get_domain_response("info", key, default=None, clinic_id=clinic_id)
+    if isinstance(domain_value, str) and domain_value.strip():
+        return domain_value
     return clinic_get_info_response(key, _default_help_prompt(clinic_id=clinic_id), clinic_id=clinic_id)
 
 def get_response(key: str, clinic_id: str | None = None, **kwargs: Any) -> str:
