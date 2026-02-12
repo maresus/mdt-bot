@@ -25,6 +25,7 @@ class BookingInterruptDeps:
     get_info_response: Callable[[str], str]
     get_service_info: Callable[[str], Optional[dict[str, Any]]]
     looks_like_symptom_report: Callable[[str], bool]
+    symptom_advice: Callable[[str, str | None], str]
 
 
 SYMPTOM_KEY_BY_SERVICE = {
@@ -111,11 +112,8 @@ def handle_booking_interrupt(
 
     # Symptom during booking -> short advice + resume booking
     if deps.looks_like_symptom_report(message):
-        mapped = SYMPTOM_KEY_BY_SERVICE.get(str(current_service).lower()) if current_service else None
-        if mapped:
-            answer = deps.get_info_response(mapped)
-        else:
-            answer = deps.get_info_response("storitve")
+        normalized_service = str(current_service).upper() if current_service else None
+        answer = deps.symptom_advice(message, normalized_service)
         return deps.build_interrupt_response(answer, step, True)
 
     # Otherwise, repeat the expected step prompt.

@@ -71,6 +71,11 @@ def _base_scenarios() -> list[Scenario]:
             ("cena", "25", "150", "nadaljujemo z naročilom"),
         ),
         Scenario(
+            "FLOW_SYMPTOM_DURING_PHONE_STEP",
+            ("rad bi termin", "dermatolog", "27.3.2026", "08:00", "Marko Satler", "boli me glava"),
+            ("glavobol", "nadaljujemo z naročilom", "telefonsko"),
+        ),
+        Scenario(
             "INFO_FUZZY_LOCATION",
             ("kje se nahajaet",),
             ("naslov", "parkiranje", "kako vam lahko pomagam"),

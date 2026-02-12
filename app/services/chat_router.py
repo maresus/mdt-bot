@@ -695,6 +695,11 @@ BOOKING_INTERRUPT_DEPS = BookingInterruptDeps(
     get_info_response=_get_info_response,
     get_service_info=get_service_info,
     looks_like_symptom_report=_looks_like_symptom_report,
+    symptom_advice=lambda message, service: (
+        advice_only_headache()
+        if any(k in message.lower() for k in ["glava", "glavobol", "migrena"])
+        else advice_only(service)
+    ),
 )
 
 
