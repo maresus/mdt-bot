@@ -429,6 +429,31 @@ def _match_unsupported_symptom(message: str, clinic_id: str | None = None) -> di
     return None
 
 
+def _specialist_quick_replies(clinic_id: str | None = None) -> list[dict[str, str]]:
+    """Build quick replies for primary specialists we can book immediately."""
+    services = get_services(clinic_id=clinic_id)
+    preferred = ["dermatolog", "ortoped", "okulist"]
+    items: list[dict[str, str]] = []
+    for key in preferred:
+        info = services.get(key)
+        if not isinstance(info, dict):
+            continue
+        name = str(info.get("name") or key).strip()
+        items.append({"label": name, "value": key})
+    return items
+
+
+def _symptom_booking_nudge(service_key: str | None, clinic_id: str | None = None) -> str:
+    """Short booking CTA appended after symptom guidance."""
+    key = (service_key or "").strip().lower()
+    if not key:
+        return "Če želite, lahko preverim prost termin pri ustreznem specialistu."
+    info = get_service_info(key)
+    if info:
+        return f"Če želite, lahko takoj preverim prost termin za {info['name'].lower()}."
+    return "Če želite, lahko takoj preverim prost termin pri ustreznem specialistu."
+
+
 # Old rule-based classify_intent kept as fallback
 def classify_intent_rules(message: str, history: list = None, clinic_id: str | None = None) -> str:
     """Rule-based fallback for intent classification"""
@@ -776,6 +801,45 @@ def handle_unified_routing(
             step = appointment_state.get("step") or get_current_step(session_id)
             return build_resume_prompt(step) or get_response("booking.resume_prompt", clinic_id=clinic_id)
 
+    # Follow-up path for unsupported symptoms (DA/NE -> specialist choice -> booking).
+    awaiting_specialist_prompt = bool(context.get("awaiting_specialist_prompt"))
+    awaiting_specialist_choice = bool(context.get("awaiting_specialist_choice"))
+    if awaiting_specialist_prompt and not is_in_flow(session_id):
+        service_choice = extract_service_type(message, clinic_id=clinic_id)
+        if service_choice:
+            state_mgr.clear_context_key("awaiting_specialist_prompt")
+            state_mgr.clear_context_key("awaiting_specialist_choice")
+            state_mgr.transition_to_booking(service_type=service_choice, legacy_state=appointment_state)
+            start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+            return get_response("booking.start_with_date", clinic_id=clinic_id, service_type=service_choice.lower())
+
+        if is_affirmative(message):
+            data = _specialist_quick_replies(clinic_id=clinic_id)
+            if data:
+                state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
+            state_mgr.clear_context_key("awaiting_specialist_prompt")
+            state_mgr.set_context_value("awaiting_specialist_choice", True)
+            return "Seveda. Pri katerem specialistu želite, da preverim termin?"
+
+        if is_negative(message):
+            state_mgr.clear_context_key("awaiting_specialist_prompt")
+            return "V redu. Če si premislite, lahko napišete: ortoped, dermatolog ali okulist."
+
+    if awaiting_specialist_choice and not is_in_flow(session_id):
+        service_choice = extract_service_type(message, clinic_id=clinic_id)
+        if service_choice:
+            state_mgr.clear_context_key("awaiting_specialist_choice")
+            state_mgr.transition_to_booking(service_type=service_choice, legacy_state=appointment_state)
+            start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+            return get_response("booking.start_with_date", clinic_id=clinic_id, service_type=service_choice.lower())
+        if is_negative(message):
+            state_mgr.clear_context_key("awaiting_specialist_choice")
+            return "V redu. Če si premislite, sem tukaj."
+        data = _specialist_quick_replies(clinic_id=clinic_id)
+        if data:
+            state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
+        return "Izberite specialista: dermatolog, ortoped ali okulist."
+
     # Keep unified state in sync with legacy appointment state.
     was_in_flow = is_in_flow(session_id)
     if appointment_state.get("step"):
@@ -906,12 +970,13 @@ def handle_unified_routing(
         if service:
             state_mgr.set_context_value("suggested_service", service)
             if _looks_like_symptom_report(message):
-                return advice_only(service)
+                nudge = _symptom_booking_nudge(service, clinic_id=clinic_id)
+                return f"{advice_only(service)}\n\n{nudge}"
         if _looks_like_symptom_report(message) and not service:
             lowered = message.lower()
             if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
                 return advice_only_headache()
-            return advice_only(None)
+            return f"{advice_only(None)}\n\n{_symptom_booking_nudge(None, clinic_id=clinic_id)}"
         if service == "DERMATOLOG":
             return get_response(INFO_SERVICE_DERMATOLOG, clinic_id=clinic_id)
         elif service == "ORTOPED":
@@ -948,6 +1013,9 @@ def handle_unified_routing(
                 response_text = raw_response
         if not response_text:
             response_text = get_response("general.unsupported_symptom_default", clinic_id=clinic_id)
+        if not is_in_flow(session_id):
+            state_mgr.set_context_value("awaiting_specialist_prompt", True)
+            state_mgr.clear_context_key("awaiting_specialist_choice")
         ui_override = unsupported.get("ui_override") if isinstance(unsupported, dict) else None
         if isinstance(ui_override, dict):
             state_mgr.set_context_value("ui_override", ui_override)
