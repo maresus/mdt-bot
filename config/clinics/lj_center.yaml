@@ -80,9 +80,9 @@ unsupported_symptoms:
 
       V našem centru nimamo specialista nevrologa, lahko pa ponudimo **splošni posvet** za začetno oceno.
 
-      Želite, da preverim proste termine za **splošni posvet** pri našem zdravniku?
+      Želite, da preverim, kateri od naših specialistov bi bil najbolj primeren za vaše težave?
     quick_replies:
-      - label: "Da, preverite posvet"
+      - label: "Da, predlagajte specialista"
         value: "DA"
       - label: "Ne, hvala"
         value: "NE"
