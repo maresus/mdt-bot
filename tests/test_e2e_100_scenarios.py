@@ -31,6 +31,11 @@ def _base_scenarios() -> list[Scenario]:
             ("ortopedija", "kateri datum", "prosti termini"),
         ),
         Scenario(
+            "FLOW_SERVICE_PARTIAL_TOKEN",
+            ("rad bi se narocil", "dermatolo"),
+            ("kateri datum", "prosim v formatu", "datum vam ustreza"),
+        ),
+        Scenario(
             "FLOW_BOOKING_WITH_DATE",
             ("rad bi termin", "dermatolog", "24.3.2026"),
             ("prosti termini", "izberite drug datum"),

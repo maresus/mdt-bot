@@ -789,16 +789,27 @@ def handle_unified_routing(
 
     decision = unified_route(message, unified_state)
     suggested_service = context.get("suggested_service")
+    current_step = get_current_step(session_id)
 
     # If user provides a date after service info prompt, start booking immediately
     date_str = extract_date_from_message(message)
     if date_str and suggested_service:
-        current_step = get_current_step(session_id)
         if not is_in_flow(session_id) or current_step in {FlowStep.SERVICE.value, "select_service", None}:
             state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
             start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
             state_mgr.clear_context_key("suggested_service")
             return handle_appointment_booking(message, session_id)
+
+    # Service step should accept classified service even if raw text is partial (e.g. "dermatolo").
+    if (
+        is_in_flow(session_id)
+        and current_step in {FlowStep.SERVICE.value, "select_service", None}
+        and decision.service_type
+    ):
+        state_mgr.transition_to_booking(service_type=decision.service_type, legacy_state=appointment_state)
+        start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+        state_mgr.set_context_value("suggested_service", decision.service_type)
+        return handle_appointment_booking(message, session_id)
 
     # Log decision for debugging
     print(f"[UNIFIED] Intent: {decision.primary_intent.value}, Confidence: {decision.confidence:.2f}, Action: {decision.action.value}, Service: {decision.service_type}")

@@ -74,6 +74,16 @@ def handle_booking_interrupt(
     current_service = appointment_data.get("service_type")
     incoming_service = (service_hint or "").lower() if service_hint else None
 
+    # Service selection step: accept classifier service hit (including partial tokens)
+    # and let booking flow consume it instead of returning service info text.
+    if (
+        step in {"service", "select_service", None}
+        and not current_service
+        and decision_intent == IntentType.SERVICE_INFO
+        and incoming_service
+    ):
+        return None
+
     # If user asks service info with a different service while booking, require explicit switch.
     if decision_intent == IntentType.SERVICE_INFO and incoming_service and current_service:
         if incoming_service != str(current_service).lower():
