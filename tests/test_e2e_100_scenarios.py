@@ -121,6 +121,11 @@ def _base_scenarios() -> list[Scenario]:
             ("ortopedija", "kateri datum", "prosti termini", "cena"),
         ),
         Scenario(
+            "PRICE_FOLLOWUP_SERVICE_SAME_SESSION",
+            ("koliko stane pregled", "okulist"),
+            ("cena", "30", "120"),
+        ),
+        Scenario(
             "MIX_GOODBYE_REENTRY",
             ("hvala", "zdravo", "kaksen je kontakt"),
             ("telefon", "email", "pomagam", "lep dan"),
