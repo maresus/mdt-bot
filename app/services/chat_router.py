@@ -662,6 +662,7 @@ BOOKING_FLOW_DEPS = BookingFlowDeps(
     format_appointment_summary=format_appointment_summary,
     reservation_service_cls=ReservationService,
     send_notifications_async=_send_reservation_emails_async,
+    set_context_value=lambda session_id, key, value: StateManager(session_id).set_context_value(key, value),
 )
 
 INTERRUPT_FLOW_DEPS = InterruptFlowDeps(
@@ -965,10 +966,23 @@ def handle_unified_routing(
     # Handle PRICE
     if decision.primary_intent == IntentType.PRICE:
         service = decision.service_type or suggested_service or appointment_state.get("service_type")
+        last_booking = state_mgr.get_context_value("last_completed_booking", {}) or {}
+        used_last_booking = False
+        if not service and isinstance(last_booking, dict):
+            remembered_service = last_booking.get("service_type")
+            if remembered_service:
+                service = str(remembered_service)
+                used_last_booking = True
         if service:
             state_mgr.clear_context_key("awaiting_price_service")
             service_key = service.lower()
-            return _service_price_info(service_key, clinic_id=clinic_id)
+            reply = _service_price_info(service_key, clinic_id=clinic_id)
+            if used_last_booking:
+                date = str(last_booking.get("date") or "").strip()
+                time = str(last_booking.get("time") or "").strip()
+                if date and time:
+                    reply = f"{reply}\n\nImate že termin {date} ob {time}."
+            return reply
         state_mgr.set_context_value("awaiting_price_service", True)
         return _rag_info_answer(message, INFO_KEY_PRICES, clinic_id=clinic_id)
 
@@ -1044,6 +1058,23 @@ async def chat(request: ChatRequest) -> ChatResponse:
             return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         conversation_tracker.add_message(session_id, message)
+
+        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
+        if awaiting_price_service:
+            service_from_message = extract_service_type(message, clinic_id=clinic_id)
+            if service_from_message:
+                state_mgr.clear_context_key("awaiting_price_service")
+                response_text = _service_price_info(service_from_message, clinic_id=clinic_id)
+                payload = format_response(
+                    response_text,
+                    state_manager=state_mgr,
+                    metadata={
+                        "contract_version": "v0.1",
+                        "router": "unified_only",
+                        "price_followup": True,
+                    },
+                )
+                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
         if fast_pass:

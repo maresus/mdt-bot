@@ -136,6 +136,22 @@ def _base_scenarios() -> list[Scenario]:
             ("cena", "30", "120"),
         ),
         Scenario(
+            "PRICE_AFTER_BOOKING_MEMORY",
+            (
+                "rad bi termin",
+                "ortoped",
+                "24.3.2026",
+                "10:00",
+                "Ana Novak",
+                "040111222",
+                "ana@example.com",
+                "bolecine v kolenu",
+                "DA",
+                "koliko stane pregled",
+            ),
+            ("cena", "40", "80", "imate že termin"),
+        ),
+        Scenario(
             "MIX_GOODBYE_REENTRY",
             ("hvala", "zdravo", "kaksen je kontakt"),
             ("telefon", "email", "pomagam", "lep dan"),

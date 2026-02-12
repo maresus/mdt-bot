@@ -31,6 +31,7 @@ class BookingFlowDeps:
     format_appointment_summary: Callable[[str, str, str, str], str]
     reservation_service_cls: Any
     send_notifications_async: Callable[[dict[str, Any]], None]
+    set_context_value: Optional[Callable[[str, str, Any], None]] = None
 
 
 def get_resume_prompt(state: State, deps: BookingFlowDeps) -> str:
@@ -280,9 +281,23 @@ Ali so podatki pravilni? (DA / NE)"""
                 email = state.get("email")
                 date = state["date"]
                 time = state["time"]
+                service_type = state.get("service_type")
+                service_name = service_info["name"]
 
                 deps.reset_appointment_state(state)
                 deps.reset_unified_state(session_id)
+                if deps.set_context_value:
+                    deps.set_context_value(
+                        session_id,
+                        "last_completed_booking",
+                        {
+                            "id": res_id,
+                            "service_type": service_type,
+                            "service_name": service_name,
+                            "date": date,
+                            "time": time,
+                        },
+                    )
 
                 email_line = (
                     f"Potrditev smo poslali na {email}."
