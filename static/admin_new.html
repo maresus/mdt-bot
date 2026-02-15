@@ -639,7 +639,7 @@
   <header class="header">
     <h1>🏥 Zdravstveni center</h1>
     <div class="header-actions">
-      <button class="btn btn-secondary" onclick="setAdminToken()">🔐 Token</button>
+      <button class="btn btn-secondary" onclick="setAdminToken()" title="Napredno">🔐 Napredno</button>
       <button class="btn btn-secondary" onclick="loadData()">🔄 Osveži</button>
       <button class="btn btn-primary" onclick="openNewModal()">+ Novo naročilo</button>
     </div>
@@ -1144,15 +1144,7 @@
     let calendarData = {};
 
     function setAdminToken() {
-      const current = localStorage.getItem(ADMIN_TOKEN_KEY) || '';
-      const next = prompt('Vnesi admin token (Bearer ni potreben):', current);
-      if (next === null) return;
-      if (next.trim()) {
-        localStorage.setItem(ADMIN_TOKEN_KEY, next.trim());
-      } else {
-        localStorage.removeItem(ADMIN_TOKEN_KEY);
-      }
-      alert('Token posodobljen.');
+      alert('Ročni vnos tokena ni več potreben. Dostop je samodejen.');
     }
 
     const _rawFetch = window.fetch.bind(window);

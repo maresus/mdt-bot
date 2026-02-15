@@ -345,7 +345,7 @@
         <div class="title">🏥 Zdravstveni center - Naročila pregledov</div>
         <div class="subtitle" id="current-date"></div>
       </div>
-      <button class="btn secondary" onclick="setAdminToken()">🔐 Token</button>
+      <button class="btn secondary" onclick="setAdminToken()" title="Napredno">🔐 Napredno</button>
     </header>
 
     <div class="tabs" id="view-tabs">
@@ -986,15 +986,7 @@
     const TABLE_CAP = 50;
 
     function setAdminToken() {
-      const current = localStorage.getItem(ADMIN_TOKEN_KEY) || '';
-      const next = prompt('Vnesi admin token (Bearer ni potreben):', current);
-      if (next === null) return;
-      if (next.trim()) {
-        localStorage.setItem(ADMIN_TOKEN_KEY, next.trim());
-      } else {
-        localStorage.removeItem(ADMIN_TOKEN_KEY);
-      }
-      alert('Token posodobljen.');
+      alert('Ročni vnos tokena ni več potreben. Dostop je samodejen.');
     }
 
     const _rawFetch = window.fetch.bind(window);
