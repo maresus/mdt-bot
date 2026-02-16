@@ -3,9 +3,12 @@ Unit tests for unified routing (v0.3).
 Run with: venv/bin/pytest tests/test_router.py -v
 """
 
+from datetime import datetime
+
 from app.services.routing.unified_router import route as unified_route, IntentType
 from app.services.session.unified_state import get_unified_state, reset_unified_state, StateManager
 from app.services.clinic_config import set_current_clinic_id
+from app.services.chat_router import extract_date_from_message
 
 
 def _route(message: str, session_id: str = "test_session", clinic_id: str = "lj_center"):
@@ -54,3 +57,21 @@ def test_symptom_service_info():
 def test_urgency():
     decision = _route("Nujno potrebujem pomoč")
     assert decision.primary_intent == IntentType.URGENCY
+
+
+def test_extract_date_without_year_infers_year():
+    result = extract_date_from_message("25.2.")
+    assert result is not None
+    parsed = datetime.strptime(result, "%d.%m.%Y")
+    assert parsed.month == 2
+    assert parsed.day == 25
+
+
+def test_extract_date_without_year_rolls_to_future():
+    today = datetime.now()
+    past_day = max(1, today.day - 1)
+    msg = f"{past_day}.{today.month}."
+    result = extract_date_from_message(msg)
+    assert result is not None
+    parsed = datetime.strptime(result, "%d.%m.%Y")
+    assert parsed.date() >= today.date()

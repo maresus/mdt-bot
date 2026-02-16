@@ -547,12 +547,34 @@ def classify_intent_rules(message: str, history: list = None, clinic_id: str | N
     return INTENT_QUESTION
 
 def extract_date_from_message(message: str) -> Optional[str]:
-    """Extract date from message (DD.MM.YYYY format)"""
+    """Extract date from message (DD.MM[.YYYY] format)."""
     # Try DD.MM.YYYY or D.M.YYYY format
     match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', message)
     if match:
         day, month, year = match.groups()
         return f"{day.zfill(2)}.{month.zfill(2)}.{year}"
+
+    # Try DD.MM or D.M format and infer year.
+    # If inferred date in current year is already in the past, roll to next year.
+    match = re.search(r'(?<!\d)(\d{1,2})\.(\d{1,2})(?!\d)', message)
+    if match:
+        day_raw, month_raw = match.groups()
+        day = int(day_raw)
+        month = int(month_raw)
+        today = datetime.now()
+
+        try:
+            candidate = datetime(today.year, month, day)
+        except ValueError:
+            return None
+
+        if candidate.date() < today.date():
+            try:
+                candidate = datetime(today.year + 1, month, day)
+            except ValueError:
+                return None
+
+        return candidate.strftime("%d.%m.%Y")
 
     # Try relative dates like "jutri", "danes", "naslednji teden"
     lowered = message.lower()
