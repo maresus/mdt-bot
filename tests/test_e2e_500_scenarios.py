@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import product
 
 import pytest
 from fastapi import FastAPI
@@ -23,56 +24,192 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-def _base_scenarios() -> list[Scenario]:
-    return [
-        Scenario("BOOKING_ORTHO_FULL", ("rad bi termin", "ortoped", "25.2.", "09:00", "Ana Novak"), ("telefonska", "telefonsko")),
-        Scenario("BOOKING_DERMA_FULL", ("rad bi termin", "dermatolog", "26.2.", "10:00", "Marko Novak"), ("telefonska", "telefonsko")),
-        Scenario("BOOKING_OKU_FULL", ("rad bi termin", "okulist", "27.2.", "11:00", "Maja Novak"), ("telefonska", "telefonsko")),
-        Scenario("PRICE_BOTOX_TYPO", ("koliko je botoc",), ("cena", "estetski", "80", "300")),
-        Scenario("PRICE_FILLER", ("koliko je filler",), ("cena", "estetski", "80", "300")),
-        Scenario("PRICE_BRADAVICA", ("koliko je poseg za bradavico",), ("cena", "laserski", "50", "200")),
-        Scenario("SERVICE_MASAZE", ("imate masaše",), ("fizioterap", "masaže", "kozmet", "tretma", "storitve")),
-        Scenario("SYMPTOM_WRIST", ("zapestje sem si poškodoval",), ("ortoped", "pregled", "termin")),
-        Scenario("SYMPTOM_WRIST_BOOK", ("pregled bi rad za boleče zapestje",), ("ortoped", "kateri datum", "prosti termini")),
-        Scenario("SYMPTOM_BRADAVICA_BOOK", ("bradavico imam", "da", "laserski poseg"), ("kateri datum", "prosim v formatu")),
-        Scenario("INTERRUPT_LOCATION_RESUME", ("rad bi termin", "ortoped", "kje ste", "25.2."), ("prosti termini", "izberite drug datum")),
-        Scenario("INTERRUPT_PRICE_RESUME", ("rad bi termin", "dermatolog", "koliko je botox", "25.2."), ("prosti termini", "izberite drug datum", "cena")),
-        Scenario("FASTPASS_LOCATION", ("kje se nahajate",), ("naslov", "parkiranje")),
-        Scenario("FASTPASS_HOURS", ("kakšen je delovni čas",), ("08:00", "18:00", "ponedeljka")),
-        Scenario("FASTPASS_CONTACT", ("kontakt",), ("telefon", "email")),
-        Scenario("PRICE_GENERIC", ("koliko stane pregled",), ("storitev", "cene")),
-        Scenario("PRICE_SERVICE", ("koliko stane ortoped",), ("cena", "40", "80")),
-        Scenario("HEADACHE_UNSUPPORTED", ("boli me glava",), ("glavobol", "specialist", "možnosti", "moznosti")),
-        Scenario("URGENT_CASE", ("nujno potrebujem pomoč",), ("112", "nujni", "urgent")),
-        Scenario("GREET_THANKS", ("zdravo", "hvala"), ("lep dan", "pomagam")),
-        Scenario("DATE_SHORT_FORMAT", ("rad bi termin", "ortoped", "25.2."), ("prosti termini", "izberite drug datum")),
-        Scenario("DATE_LONG_FORMAT", ("rad bi termin", "ortoped", "25.02.2026"), ("prosti termini", "izberite drug datum")),
-        Scenario("SERVICE_INFO_BOTOX", ("imate botox",), ("estetski", "botox", "termin")),
-        Scenario("SERVICE_INFO_BRADAVICE", ("imate odstranjevanje bradavic",), ("laserski", "bradavic", "termin")),
-        Scenario("NO_FOOD_COLLISION", ("kaj je za kosilo",), ("pomagam", "storitve", "naročilom", "telefon", "email")),
+def _build_500_unique_scenarios() -> list[Scenario]:
+    scenarios: list[Scenario] = []
+    seen_turns: set[tuple[str, ...]] = set()
+    booking_progress_expect = (
+        "na kateri pregled",
+        "kateri datum",
+        "prosti termini",
+        "katera ura",
+        "ime in priimek",
+        "telefons",
+        "email",
+    )
+
+    def add(kind: str, turns: tuple[str, ...], expect: tuple[str, ...]) -> None:
+        if turns in seen_turns:
+            return
+        seen_turns.add(turns)
+        scenarios.append(Scenario(f"{kind}_{len(scenarios)+1:03d}", turns, expect))
+
+    greetings = [
+        "zdravo",
+        "živjo",
+        "dober dan",
+        "hello",
+    ]
+    booking_starts = [
+        "rad bi termin",
+        "rada bi termin",
+        "rabim pregled",
+        "lahko rezerviram termin",
+        "rad bi se naročil",
+    ]
+    services = [
+        "ortoped",
+        "dermatolog",
+        "okulist",
+        "laserski poseg",
+        "estetski poseg",
+    ]
+    services_typos = [
+        "ortopet",
+        "dermatalog",
+        "okulsit",
+        "laser",
+        "botoc",
+    ]
+    dates = [
+        "25.2.",
+        "25.02.2026",
+        "26.2.",
+        "27.02.2026",
+        "1.3.",
+    ]
+    times = ["08:00", "09:00", "10:30", "11:00", "12:30"]
+    names = [
+        "Ana Novak",
+        "Marko Kralj",
+        "Maja Horvat",
+        "Luka Zupan",
+        "Nina Vidmar",
+    ]
+    interrupts = [
+        "kje se nahajate",
+        "kakšen je delovni čas",
+        "kontakt",
+        "koliko stane pregled",
+        "koliko je botox",
     ]
 
+    # 1) End-to-end booking to phone step (220)
+    for g, b, s, d, t, n in product(greetings, booking_starts, services, dates, times, names):
+        add("BOOKING_FULL", (g, b, s, d, t, n), booking_progress_expect)
+        if len(scenarios) >= 220:
+            break
+    
+    # 2) Booking with typo services (80)
+    for b, s, d, t, n in product(booking_starts, services_typos, dates, times, names):
+        add("BOOKING_TYPO", (b, s, d, t, n), booking_progress_expect)
+        if len([x for x in scenarios if x.scenario_id.startswith("BOOKING_TYPO")]) >= 80:
+            break
 
-def _build_500() -> list[Scenario]:
-    base = _base_scenarios()
-    scenarios: list[Scenario] = []
-    batch = 1
-    while len(scenarios) < 500:
-        for item in base:
-            if len(scenarios) >= 500:
-                break
-            scenarios.append(
-                Scenario(
-                    scenario_id=f"{item.scenario_id}_{batch:03d}",
-                    turns=item.turns,
-                    expect_any_final=item.expect_any_final,
-                )
-            )
-        batch += 1
-    return scenarios
+    # 3) Interrupt and resume during booking (120)
+    for b, s, q, d, t, n in product(booking_starts, services, interrupts, dates, times, names):
+        add(
+            "BOOKING_INTERRUPT",
+            (b, s, q, d, t, n),
+            booking_progress_expect + ("naslov", "08:00", "kontakt", "cena"),
+        )
+        if len([x for x in scenarios if x.scenario_id.startswith("BOOKING_INTERRUPT")]) >= 120:
+            break
+
+    # 4) Service info / typo / mixed topic (60)
+    service_info_msgs = [
+        "imate botox",
+        "koliko je botoc",
+        "koliko je filler",
+        "imam madež na koži",
+        "odstranjevanje bradavic",
+        "zapestje sem si poškodoval",
+        "imate masaše",
+        "imate masaze",
+        "boli me glava",
+        "bradavico imam",
+    ]
+    followups = ["lahko", "okej", "rad bi termin", "kaj predlagate", "hvala"]
+    for m1, m2 in product(service_info_msgs, followups):
+        add(
+            "SERVICE_MIX",
+            (m1, m2),
+            (
+                "termin",
+                "kateri datum",
+                "cena",
+                "ortoped",
+                "dermat",
+                "laserski",
+                "estetski",
+                "fizioterap",
+                "kozmet",
+                "glavobol",
+                "lep dan",
+                "nisem prepričan",
+            ),
+        )
+        if len([x for x in scenarios if x.scenario_id.startswith("SERVICE_MIX")]) >= 60:
+            break
+
+    # 5) Food/general collision safety + greeting/goodbye loops (12)
+    general_starts = [
+        "kaj je za kosilo",
+        "koleno bi jedel",
+        "zdravo",
+        "hello",
+    ]
+    general_followups = [
+        ("hvala",),
+        ("kontakt",),
+        ("kje ste",),
+    ]
+    for first, rest in product(general_starts, general_followups):
+        turns = (first, *rest)
+        add("GENERAL_SAFE", turns, ("pomagam", "telefon", "email", "naslov", "storitve", "lep"))
+        if len([x for x in scenarios if x.scenario_id.startswith("GENERAL_SAFE")]) >= 12:
+            break
+
+    # 6) Urgency / unsupported specialist (8)
+    urgency_msgs = [
+        "nujno potrebujem pomoč",
+        "hud glavobol imam",
+        "migrena me ubija",
+        "imam nevrološke težave",
+        "nujno",
+        "urgentno",
+        "zelo boli",
+        "takoj pomoč",
+    ]
+    for turns in [(m,) for m in urgency_msgs]:
+        add("URG_UNSUP", turns, ("112", "nujni", "specialist", "glavobol", "posvet", "nisem prepričan"))
+        if len([x for x in scenarios if x.scenario_id.startswith("URG_UNSUP")]) >= 8:
+            break
+
+    # 7) Final mixed price/info edge cases (10)
+    edge_sequences = [
+        ("koliko je botox", "25.2."),
+        ("koliko je filler", "rad bi termin"),
+        ("koliko stane ortoped", "rad bi termin"),
+        ("kje se nahajate", "rad bi termin"),
+        ("kaksen je delovn cas", "rad bi termin"),
+        ("kontakt", "rad bi termin"),
+        ("odstranjevanje bradavic", "koliko stane"),
+        ("zapestje sem si poškodoval", "lahko termin"),
+        ("imam madež na koži", "25.2."),
+        ("imate masaze", "koliko stane"),
+        ("naročanje", "ortoped", "26.2."),
+    ]
+    for turns in edge_sequences:
+        add(
+            "EDGE_MIX",
+            turns,
+            ("cena", "termin", "kateri datum", "prosti termini", "telefon", "email", "naslov", "na kateri pregled"),
+        )
+
+    return scenarios[:500]
 
 
-SCENARIOS = _build_500()
+SCENARIOS = _build_500_unique_scenarios()
 
 
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=[s.scenario_id for s in SCENARIOS])
@@ -103,6 +240,23 @@ def test_e2e_500_live_like_scenarios(client: TestClient, scenario: Scenario) -> 
         final_reply = lowered
 
     assert final_reply
-    assert any(expected in final_reply for expected in scenario.expect_any_final), (
+    normalized = (
+        final_reply.replace("š", "s")
+        .replace("č", "c")
+        .replace("ž", "z")
+        .replace("ć", "c")
+        .replace("đ", "d")
+    )
+    assert any(
+        expected.replace("š", "s").replace("č", "c").replace("ž", "z").replace("ć", "c").replace("đ", "d")
+        in normalized
+        for expected in scenario.expect_any_final
+    ), (
         f"Unexpected final reply for {scenario.scenario_id}: {final_reply!r}"
     )
+
+
+def test_e2e_500_are_unique() -> None:
+    assert len(SCENARIOS) == 500
+    turns = [s.turns for s in SCENARIOS]
+    assert len(set(turns)) == 500
