@@ -50,6 +50,7 @@ from app.services.session.unified_state import (
     FlowStep,
 )
 from app.services.routing.unified_router import route as unified_route, IntentType
+from app.services.routing.confidence import detect_service_type as detect_service_type_conf
 from app.services.routing.nlp_utils import is_affirmative, is_negative
 from app.services.routing.state_manager import ConversationTracker, SimpleCache
 from app.services.routing.intent_engine import classify_intent_llm
@@ -665,10 +666,14 @@ def _service_price_info(service_type: Optional[str], clinic_id: str | None = Non
 
 
 def extract_service_type(message: str, clinic_id: str | None = None) -> Optional[str]:
-    """Extract service type from message using word boundary matching"""
-    import re
+    """Extract service type from message (router confidence + fallback matching)."""
     lowered = message.lower()
     service_map = get_service_map(clinic_id=clinic_id)
+
+    # Primary path: use shared confidence detector (handles typos/synonyms/context).
+    detected = detect_service_type_conf(lowered, service_map=service_map)
+    if detected:
+        return detected.lower()
 
     # Skip short keywords that cause false positives
     skip_keywords = SKIP_SERVICE_KEYWORDS
@@ -679,7 +684,7 @@ def extract_service_type(message: str, clinic_id: str | None = None) -> Optional
             if var in skip_keywords:
                 continue
             # Use word boundary to avoid substring matches
-            if re.search(r'\b' + re.escape(var), lowered):
+            if re.search(r'\b' + re.escape(var) + r'\b', lowered):
                 return service_key
 
     return None

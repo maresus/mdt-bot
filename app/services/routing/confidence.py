@@ -137,6 +137,10 @@ ORTHOPEDICS_KEYWORDS = {
     "knees",
     "shoulder",
     "joint",
+    "zapestje",
+    "zapestja",
+    "zapestju",
+    "wrist",
 }
 
 # Keywords that need word boundary matching (to avoid "kolk" in "kolko")
@@ -181,7 +185,11 @@ OPHTHALMOLOGY_WORDS = {
 
 AESTHETIC_KEYWORDS = {
     "botox",
+    "botoks",
+    "botoc",
     "filler",
+    "filer",
+    "fillerji",
     "fillerj",
     "estetsk",
     "biorevital",
@@ -197,6 +205,8 @@ LASER_KEYWORDS = {
     "zilic",
     "kapilare",
     "bradavic",
+    "bradavica",
+    "bradavice",
     "glivic",
 }
 
@@ -207,6 +217,12 @@ PHYSIOTHERAPY_KEYWORDS = {
     "rehabilit",
     "masaž",
     "masaz",
+    "masaže",
+    "masaze",
+    "masaža",
+    "masaza",
+    "masaše",
+    "masase",
     "razgib",
     "vaje",
 }
@@ -218,6 +234,12 @@ COSMETICS_KEYWORDS = {
     "nega",
     "obraz",
     "tretma",
+    "masaža",
+    "masaza",
+    "masaže",
+    "masaze",
+    "masaše",
+    "masase",
 }
 
 # All service keywords combined
@@ -285,6 +307,11 @@ SYMPTOM_KEYWORDS = {
     "slabo vidim",
     "vidim slabše",
     "slabse vidim",
+    "poškod",
+    "poskod",
+    "poškodoval",
+    "poskodoval",
+    "zapestje",
 }
 # ============ INFO KEYWORDS ============
 
@@ -328,9 +355,13 @@ PRICE_KEYWORDS = {
     "cena",
     "cenik",
     "koliko stane",
+    "koliko je",
     "koliko stan",
     "kolko stane", # sleng
+    "kolko je",
     "kolko",       # sleng
+    "koliko pride",
+    "kolko pride",
     "kva stane",   # sleng
     "cene",
     "stroški",
@@ -403,6 +434,7 @@ URGENCY_KEYWORDS = {
 }
 
 QUESTION_MARKERS = {"?", "ali", "a ", "a imate", "imate", "kaj", "koliko", "kdaj", "kje"}
+FOOD_CONTEXT_KEYWORDS = {"kosilo", "jedel", "jest", "hrana", "meni", "jedilnik"}
 
 
 def _ascii_fold(text: str) -> str:
@@ -591,6 +623,11 @@ def compute_confidence(
         has_inquiry_kw = any(k in text for k in SERVICE_INQUIRY_KEYWORDS)
         has_booking_hint = any(k in text for k in BOOKING_HINTS)
         has_symptom_kw = any(k in text for k in SYMPTOM_KEYWORDS)
+        has_food_kw = any(k in text for k in FOOD_CONTEXT_KEYWORDS)
+
+        # Guard against obvious food-domain phrases (e.g. "kaj je za kosilo", "koleno bi jedel")
+        if has_food_kw and not has_booking_hint and not has_appointment_kw:
+            return 0.0
 
         # Strong signal: service + inquiry keyword (e.g., "kaj zdravi dermatolog?")
         if has_service_kw and has_inquiry_kw:
@@ -624,6 +661,10 @@ def compute_confidence(
         return 0.0
 
     if intent == "INFO":
+        # Keep food-domain queries in safe generic assistance flow
+        # (avoid uncertain fallback for messages like "kaj je za kosilo").
+        if any(k in text for k in FOOD_CONTEXT_KEYWORDS):
+            return 0.6
         if any(k in text for k in INFO_KEYWORDS) or "storitve" in text:
             return 0.8
         base = _score_question_marker(text)
