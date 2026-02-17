@@ -7,6 +7,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from app.services.session.store import get_session_store
+
 
 class FlowType(str, Enum):
     IDLE = "idle"
@@ -23,10 +25,6 @@ class FlowStep(str, Enum):
     EMAIL = "email"           # Contact email (optional)
     REASON = "reason"         # Visit reason
     CONFIRM = "confirm"       # Confirmation
-
-
-# In-memory state storage (per session_id)
-unified_states: Dict[str, Dict[str, Any]] = {}
 
 
 class StateManager:
@@ -162,14 +160,17 @@ def blank_unified_state() -> Dict[str, Any]:
 
 def get_unified_state(session_id: str) -> Dict[str, Any]:
     """Get or create unified state for session."""
-    if session_id not in unified_states:
-        unified_states[session_id] = blank_unified_state()
-    return unified_states[session_id]
+    store = get_session_store()
+    state = store.get(session_id)
+    if state is None:
+        state = blank_unified_state()
+        store.set(session_id, state)
+    return state
 
 
 def reset_unified_state(session_id: str) -> None:
     """Reset state to blank."""
-    unified_states[session_id] = blank_unified_state()
+    get_session_store().set(session_id, blank_unified_state())
 
 
 def reset_flow(session_id: str) -> None:
