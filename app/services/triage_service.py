@@ -32,6 +32,7 @@ from app.services.routing.symptom_lexicon import (
     ORTHOPEDICS_HINTS,
     URGENT_MEDICAL_HINTS,
 )
+from app.services.session.store import get_session_store
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,41 @@ class TriageService:
     """Service za soft triage - usmerjanje k pravemu specialistu."""
 
     def __init__(self):
-        self.sessions: Dict[str, TriageSession] = {}
+        self._store = get_session_store()
+
+    def _session_key(self, session_id: str) -> str:
+        return f"triage::{session_id}"
+
+    def _serialize_session(self, session: TriageSession) -> Dict[str, Any]:
+        return {
+            "session_id": session.session_id,
+            "state": session.state.value,
+            "symptoms": list(session.symptoms),
+            "duration_days": session.duration_days,
+            "intensity": session.intensity.value if session.intensity else None,
+            "additional_info": dict(session.additional_info),
+            "started_at": session.started_at,
+            "completed_at": session.completed_at,
+        }
+
+    def _deserialize_session(self, payload: Dict[str, Any]) -> TriageSession:
+        intensity_raw = payload.get("intensity")
+        intensity = SymptomIntensity(intensity_raw) if intensity_raw in {1, 2, 3, 4} else None
+        state_raw = str(payload.get("state") or TriageState.INITIAL.value)
+        state = TriageState(state_raw) if state_raw in {s.value for s in TriageState} else TriageState.INITIAL
+        return TriageSession(
+            session_id=str(payload.get("session_id") or ""),
+            state=state,
+            symptoms=list(payload.get("symptoms") or []),
+            duration_days=payload.get("duration_days"),
+            intensity=intensity,
+            additional_info=dict(payload.get("additional_info") or {}),
+            started_at=str(payload.get("started_at") or datetime.now().isoformat()),
+            completed_at=payload.get("completed_at"),
+        )
+
+    def _save_session(self, session: TriageSession) -> None:
+        self._store.set(self._session_key(session.session_id), self._serialize_session(session))
 
     # ================================================================
     # SESSION MANAGEMENT
@@ -158,7 +193,7 @@ class TriageService:
             Začetno vprašanje in metadata
         """
         session = TriageSession(session_id=session_id)
-        self.sessions[session_id] = session
+        self._save_session(session)
 
         return {
             "session_id": session_id,
@@ -169,15 +204,19 @@ class TriageService:
 
     def get_session(self, session_id: str) -> Optional[TriageSession]:
         """Vrne obstoječo sejo."""
-        return self.sessions.get(session_id)
+        payload = self._store.get(self._session_key(session_id))
+        if not payload:
+            return None
+        return self._deserialize_session(payload)
 
     def end_session(self, session_id: str) -> bool:
         """Zaključi sejo."""
-        if session_id in self.sessions:
-            self.sessions[session_id].completed_at = datetime.now().isoformat()
-            del self.sessions[session_id]
-            return True
-        return False
+        session = self.get_session(session_id)
+        if not session:
+            return False
+        session.completed_at = datetime.now().isoformat()
+        self._store.delete(self._session_key(session_id))
+        return True
 
     # ================================================================
     # SYMPTOM ANALYSIS
@@ -333,6 +372,7 @@ class TriageService:
             result["question"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_DURATION]["question"]
             result["options"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_DURATION].get("options")
             result["analysis"] = analysis
+            self._save_session(session)
 
         elif session.state == TriageState.COLLECTING_DURATION:
             # Parse duration
@@ -341,6 +381,7 @@ class TriageService:
             result["state"] = session.state.value
             result["question"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_INTENSITY]["question"]
             result["options"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_INTENSITY].get("options")
+            self._save_session(session)
 
         elif session.state == TriageState.COLLECTING_INTENSITY:
             # Parse intensity
@@ -360,6 +401,7 @@ class TriageService:
             else:
                 result["question"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_HISTORY]["question"]
                 result["options"] = TRIAGE_QUESTIONS[TriageState.COLLECTING_HISTORY].get("options")
+                self._save_session(session)
 
             result["state"] = session.state.value
 

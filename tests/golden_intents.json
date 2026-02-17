@@ -211,7 +211,8 @@
   {
     "input": "Zelo me boli glava",
     "expected": {
-      "intent": "SERVICE_INFO"
+      "intent": "UNSUPPORTED_SYMPTOM",
+      "ui_type": "quick_replies"
     }
   },
   {

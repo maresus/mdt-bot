@@ -19,3 +19,4 @@ pyyaml
 # Fuzzy matching for fast-pass
 thefuzz>=0.20.0
 python-Levenshtein>=0.25.0
+redis>=5.0.0
