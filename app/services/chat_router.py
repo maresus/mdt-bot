@@ -464,6 +464,24 @@ def _append_nudge_if_missing(advice_text: str, nudge: str) -> str:
     return f"{advice_text}\n\n{nudge}"
 
 
+def _looks_like_medication_request(message: str) -> bool:
+    lowered = message.lower()
+    medication_keywords = [
+        "tablete",
+        "tableta",
+        "zdravilo",
+        "zdravila",
+        "recept",
+        "predpis",
+        "antibiotik",
+        "protiboleč",
+        "protibolec",
+        "analgetik",
+    ]
+    ask_markers = ["lahko", "dobim", "date", "izdate", "prodam", "prodajate", "?"]
+    return any(k in lowered for k in medication_keywords) and any(a in lowered for a in ask_markers)
+
+
 def _quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | None:
     """
     Run single-step triage for free-form symptom statements that would otherwise
@@ -1000,6 +1018,17 @@ def handle_unified_routing(
     # Handle GOODBYE
     if decision.primary_intent == IntentType.GOODBYE:
         return get_response("general.goodbye", clinic_id=clinic_id)
+
+    # Medication/prescription asks should not start booking flow directly.
+    if _looks_like_medication_request(message):
+        response_text = (
+            "Prek klepeta ne izdajamo zdravil ali receptov. "
+            "Za zdravila je potreben posvet pri zdravniku.\n\n"
+            "Če želite, vas lahko takoj naročim na ustrezen pregled."
+        )
+        if is_in_flow(session_id):
+            return build_interrupt_response(response_text, get_current_step(session_id), True)
+        return response_text
 
     # Handle BOOKING_APPOINTMENT intent
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:
