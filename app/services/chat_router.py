@@ -464,6 +464,27 @@ def _append_nudge_if_missing(advice_text: str, nudge: str) -> str:
     return f"{advice_text}\n\n{nudge}"
 
 
+def _looks_like_medical_statement(message: str) -> bool:
+    """Detect short health-problem statements that miss classic symptom keywords."""
+    lowered = message.lower()
+    medical_cues = [
+        "krv",
+        "krvav",
+        "krvavim",
+        "nos",
+        "diham",
+        "duši",
+        "dus",
+        "nezavest",
+        "omedlev",
+        "bruham",
+        "vrti",
+        "vročina",
+        "vrocina",
+    ]
+    return any(cue in lowered for cue in medical_cues)
+
+
 def _looks_like_medication_request(message: str) -> bool:
     lowered = message.lower()
     medication_keywords = [
@@ -487,7 +508,7 @@ def _quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | 
     Run single-step triage for free-form symptom statements that would otherwise
     fall to generic "Kako vam lahko pomagam" fallback.
     """
-    if not _looks_like_symptom_report(message):
+    if not (_looks_like_symptom_report(message) or _looks_like_medical_statement(message)):
         return None
 
     try:
