@@ -499,6 +499,7 @@ def _looks_like_previsit_question(message: str) -> bool:
         "mr",
         "magnetna",
         "pred pregledom",
+        "s sabo",
         "moram prinesti",
         "prinesem",
     ]
@@ -536,6 +537,20 @@ def _previsit_guidance_response(service_key: str | None, clinic_id: str | None =
     )
 
 
+def _looks_like_uncertain_help_request(message: str) -> bool:
+    lowered = message.lower()
+    signals = [
+        "ne vem",
+        "ne vem tocno",
+        "ne vem točno",
+        "nekaj ni ok",
+        "nekaj ni v redu",
+        "sam neki ni ok",
+        "nisem prepričan",
+    ]
+    return any(sig in lowered for sig in signals)
+
+
 def _looks_like_medication_request(message: str) -> bool:
     lowered = message.lower()
     medication_keywords = [
@@ -561,6 +576,13 @@ def _quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | 
     """
     if not (_looks_like_symptom_report(message) or _looks_like_medical_statement(message)):
         return None
+
+    lowered = message.lower()
+    if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
+        return _append_nudge_if_missing(
+            advice_only_headache(),
+            _symptom_booking_nudge(None, clinic_id=clinic_id),
+        )
 
     try:
         triage = get_triage_service().quick_triage(message)
@@ -1270,6 +1292,13 @@ def handle_unified_routing(
     # Handle INFO
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
+        asks_location = any(k in lowered for k in ["kje", "naslov", "lokacij", "nahajate", "pridem", "pot"])
+        asks_hours = any(k in lowered for k in ["delovni", "delovn", "odprto", "odprti", "kdaj", "ura"])
+        if asks_location and asks_hours:
+            return (
+                f"{_get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)}\n\n"
+                f"{_get_info_response('delovni_cas', clinic_id=clinic_id)}"
+            )
         info_key = pick_info_key(message)
         if info_key == "cakalna_doba":
             service = decision.service_type or suggested_service or appointment_state.get("service_type")
@@ -1414,6 +1443,13 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if (not in_booking_flow) and conversation_tracker.detect_loop(session_id, message):
             loop_count = conversation_tracker.get_loop_count(session_id)
             conversation_tracker.add_message(session_id, message)
+            if _looks_like_uncertain_help_request(message):
+                payload = format_response(
+                    _default_help_prompt(clinic_id=clinic_id),
+                    state_manager=state_mgr,
+                    metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": "soft"},
+                )
+                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
             if loop_count >= 2:
                 conversation_tracker.reset_loop_count(session_id)
                 payload = format_response(

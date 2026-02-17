@@ -313,6 +313,7 @@ PREVISIT_INFO_KEYWORDS = {
     "mr",
     "magnetna",
     "pred pregledom",
+    "s sabo",
     "moram prinesti",
     "prinesem",
 }

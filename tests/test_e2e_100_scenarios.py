@@ -141,6 +141,11 @@ def _base_scenarios() -> list[Scenario]:
             ("prinesete obstoječe izvide", "napotnico", "preverim prost termin"),
         ),
         Scenario(
+            "INFO_PREVISIT_DOCUMENTS_DERMATOLOG",
+            ("kaj vse rabim s sabo za dermatologa",),
+            ("prinesete obstoječe izvide", "seznam zdravil", "preverim prost termin"),
+        ),
+        Scenario(
             "INTERRUPT_URGENCY_CHEST",
             ("bolečina v prsih + težko diham, a mate jutri termin?",),
             ("112", "nujni primer", "prednostne termine"),
@@ -154,6 +159,11 @@ def _base_scenarios() -> list[Scenario]:
             "INTERRUPT_SYMPTOM_HEADACHE",
             ("boli me glava",),
             ("glavobol", "zdravnikom", "nujno obravnavo", "splošni posvet", "proste termine", "kako vam lahko pomagam"),
+        ),
+        Scenario(
+            "INTERRUPT_SYMPTOM_HEADACHE_VARIANT",
+            ("glava me boli že 3 dni",),
+            ("glavobol", "zdravnikom", "poslabša", "proste termine"),
         ),
         Scenario(
             "INTERRUPT_SYMPTOM_SKIN",
@@ -184,6 +194,11 @@ def _base_scenarios() -> list[Scenario]:
             "MIX_TOPIC_SWITCH_BACK",
             ("zdravo", "kje ste", "rad bi se narocil", "ortoped", "25.3.2026"),
             ("prosti termini", "izberite drug datum"),
+        ),
+        Scenario(
+            "INFO_LOCATION_AND_HOURS_COMBINED",
+            ("Kje ste in kakšen je delovni čas v soboto?",),
+            ("naslov", "delovni čas", "sobota"),
         ),
         Scenario(
             "MIX_PRICE_THEN_BOOK",
@@ -220,6 +235,11 @@ def _base_scenarios() -> list[Scenario]:
             "MIX_GOODBYE_REENTRY",
             ("hvala", "zdravo", "kaksen je kontakt"),
             ("telefon", "email", "pomagam", "lep dan"),
+        ),
+        Scenario(
+            "LOOP_UNCERTAIN_HELP_SOFT",
+            ("zdravo, ne vem točno kaj rabim, sam neki ni ok", "zdravo, ne vem točno kaj rabim, sam neki ni ok"),
+            ("kako vam lahko pomagam", "kaj vas danes zanima", "povejte"),
         ),
     ]
 
