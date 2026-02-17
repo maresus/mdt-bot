@@ -490,17 +490,35 @@ def _looks_like_previsit_question(message: str) -> bool:
     previsit_keywords = [
         "izvid",
         "izvide",
+        "izvidi",
         "napotnic",
         "napotnica",
         "napotnico",
+        "napotnco",
+        "rtg",
+        "mr",
+        "magnetna",
         "pred pregledom",
         "moram prinesti",
         "prinesem",
-        "kaj rabim",
-        "kaj potrebujem",
     ]
     question_markers = ["?", "ali", "kaj", "moram", "potrebujem"]
     return any(k in lowered for k in previsit_keywords) and any(q in lowered for q in question_markers)
+
+
+def _looks_like_urgent_message(message: str) -> bool:
+    lowered = message.lower()
+    urgent_phrases = [
+        "težko diham",
+        "tezko diham",
+        "bolečina v prs",
+        "bolecina v prs",
+        "krvavim",
+        "krvavi",
+        "nezavest",
+        "omedlev",
+    ]
+    return any(p in lowered for p in urgent_phrases)
 
 
 def _previsit_guidance_response(service_key: str | None, clinic_id: str | None = None) -> str:
@@ -1075,6 +1093,10 @@ def handle_unified_routing(
     # Handle GOODBYE
     if decision.primary_intent == IntentType.GOODBYE:
         return get_response("general.goodbye", clinic_id=clinic_id)
+
+    # Hard safety guard for clearly urgent messages.
+    if _looks_like_urgent_message(message):
+        return get_response("general.urgency", clinic_id=clinic_id)
 
     # Medication/prescription asks should not start booking flow directly.
     if _looks_like_medication_request(message):

@@ -131,6 +131,21 @@ def _base_scenarios() -> list[Scenario]:
             ("prinesete obstoječe izvide", "seznam zdravil", "preverim prost termin"),
         ),
         Scenario(
+            "INFO_PREVISIT_DOCUMENTS_TYPOS",
+            ("A rabim napotnco za ortopeda, mam sam RTG od lani?",),
+            ("prinesete obstoječe izvide", "napotnico", "preverim prost termin"),
+        ),
+        Scenario(
+            "INTERRUPT_URGENCY_CHEST",
+            ("bolečina v prsih + težko diham, a mate jutri termin?",),
+            ("112", "nujni primer", "prednostne termine"),
+        ),
+        Scenario(
+            "SERVICE_INFO_AESTHETIC_PRICE",
+            ("botoc + filler isti dan, kolk pride vse skp?",),
+            ("estetski", "botox", "filler", "80-300"),
+        ),
+        Scenario(
             "INTERRUPT_SYMPTOM_HEADACHE",
             ("boli me glava",),
             ("glavobol", "zdravnikom", "nujno obravnavo", "splošni posvet", "proste termine", "kako vam lahko pomagam"),

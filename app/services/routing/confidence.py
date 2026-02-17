@@ -86,6 +86,8 @@ DERMATOLOGY_KEYWORDS = {
     "koza",
     "kozo",      # sleng/typo: "s kozo"
     "kožo",      # "s kožo"
+    "koži",
+    "kozi",
     "kožn",
     "kozn",
     "akne",
@@ -104,6 +106,7 @@ DERMATOLOGY_KEYWORDS = {
     "rash",
     "mole",
     "acne",
+    "glivic",
 }
 
 ORTHOPEDICS_KEYWORDS = {
@@ -144,9 +147,8 @@ ORTHOPEDICS_KEYWORDS = {
     "wrist",
 }
 
-# Keywords that need word boundary matching (to avoid "kolk" in "kolko")
+# Keywords that need word boundary matching
 ORTHOPEDICS_WORDS = {
-    "kolk",     # hip - needs boundary to not match "kolko" (how much)
     "kolka",
     "kolku",
 }
@@ -306,6 +308,10 @@ PREVISIT_INFO_KEYWORDS = {
     "napotnic",
     "napotnico",
     "napotnica",
+    "napotnco",
+    "rtg",
+    "mr",
+    "magnetna",
     "pred pregledom",
     "moram prinesti",
     "prinesem",
@@ -467,6 +473,15 @@ URGENCY_KEYWORDS = {
     "zelo boli",
     "močno boli",
     "mocno boli",
+    "težko diham",
+    "tezko diham",
+    "duši",
+    "dusi",
+    "bolečina v prs",
+    "bolecina v prs",
+    "prsih",
+    "krvavim",
+    "krvavi",
 }
 
 QUESTION_MARKERS = {"?", "ali", "a ", "a imate", "imate", "kaj", "koliko", "kdaj", "kje"}
@@ -605,6 +620,9 @@ def compute_confidence(
         return 1.0 if any(k in text for k in GOODBYE_KEYWORDS) else 0.0
 
     if intent == "BOOKING_APPOINTMENT":
+        if any(k in text for k in URGENCY_KEYWORDS):
+            return 0.1
+
         # "Kako pridem" is INFO, not booking
         if is_kako_pridem:
             return 0.0
@@ -680,6 +698,10 @@ def compute_confidence(
         # Strong signal: service + pre-visit question (documents/preparation)
         if has_service_kw and has_previsit_kw:
             return 0.95
+
+        # Urgent phrasing should route to URGENCY handler, not service info.
+        if any(k in text for k in URGENCY_KEYWORDS):
+            return 0.4
 
         # Strong signal: symptom report (e.g., "boli me glava")
         if has_symptom_kw:
