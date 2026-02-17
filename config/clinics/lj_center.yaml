@@ -77,21 +77,33 @@ unsupported_symptoms:
       - "boli me glava"
     response:
       - |
-        Žal mi je, da imate težave z glavobolom. 😊
+        Razumem, glavobol je lahko zelo neprijeten.
 
-        V našem centru nimamo specialista nevrologa, lahko pa preverim, kateri od naših specialistov bi bil glede opisa najprimernejši.
+        Za začetek lahko pomaga počitek, dovolj tekočine in manj obremenitve (ekrani, hrup, stres). Če se glavobol stopnjuje, traja več dni ali se pojavijo dodatni simptomi, je priporočljiv čimprejšnji pregled.
+
+        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+
+        V našem centru nimamo nevrologa, lahko pa preverim, kateri od naših specialistov je trenutno najprimernejši.
 
         Želite, da preverim možnosti?
       - |
-        Razumem, glavobol je lahko zelo neprijeten.
+        Razumem, da imate težave z glavobolom.
 
-        Ker nimamo nevrologa, vam lahko predlagam najbolj smiseln pregled pri enem od naših specialistov.
+        Do pregleda lahko poskusite z mirovanjem, hidracijo in izogibanjem sprožilcem (npr. napor, premalo spanja, dolgotrajno delo za zaslonom).
+
+        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+
+        Ker pri nas nimamo nevrologa, vam lahko predlagam najbolj smiseln naslednji pregled pri enem od naših specialistov.
 
         Želite, da preverim, kam bi vas najhitreje uvrstili?
       - |
         Hvala za opis težave.
 
-        Nevrologa pri nas žal nimamo, lahko pa skupaj preveriva, kateri specialist pri nas je najbolj primeren za začetno obravnavo.
+        Pri takih težavah je smiselno spremljati trajanje in jakost simptomov ter po potrebi čim prej opraviti pregled.
+
+        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+
+        Nevrologa pri nas žal nimamo, lahko pa preverim, kateri specialist pri nas je najbolj primeren za začetno obravnavo.
 
         Želite, da preverim razpoložljive možnosti?
     quick_replies:
