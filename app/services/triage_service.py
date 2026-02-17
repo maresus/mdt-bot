@@ -26,6 +26,13 @@ from datetime import datetime
 import logging
 import re
 
+from app.services.routing.symptom_lexicon import (
+    DERMATOLOGY_HINTS,
+    OPHTHALMOLOGY_HINTS,
+    ORTHOPEDICS_HINTS,
+    URGENT_MEDICAL_HINTS,
+)
+
 logger = logging.getLogger(__name__)
 
 # POMEMBNO: Vsi odgovori morajo vsebovati to opozorilo
@@ -203,6 +210,41 @@ class TriageService:
                     "message": info["message"],
                     "urgent": info.get("urgent", False),
                     "priority": info.get("priority", False)
+                })
+
+        # Shared keyword fallback to keep triage and routing aligned.
+        if not matches:
+            if any(token in text_lower for token in URGENT_MEDICAL_HINTS):
+                matches.append({
+                    "specialist": "urgenca",
+                    "confidence": 1.0,
+                    "message": " POMEMBNO: Pri teh simptomih priporočam takojšnjo medicinsko pomoč. Pokličite 112 ali obiščite urgentni center.",
+                    "urgent": True,
+                    "priority": True,
+                })
+            elif any(token in text_lower for token in DERMATOLOGY_HINTS):
+                matches.append({
+                    "specialist": "dermatolog",
+                    "confidence": 0.9,
+                    "message": "Za težave s kožo priporočam pregled pri dermatologu.",
+                    "urgent": False,
+                    "priority": False,
+                })
+            elif any(token in text_lower for token in ORTHOPEDICS_HINTS):
+                matches.append({
+                    "specialist": "ortoped",
+                    "confidence": 0.9,
+                    "message": "Za težave s sklepi in hrbtenico priporočam ortopedski pregled.",
+                    "urgent": False,
+                    "priority": False,
+                })
+            elif any(token in text_lower for token in OPHTHALMOLOGY_HINTS):
+                matches.append({
+                    "specialist": "okulist",
+                    "confidence": 0.9,
+                    "message": "Za očesne težave priporočam okulistični pregled.",
+                    "urgent": False,
+                    "priority": False,
                 })
 
         # Sort by confidence and priority

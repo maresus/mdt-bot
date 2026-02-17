@@ -8,6 +8,12 @@ from enum import Enum
 from typing import Dict, Tuple
 import re
 
+from app.services.routing.symptom_lexicon import (
+    DERMATOLOGY_HINTS,
+    OPHTHALMOLOGY_HINTS,
+    ORTHOPEDICS_HINTS,
+)
+
 
 class SwitchAction(str, Enum):
     HARD_SWITCH = "hard_switch"
@@ -108,6 +114,7 @@ DERMATOLOGY_KEYWORDS = {
     "acne",
     "glivic",
 }
+DERMATOLOGY_KEYWORDS |= DERMATOLOGY_HINTS
 
 ORTHOPEDICS_KEYWORDS = {
     "ortoped",
@@ -146,6 +153,7 @@ ORTHOPEDICS_KEYWORDS = {
     "zapestju",
     "wrist",
 }
+ORTHOPEDICS_KEYWORDS |= ORTHOPEDICS_HINTS
 
 # Keywords that need word boundary matching
 ORTHOPEDICS_WORDS = {
@@ -176,6 +184,7 @@ OPHTHALMOLOGY_KEYWORDS = {
     "eye check",
     "eye exam",
 }
+OPHTHALMOLOGY_KEYWORDS |= OPHTHALMOLOGY_HINTS
 
 # Keywords that need word boundary matching (to avoid "oci" in "naročilo")
 OPHTHALMOLOGY_WORDS = {
