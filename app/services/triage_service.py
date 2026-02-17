@@ -88,7 +88,7 @@ TRIAGE_QUESTIONS = {
 # Simptom → specialist mapping
 SYMPTOM_SPECIALIST_MAP = {
     # Dermatolog
-    r"(koža|kožn|izpuščaj|akne|mozolj|bradavic|luščenj|srbi|peče kož)": {
+    r"(\bkoža\b|\bkozi?\b|kožn|kozn|izpuščaj|izpuscaj|akne|mozolj|bradavic|luščenj|luscenj|srbi|srbe|peče kož|pece koz|bula|bulo|bulica|zatrdlin|izboklin)": {
         "specialist": "dermatolog",
         "confidence": 0.9,
         "message": "Za težave s kožo priporočam pregled pri dermatologu."
@@ -114,7 +114,7 @@ SYMPTOM_SPECIALIST_MAP = {
     },
 
     # Okulist
-    r"(oč|vid|gledl|zamegljen|očala|leč|očesn)": {
+    r"(\boči\b|\boci\b|\bočes\w*|\boces\w*|\bvid\w*|gledl|zamegljen|zamegljeno|očala|ocala|leč|lec|oftalm|okul)": {
         "specialist": "okulist",
         "confidence": 0.9,
         "message": "Za očesne težave priporočam okulistični pregled."
