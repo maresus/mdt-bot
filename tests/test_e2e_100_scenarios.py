@@ -41,6 +41,11 @@ def _base_scenarios() -> list[Scenario]:
             ("prosti termini", "izberite drug datum"),
         ),
         Scenario(
+            "FLOW_BOOKING_ONE_SHOT_SERVICE_DATE_TIME",
+            ("rad bi termin pri dermatologu 26.02 ob 11",),
+            ("prosti termini", "termin 26.02", "izberite drug datum"),
+        ),
+        Scenario(
             "FLOW_BOOKING_EMAIL_REASON",
             ("rad bi termin", "okulist", "24.3.2026", "10:00", "Ana Novak", "040111222", "ana@example.com", "slabsi vid"),
             ("ali so podatki pravilni", "prosim vnesite veljaven"),

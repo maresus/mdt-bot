@@ -1117,6 +1117,10 @@ def handle_unified_routing(
             if service_type:
                 state_mgr.transition_to_booking(service_type=service_type, legacy_state=appointment_state)
                 start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+                # One-shot booking message may already include date/time
+                # (e.g. "rad bi termin pri dermatologu 26.02 ob 11").
+                if extract_date_from_message(message):
+                    return handle_appointment_booking(message, session_id)
                 return get_response(
                     "booking.start_with_date",
                     clinic_id=clinic_id,
