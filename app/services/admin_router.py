@@ -1319,17 +1319,31 @@ async def get_reminder_statistics():
 
 
 @router.get("/quality/daily-audit")
-def get_daily_quality_audit(days: int = 1, max_sessions: int = 2000, max_examples: int = 20):
+def get_daily_quality_audit(
+    days: int = 1,
+    max_sessions: int = 2000,
+    max_examples: int = 20,
+    include_test_sessions: bool = False,
+):
     """
     Daily chat quality audit over saved chat_messages.
     Intended to be called once per day from cron/automation.
     """
     _log("GET /quality/daily-audit", days=days, max_sessions=max_sessions, max_examples=max_examples)
     try:
+        exclude_prefixes = () if include_test_sessions else (
+            "test_center::e2e",
+            "test_center::golden",
+            "test_center::test",
+            "e2e",
+            "golden",
+            "test-",
+        )
         return run_daily_chat_quality_audit(
             days=days,
             max_sessions=max_sessions,
             max_examples=max_examples,
+            exclude_session_prefixes=exclude_prefixes,
         )
     except Exception as e:
         print(f"[ADMIN] Error running daily quality audit: {e}")

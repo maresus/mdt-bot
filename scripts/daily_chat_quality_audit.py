@@ -19,6 +19,11 @@ def main() -> int:
     parser.add_argument("--max-sessions", type=int, default=2000, help="Maximum sessions to scan.")
     parser.add_argument("--max-examples", type=int, default=20, help="Examples per detected issue.")
     parser.add_argument(
+        "--include-test-sessions",
+        action="store_true",
+        help="Include test/e2e sessions in audit (default: excluded).",
+    )
+    parser.add_argument(
         "--out",
         type=str,
         default="",
@@ -30,6 +35,16 @@ def main() -> int:
         days=args.days,
         max_sessions=args.max_sessions,
         max_examples=args.max_examples,
+        exclude_session_prefixes=()
+        if args.include_test_sessions
+        else (
+            "test_center::e2e",
+            "test_center::golden",
+            "test_center::test",
+            "e2e",
+            "golden",
+            "test-",
+        ),
     )
 
     payload = json.dumps(report, ensure_ascii=False, indent=2)

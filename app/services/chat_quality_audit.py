@@ -58,7 +58,19 @@ def _first_assistant_after(messages: list[dict[str, Any]], start_idx: int) -> di
     return None
 
 
-def run_daily_chat_quality_audit(days: int = 1, max_sessions: int = 2000, max_examples: int = 20) -> dict[str, Any]:
+def run_daily_chat_quality_audit(
+    days: int = 1,
+    max_sessions: int = 2000,
+    max_examples: int = 20,
+    exclude_session_prefixes: tuple[str, ...] = (
+        "test_center::e2e",
+        "test_center::golden",
+        "test_center::test",
+        "e2e",
+        "golden",
+        "test-",
+    ),
+) -> dict[str, Any]:
     history = get_chat_history_service()
     since_dt = datetime.now() - timedelta(days=days)
     since = since_dt.isoformat()
@@ -70,7 +82,12 @@ def run_daily_chat_quality_audit(days: int = 1, max_sessions: int = 2000, max_ex
     sessions_analyzed = 0
     messages_analyzed = 0
 
+    ignored_sessions = 0
     for session_id in session_ids:
+        sid_norm = _norm(session_id)
+        if any(sid_norm.startswith(_norm(prefix)) for prefix in exclude_session_prefixes):
+            ignored_sessions += 1
+            continue
         messages = history.get_session_history(session_id=session_id)
         if not messages:
             continue
@@ -147,9 +164,9 @@ def run_daily_chat_quality_audit(days: int = 1, max_sessions: int = 2000, max_ex
         "generated_at": datetime.now().isoformat(),
         "period_days": days,
         "period_start": since_dt.isoformat(),
+        "ignored_sessions": ignored_sessions,
         "sessions_analyzed": sessions_analyzed,
         "messages_analyzed": messages_analyzed,
         "issues_total": sum(issue_counts.values()),
         "issues": issues,
     }
-
