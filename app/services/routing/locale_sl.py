@@ -133,7 +133,17 @@ BOOKING_KEYWORDS_EXTENDED = [
     "želela",
 ]
 
-HOURS_WORDS = ["delovni čas", "delovni cas", "odprto", "odprti", "kdaj ste odprti", "do kdaj", "od kdaj"]
+HOURS_WORDS = [
+    "delovni čas",
+    "delovni cas",
+    "delovn cas",
+    "delovn",
+    "odprto",
+    "odprti",
+    "kdaj ste odprti",
+    "do kdaj",
+    "od kdaj",
+]
 
 AVAILABILITY_WORDS = ["prost", "razpoložljiv", "razpolozljiv", "kdaj", "termin"]
 

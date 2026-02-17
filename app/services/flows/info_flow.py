@@ -9,7 +9,7 @@ def pick_info_key(message: str, default: str = "") -> str:
 
     if any(k in lowered for k in ["lokacija", "naslov", "kje", "nahajate"]):
         return "lokacija"
-    if any(k in lowered for k in ["delovni", "ura", "odprt", "kdaj"]):
+    if any(k in lowered for k in ["delovni", "delovn", "delovn cas", "ura", "odprt", "kdaj"]):
         return "delovni_cas"
     if any(
         k in lowered
