@@ -908,7 +908,10 @@ def handle_unified_routing(
                 state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
             state_mgr.clear_context_key("awaiting_specialist_prompt")
             state_mgr.set_context_value("awaiting_specialist_choice", True)
-            return "Seveda. Pri katerem specialistu želite, da preverim termin?"
+            return (
+                "Seveda. Ker brez pregleda ne morem zanesljivo določiti specialista, "
+                "izberite prosim, pri katerem želite preveriti termin."
+            )
 
         if is_negative(message):
             state_mgr.clear_context_key("awaiting_specialist_prompt")

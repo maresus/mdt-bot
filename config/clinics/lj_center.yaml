@@ -83,9 +83,9 @@ unsupported_symptoms:
 
         ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
-        V našem centru nimamo nevrologa, lahko pa preverim, kateri od naših specialistov je trenutno najprimernejši.
+        V našem centru nimamo nevrologa. Lahko pa vam ponudim možnosti terminov pri specialistih, ki so pri nas na voljo.
 
-        Želite, da preverim možnosti?
+        Želite, da vam pokažem možnosti?
       - |
         Razumem, da imate težave z glavobolom.
 
@@ -93,9 +93,9 @@ unsupported_symptoms:
 
         ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
-        Ker pri nas nimamo nevrologa, vam lahko predlagam najbolj smiseln naslednji pregled pri enem od naših specialistov.
+        Ker pri nas nimamo nevrologa, vam lahko ponudim termine pri specialistih, ki so pri nas na voljo.
 
-        Želite, da preverim, kam bi vas najhitreje uvrstili?
+        Želite, da vam pokažem možnosti?
       - |
         Hvala za opis težave.
 
@@ -103,9 +103,9 @@ unsupported_symptoms:
 
         ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
-        Nevrologa pri nas žal nimamo, lahko pa preverim, kateri specialist pri nas je najbolj primeren za začetno obravnavo.
+        Nevrologa pri nas žal nimamo, lahko pa vam pokažem razpoložljive možnosti pri specialistih, ki jih imamo.
 
-        Želite, da preverim razpoložljive možnosti?
+        Želite, da vam pokažem možnosti?
     quick_replies:
       - label: "Da, predlagajte specialista"
         value: "DA"
