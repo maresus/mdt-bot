@@ -1111,6 +1111,18 @@ def handle_unified_routing(
     if decision.primary_intent == IntentType.INFO:
         lowered = message.lower()
         info_key = pick_info_key(message)
+        if info_key == "cakalna_doba":
+            service = decision.service_type or suggested_service or appointment_state.get("service_type")
+            if service:
+                return (
+                    "Čakalna doba je odvisna od storitve in termina. "
+                    f"Za {str(service).lower()} lahko takoj preverim prvi prost termin."
+                )
+            return (
+                "Čakalna doba je odvisna od storitve. "
+                "Napišite prosim kateri pregled želite (npr. dermatolog, ortoped, okulist), "
+                "pa preverim prvi prost termin."
+            )
         if info_key in CRITICAL_INFO_KEYS or info_key in INFO_KEYS_DIRECT:
             if info_key == INFO_KEY_CONTACT and any(k in lowered for k in CONTACT_ROUTE_WORDS):
                 return _get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)
@@ -1236,7 +1248,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
             return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         # Keep anti-loop guard for non-fast-pass traffic only.
-        if conversation_tracker.detect_loop(session_id, message):
+        # While user is in booking flow, repeated inputs are often normal
+        # (e.g., symptom restatement while awaiting date).
+        in_booking_flow = is_in_flow(session_id)
+        if (not in_booking_flow) and conversation_tracker.detect_loop(session_id, message):
             loop_count = conversation_tracker.get_loop_count(session_id)
             conversation_tracker.add_message(session_id, message)
             if loop_count >= 2:

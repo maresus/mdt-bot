@@ -96,6 +96,16 @@ def _base_scenarios() -> list[Scenario]:
             ("park", "naslov", "lokacij"),
         ),
         Scenario(
+            "INFO_WAITING_TIME",
+            ("koliko čakam",),
+            ("čakalna", "cakalna", "odvisna od storitve", "prvi prost termin"),
+        ),
+        Scenario(
+            "FLOW_NO_LOOP_ON_SYMPTOM_REPEAT",
+            ("imam bradavico", "bradavico imam"),
+            ("laserski poseg", "bradavice", "preverim prost termin"),
+        ),
+        Scenario(
             "INFO_PRICE_GENERIC",
             ("kolk stane pregled",),
             ("cene", "storitev"),
