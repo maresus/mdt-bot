@@ -122,11 +122,9 @@ def answer_with_hybrid_kb(
             state_store[session_id] = state
 
         if not results:
-            return """Nisem prepričan, da pravilno razumem. Lahko pojasnite:
-- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)
-- Za kateri datum?
-
-Ali lahko zastavite vprašanje drugače?"""
+            return """Pozdravljeni. Da vas pravilno usmerim, mi prosim napišite:
+- ali želite informacijo ali termin,
+- in za katero storitev (dermatolog / ortoped / okulist / laser / estetika / kozmetika)."""
 
         top_result = results[0]
         top_score = top_result["score"]
@@ -223,13 +221,9 @@ Prosim, navedite obe informaciji."""
 
 Katero storitev želite?"""
 
-        return """Lahko vam pomagam z:
-- Naročilom na pregled (dermatolog, ortoped, okulist...)
-- Informacijami o storitvah in cenah
-- Delovnim časom in lokacijo
-- Prostimi termini
-
-Kaj vas zanima?"""
+        return """Razumem. Da nadaljujeva brez ugibanja, mi prosim povejte eno stvar:
+- želite informacijo (cene, delovni čas, kontakt), ali
+- želite termin za pregled (in kateri pregled)."""
 
     except Exception as e:
         print(f"[KB_SEARCH] Error: {e}")

@@ -1073,6 +1073,9 @@ def handle_unified_routing(
                 nudge = _symptom_booking_nudge(service, clinic_id=clinic_id)
                 return _append_nudge_if_missing(advice_only(service), nudge)
         if _looks_like_symptom_report(message) and not service:
+            triage_fallback = _quick_triage_fallback(message, clinic_id=clinic_id)
+            if triage_fallback:
+                return triage_fallback
             lowered = message.lower()
             if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
                 return advice_only_headache()
