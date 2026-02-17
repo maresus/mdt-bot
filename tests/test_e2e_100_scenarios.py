@@ -126,6 +126,11 @@ def _base_scenarios() -> list[Scenario]:
             ("ne izdajamo zdravil", "potreben posvet", "naročim na ustrezen pregled"),
         ),
         Scenario(
+            "INFO_PREVISIT_DOCUMENTS",
+            ("Ali potrebujem izvide pred pregledom kolena?",),
+            ("prinesete obstoječe izvide", "seznam zdravil", "preverim prost termin"),
+        ),
+        Scenario(
             "INTERRUPT_SYMPTOM_HEADACHE",
             ("boli me glava",),
             ("glavobol", "zdravnikom", "nujno obravnavo", "splošni posvet", "proste termine", "kako vam lahko pomagam"),

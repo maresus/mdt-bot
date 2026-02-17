@@ -485,6 +485,39 @@ def _looks_like_medical_statement(message: str) -> bool:
     return any(cue in lowered for cue in medical_cues)
 
 
+def _looks_like_previsit_question(message: str) -> bool:
+    lowered = message.lower()
+    previsit_keywords = [
+        "izvid",
+        "izvide",
+        "napotnic",
+        "napotnica",
+        "napotnico",
+        "pred pregledom",
+        "moram prinesti",
+        "prinesem",
+        "kaj rabim",
+        "kaj potrebujem",
+    ]
+    question_markers = ["?", "ali", "kaj", "moram", "potrebujem"]
+    return any(k in lowered for k in previsit_keywords) and any(q in lowered for q in question_markers)
+
+
+def _previsit_guidance_response(service_key: str | None, clinic_id: str | None = None) -> str:
+    service_name = None
+    if service_key:
+        info = get_service_info(service_key.lower(), clinic_id=clinic_id)
+        if info:
+            service_name = info.get("name")
+    service_label = service_name or "pregled"
+    return (
+        f"Za {service_label.lower()} običajno priporočamo, da prinesete obstoječe izvide, "
+        "seznam zdravil in osebni dokument. Če imate napotnico, jo prinesite s seboj.\n\n"
+        "Če nimate vse dokumentacije, lahko vseeno pridete na pregled.\n\n"
+        "Če želite, lahko takoj preverim prost termin."
+    )
+
+
 def _looks_like_medication_request(message: str) -> bool:
     lowered = message.lower()
     medication_keywords = [
@@ -1087,6 +1120,8 @@ def handle_unified_routing(
             if extract_service_type(message, clinic_id=clinic_id):
                 return None
         service = decision.service_type
+        if _looks_like_previsit_question(message):
+            return _previsit_guidance_response(service, clinic_id=clinic_id)
         awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
         if service and awaiting_price_service:
             state_mgr.clear_context_key("awaiting_price_service")

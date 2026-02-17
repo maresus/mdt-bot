@@ -112,6 +112,7 @@ ORTHOPEDICS_KEYWORDS = {
     "ortopd",   # typo
     "hrbet",
     "hrbten",
+    "kolen",
     "hrbtom",
     "koleno",
     "nogo",
@@ -283,6 +284,31 @@ SERVICE_INQUIRY_KEYWORDS = {
     "vprašanje",
     "vprasanje",
     "vprasat",        # sleng
+    "izvid",
+    "izvide",
+    "izvidi",
+    "napotnic",
+    "napotnico",
+    "napotnica",
+    "kaj rabim",
+    "kaj potrebujem",
+    "prinesem",
+    "moram prinesti",
+    "pred pregledom",
+}
+
+# Pre-visit preparation questions should be treated as info intent,
+# not as direct booking intent.
+PREVISIT_INFO_KEYWORDS = {
+    "izvid",
+    "izvide",
+    "izvidi",
+    "napotnic",
+    "napotnico",
+    "napotnica",
+    "pred pregledom",
+    "moram prinesti",
+    "prinesem",
 }
 
 # Symptom keywords to trigger SERVICE_INFO (health advice path)
@@ -594,6 +620,13 @@ def compute_confidence(
         if has_inquiry_kw and not has_booking_hint:
             return 0.3  # Lower than SERVICE_INFO's 0.9
 
+        # "Ali potrebujem izvide pred pregledom kolena?" and similar:
+        # user asks preparation question, not immediate booking.
+        has_previsit_kw = any(k in text for k in PREVISIT_INFO_KEYWORDS)
+        has_question = _score_question_marker(text) > 0
+        if has_previsit_kw and has_question:
+            return 0.2
+
         # Strong signal: explicit appointment + service type
         if has_appointment_kw and has_service_kw:
             if not has_booking_hint and not any(k in text for k in {"naroč", "naroc", "rezerv", "termin"}):
@@ -631,6 +664,7 @@ def compute_confidence(
         # Questions about services (not booking)
         has_service_kw = any(k in text for k in service_keywords)
         has_inquiry_kw = any(k in text for k in SERVICE_INQUIRY_KEYWORDS)
+        has_previsit_kw = any(k in text for k in PREVISIT_INFO_KEYWORDS)
         has_booking_hint = any(k in text for k in BOOKING_HINTS)
         has_symptom_kw = any(k in text for k in SYMPTOM_KEYWORDS)
         has_food_kw = any(k in text for k in FOOD_CONTEXT_KEYWORDS)
@@ -642,6 +676,10 @@ def compute_confidence(
         # Strong signal: service + inquiry keyword (e.g., "kaj zdravi dermatolog?")
         if has_service_kw and has_inquiry_kw:
             return 0.9
+
+        # Strong signal: service + pre-visit question (documents/preparation)
+        if has_service_kw and has_previsit_kw:
+            return 0.95
 
         # Strong signal: symptom report (e.g., "boli me glava")
         if has_symptom_kw:
