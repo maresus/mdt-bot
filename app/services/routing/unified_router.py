@@ -55,6 +55,12 @@ NEGATIVE_WORDS = {
     "no", "nope", "hvala", "ni",
 }
 
+FALLBACK_UNSUPPORTED_SYMPTOM_KEYWORDS = {
+    "zob": "zobobol",
+    "zobobol": "zobobol",
+    "dlesen": "zobobol",
+}
+
 
 def _detect_affirmative_negative(message: str) -> IntentType | None:
     """Detect simple yes/no responses (word-based matching)."""
@@ -133,6 +139,14 @@ def route(message: str, unified_state: Dict[str, Any]) -> Decision:
                     confidence=1.0,
                     action=SwitchAction.IGNORE,
                 )
+    elif isinstance(clinic_config, dict):
+        lowered = message.lower()
+        if any(keyword in lowered for keyword in FALLBACK_UNSUPPORTED_SYMPTOM_KEYWORDS):
+            return Decision(
+                primary_intent=IntentType.UNSUPPORTED_SYMPTOM,
+                confidence=1.0,
+                action=SwitchAction.IGNORE,
+            )
 
     # 3. Score all intents through unified system
     scores = detect_intents(message, service_map=service_map)

@@ -6,7 +6,7 @@ from datetime import date
 from typing import Any, Dict
 
 from app.services.clinic_config import get_clinic_config
-from app.services.health_center_extensions import get_available_time_slots
+from app.services.health_center_extensions import get_available_time_slots, get_services
 from app.services.session.unified_state import FlowStep, FlowType, StateManager
 
 
@@ -34,6 +34,13 @@ def _build_ui_payload(state_manager: StateManager | None) -> dict[str, Any] | No
             label = payload.get("name") if isinstance(payload, dict) else str(payload)
             label = label or str(key)
             options.append({"label": label, "value": label})
+        if not options:
+            fallback_services = get_services(clinic_id=clinic_id)
+            for key, payload in fallback_services.items():
+                if not isinstance(payload, dict):
+                    continue
+                label = str(payload.get("name") or key).strip()
+                options.append({"label": label, "value": label})
         if options:
             return {
                 "type": "service_select",

@@ -56,6 +56,20 @@ from app.services.routing.state_manager import ConversationTracker, SimpleCache
 from app.services.routing.intent_engine import classify_intent_llm
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
 from app.services.routing.advice import advice_only, advice_only_headache
+from app.services.routing.symptom_fallback import (
+    append_nudge_if_missing as _append_nudge_if_missing,
+    looks_like_medical_statement as _looks_like_medical_statement,
+    looks_like_medication_request as _looks_like_medication_request,
+    looks_like_previsit_question as _looks_like_previsit_question,
+    looks_like_symptom_report as _looks_like_symptom_report,
+    looks_like_uncertain_help_request as _looks_like_uncertain_help_request,
+    looks_like_urgent_message as _looks_like_urgent_message,
+    match_unsupported_symptom as _match_unsupported_symptom,
+    previsit_guidance_response as _previsit_guidance_response,
+    quick_triage_fallback as _quick_triage_fallback,
+    specialist_quick_replies as _specialist_quick_replies,
+    symptom_booking_nudge as _symptom_booking_nudge,
+)
 from app.services.routing.intent_labels import (
     INTENT_BOOK_GENERAL,
     INTENT_CHECK_AVAILABILITY,
@@ -127,7 +141,6 @@ from app.services.flows.booking_interrupt_policy import (
     BookingInterruptDeps,
     handle_booking_interrupt,
 )
-from app.services.triage_service import get_triage_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -400,215 +413,6 @@ def classify_intent(message: str, history: list = None, clinic_id: str | None = 
 def _has_booking_keywords(message: str) -> bool:
     lowered = message.lower()
     return any(word in lowered for word in BOOKING_KEYWORDS)
-
-
-def _looks_like_symptom_report(message: str) -> bool:
-    """Heuristic: user reports symptoms (not asking informational question)."""
-    lowered = message.lower()
-    has_symptom = any(marker in lowered for marker in SYMPTOM_MARKERS)
-    asks_question = any(marker in lowered for marker in QUESTION_MARKERS)
-    return has_symptom and not asks_question
-
-
-def _match_unsupported_symptom(message: str, clinic_id: str | None = None) -> dict[str, Any] | None:
-    config = get_clinic_config(clinic_id=clinic_id) if clinic_id else get_clinic_config()
-    entries = config.get("unsupported_symptoms", []) if isinstance(config, dict) else []
-    if isinstance(entries, dict):
-        entries = list(entries.values())
-    if not isinstance(entries, list):
-        return None
-    lowered = message.lower()
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        keywords = entry.get("keywords", [])
-        if isinstance(keywords, str):
-            keywords = [keywords]
-        if not isinstance(keywords, list):
-            continue
-        if any(str(kw).lower() in lowered for kw in keywords if kw):
-            return entry
-    return None
-
-
-def _specialist_quick_replies(clinic_id: str | None = None) -> list[dict[str, str]]:
-    """Build quick replies for primary specialists we can book immediately."""
-    services = get_services(clinic_id=clinic_id)
-    preferred = ["dermatolog", "ortoped", "okulist"]
-    items: list[dict[str, str]] = []
-    for key in preferred:
-        info = services.get(key)
-        if not isinstance(info, dict):
-            continue
-        name = str(info.get("name") or key).strip()
-        items.append({"label": name, "value": key})
-    return items
-
-
-def _symptom_booking_nudge(service_key: str | None, clinic_id: str | None = None) -> str:
-    """Short booking CTA appended after symptom guidance."""
-    key = (service_key or "").strip().lower()
-    if not key:
-        return "Če želite, lahko preverim prost termin pri ustreznem specialistu."
-    info = get_service_info(key)
-    if info:
-        return f"Če želite, lahko takoj preverim prost termin za {info['name'].lower()}."
-    return "Če želite, lahko takoj preverim prost termin pri ustreznem specialistu."
-
-
-def _append_nudge_if_missing(advice_text: str, nudge: str) -> str:
-    """Avoid duplicated CTAs when advice template already includes booking prompt."""
-    lowered = advice_text.lower()
-    if ("termin" in lowered and ("preverim" in lowered or "naro" in lowered)):
-        return advice_text
-    return f"{advice_text}\n\n{nudge}"
-
-
-def _looks_like_medical_statement(message: str) -> bool:
-    """Detect short health-problem statements that miss classic symptom keywords."""
-    lowered = message.lower()
-    medical_cues = [
-        "krv",
-        "krvav",
-        "krvavim",
-        "nos",
-        "diham",
-        "duši",
-        "dus",
-        "nezavest",
-        "omedlev",
-        "bruham",
-        "vrti",
-        "vročina",
-        "vrocina",
-    ]
-    return any(cue in lowered for cue in medical_cues)
-
-
-def _looks_like_previsit_question(message: str) -> bool:
-    lowered = message.lower()
-    previsit_keywords = [
-        "izvid",
-        "izvide",
-        "izvidi",
-        "napotnic",
-        "napotnica",
-        "napotnico",
-        "napotnco",
-        "rtg",
-        "mr",
-        "magnetna",
-        "pred pregledom",
-        "s sabo",
-        "moram prinesti",
-        "prinesem",
-    ]
-    question_markers = ["?", "ali", "kaj", "moram", "potrebujem"]
-    return any(k in lowered for k in previsit_keywords) and any(q in lowered for q in question_markers)
-
-
-def _looks_like_urgent_message(message: str) -> bool:
-    lowered = message.lower()
-    urgent_phrases = [
-        "težko diham",
-        "tezko diham",
-        "bolečina v prs",
-        "bolecina v prs",
-        "krvavim",
-        "krvavi",
-        "nezavest",
-        "omedlev",
-    ]
-    return any(p in lowered for p in urgent_phrases)
-
-
-def _previsit_guidance_response(service_key: str | None, clinic_id: str | None = None) -> str:
-    service_name = None
-    if service_key:
-        info = get_service_info(service_key.lower(), clinic_id=clinic_id)
-        if info:
-            service_name = info.get("name")
-    service_label = service_name or "pregled"
-    return (
-        f"Za {service_label.lower()} običajno priporočamo, da prinesete obstoječe izvide, "
-        "seznam zdravil in osebni dokument. Če imate napotnico, jo prinesite s seboj.\n\n"
-        "Če nimate vse dokumentacije, lahko vseeno pridete na pregled.\n\n"
-        "Če želite, lahko takoj preverim prost termin."
-    )
-
-
-def _looks_like_uncertain_help_request(message: str) -> bool:
-    lowered = message.lower()
-    signals = [
-        "ne vem",
-        "ne vem tocno",
-        "ne vem točno",
-        "nekaj ni ok",
-        "nekaj ni v redu",
-        "sam neki ni ok",
-        "nisem prepričan",
-    ]
-    return any(sig in lowered for sig in signals)
-
-
-def _looks_like_medication_request(message: str) -> bool:
-    lowered = message.lower()
-    medication_keywords = [
-        "tablete",
-        "tableta",
-        "zdravilo",
-        "zdravila",
-        "recept",
-        "predpis",
-        "antibiotik",
-        "protiboleč",
-        "protibolec",
-        "analgetik",
-    ]
-    ask_markers = ["lahko", "dobim", "date", "izdate", "prodam", "prodajate", "?"]
-    return any(k in lowered for k in medication_keywords) and any(a in lowered for a in ask_markers)
-
-
-def _quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | None:
-    """
-    Run single-step triage for free-form symptom statements that would otherwise
-    fall to generic "Kako vam lahko pomagam" fallback.
-    """
-    if not (_looks_like_symptom_report(message) or _looks_like_medical_statement(message)):
-        return None
-
-    lowered = message.lower()
-    if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
-        return _append_nudge_if_missing(
-            advice_only_headache(),
-            _symptom_booking_nudge(None, clinic_id=clinic_id),
-        )
-
-    try:
-        triage = get_triage_service().quick_triage(message)
-    except Exception:
-        return None
-
-    recommendation = str(triage.get("recommendation") or "").strip()
-    disclaimer = str(triage.get("disclaimer") or "").strip()
-    specialist = str(triage.get("specialist") or "").strip().lower()
-
-    if not recommendation:
-        return None
-
-    parts: list[str] = [recommendation]
-    if disclaimer:
-        parts.append(disclaimer)
-
-    if specialist:
-        parts.append(_symptom_booking_nudge(specialist, clinic_id=clinic_id))
-    else:
-        parts.append(
-            "Če želite, lahko težavo opišete bolj natančno (npr. koža, sklepi, vid), "
-            "da vas usmerim k ustreznemu specialistu."
-        )
-
-    return "\n\n".join(parts)
 
 
 # Old rule-based classify_intent kept as fallback
@@ -1243,6 +1047,13 @@ def handle_unified_routing(
                     default=None,
                     clinic_id=clinic_id,
                 )
+            if not quick_replies:
+                quick_replies = [
+                    {"label": "Da, predlagajte specialista", "value": "DA"},
+                    {"label": "Ne, hvala", "value": "NE"},
+                ]
+            if isinstance(quick_replies, dict):
+                quick_replies = [quick_replies]
             data: list[dict[str, str]] = []
             if isinstance(quick_replies, list):
                 for item in quick_replies:

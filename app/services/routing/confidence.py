@@ -564,6 +564,9 @@ def _detect_service_type(text: str, service_map: Dict[str, list[str]] | None = N
             return best.upper()
 
     # Order matters - more specific first, then check word-boundary matches
+    # Explicit laser mention should win over generic skin keywords (e.g. "laserski poseg za bradavice")
+    if any(k in text for k in {"laser", "lasersk"}):
+        return "LASERSKI_POSEG"
     if any(k in text for k in DERMATOLOGY_KEYWORDS):
         return "DERMATOLOG"
     if any(k in text for k in ORTHOPEDICS_KEYWORDS):

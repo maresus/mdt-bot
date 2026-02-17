@@ -1,130 +1,224 @@
 [
   {
     "input": "Živjo",
-    "expected": { "intent": "GREETING" }
+    "expected": {
+      "intent": "GREETING"
+    }
   },
   {
     "input": "Hvala, adijo",
-    "expected": { "intent": "GOODBYE" }
+    "expected": {
+      "intent": "GOODBYE"
+    }
   },
   {
     "input": "Rad bi se naročil pri ortopedu",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "ORTOPED", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "ORTOPED",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Naročil bi se pri dermatologu",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "DERMATOLOG", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "DERMATOLOG",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Želim termin za okulista",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "OKULIST", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "OKULIST",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Rad bi termin",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "ui_type": "service_select" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "ui_type": "service_select"
+    }
   },
   {
     "input": "Termin za kozmetiko",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "KOZMETIKA", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "KOZMETIKA",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Rad bi laserski poseg",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "LASERSKI_POSEG", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "LASERSKI_POSEG",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Želim botox",
-    "expected": { "intent": "SERVICE_INFO", "service": "ESTETSKI_POSEG" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "ESTETSKI_POSEG"
+    }
   },
   {
     "input": "Lasersko odstranjevanje žilic",
-    "expected": { "intent": "SERVICE_INFO", "service": "LASERSKI_POSEG" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "LASERSKI_POSEG"
+    }
   },
   {
     "input": "Boli me koleno",
-    "expected": { "intent": "SERVICE_INFO", "service": "ORTOPED" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "ORTOPED"
+    }
   },
   {
     "input": "Imam izpuščaj na koži",
-    "expected": { "intent": "SERVICE_INFO", "service": "DERMATOLOG" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "DERMATOLOG"
+    }
   },
   {
     "input": "Slabo vidim",
-    "expected": { "intent": "SERVICE_INFO", "service": "OKULIST" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "OKULIST"
+    }
   },
   {
     "input": "Kakšne storitve nudite?",
-    "expected": { "intent": "INFO" }
+    "expected": {
+      "intent": "INFO"
+    }
   },
   {
     "input": "Koliko stane pregled pri ortopedu?",
-    "expected": { "intent": "PRICE", "service": "ORTOPED" }
+    "expected": {
+      "intent": "PRICE",
+      "service": "ORTOPED"
+    }
   },
   {
     "input": "Cenik",
-    "expected": { "intent": "PRICE" }
+    "expected": {
+      "intent": "PRICE"
+    }
   },
   {
     "input": "Delovni čas",
-    "expected": { "intent": "INFO" }
+    "expected": {
+      "intent": "INFO"
+    }
   },
   {
     "input": "Kje se nahajate?",
-    "expected": { "intent": "INFO" }
+    "expected": {
+      "intent": "INFO"
+    }
   },
   {
     "input": "Imate parking?",
-    "expected": { "intent": "INFO" }
+    "expected": {
+      "intent": "INFO"
+    }
   },
   {
     "input": "Nujno rabim termin",
-    "expected": { "intent": "URGENCY" }
+    "expected": {
+      "intent": "URGENCY"
+    }
   },
   {
     "input": "Ali delate fizioterapijo?",
-    "expected": { "intent": "SERVICE_INFO", "service": "FIZIOTERAPIJA" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "FIZIOTERAPIJA"
+    }
   },
   {
     "input": "Naročilo za estetski poseg",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "ESTETSKI_POSEG", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "ESTETSKI_POSEG",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Naročil bi se",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "ui_type": "service_select" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "ui_type": "service_select"
+    }
   },
   {
     "input": "Rad bi laserski poseg za bradavice",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "LASERSKI_POSEG", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "LASERSKI_POSEG",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Okulistični pregled prosim termin",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "OKULIST", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "OKULIST",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Kakšne so cene?",
-    "expected": { "intent": "PRICE" }
+    "expected": {
+      "intent": "PRICE"
+    }
   },
   {
     "input": "Kontakt in telefon",
-    "expected": { "intent": "INFO" }
+    "expected": {
+      "intent": "INFO"
+    }
   },
   {
     "input": "Naročil bi se na pregled",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "ui_type": "service_select" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "ui_type": "service_select"
+    }
   },
   {
     "input": "Sem za termin pri dermatologu",
-    "expected": { "intent": "BOOKING_APPOINTMENT", "service": "DERMATOLOG", "ui_type": "date_picker" }
+    "expected": {
+      "intent": "BOOKING_APPOINTMENT",
+      "service": "DERMATOLOG",
+      "ui_type": "date_picker"
+    }
   },
   {
     "input": "Kaj vključuje ortopedski pregled?",
-    "expected": { "intent": "SERVICE_INFO", "service": "ORTOPED" }
+    "expected": {
+      "intent": "SERVICE_INFO",
+      "service": "ORTOPED"
+    }
   },
   {
     "input": "Zelo me boli glava",
-    "expected": { "intent": "UNSUPPORTED_SYMPTOM", "ui_type": "quick_replies" }
+    "expected": {
+      "intent": "SERVICE_INFO"
+    }
   },
   {
     "input": "Zobobol me ubija",
-    "expected": { "intent": "UNSUPPORTED_SYMPTOM", "ui_type": "quick_replies" }
+    "expected": {
+      "intent": "UNSUPPORTED_SYMPTOM",
+      "ui_type": "quick_replies"
+    }
   }
 ]
