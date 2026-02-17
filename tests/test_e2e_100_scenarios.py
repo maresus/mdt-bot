@@ -131,6 +131,11 @@ def _base_scenarios() -> list[Scenario]:
             ("dermatolo", "kož", "kako vam lahko pomagam"),
         ),
         Scenario(
+            "TRIAGE_SYMPTOM_UNKNOWN",
+            ("bulo imam na hrbtu",),
+            ("osebnim zdravnikom", "to ni zdravniška diagnoza", "ustreznemu specialistu"),
+        ),
+        Scenario(
             "INTERRUPT_URGENCY",
             ("nujno je",),
             ("112", "nujni primer", "na kateri pregled"),

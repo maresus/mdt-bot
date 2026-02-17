@@ -127,6 +127,7 @@ from app.services.flows.booking_interrupt_policy import (
     BookingInterruptDeps,
     handle_booking_interrupt,
 )
+from app.services.triage_service import get_triage_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -461,6 +462,41 @@ def _append_nudge_if_missing(advice_text: str, nudge: str) -> str:
     if ("termin" in lowered and ("preverim" in lowered or "naro" in lowered)):
         return advice_text
     return f"{advice_text}\n\n{nudge}"
+
+
+def _quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | None:
+    """
+    Run single-step triage for free-form symptom statements that would otherwise
+    fall to generic "Kako vam lahko pomagam" fallback.
+    """
+    if not _looks_like_symptom_report(message):
+        return None
+
+    try:
+        triage = get_triage_service().quick_triage(message)
+    except Exception:
+        return None
+
+    recommendation = str(triage.get("recommendation") or "").strip()
+    disclaimer = str(triage.get("disclaimer") or "").strip()
+    specialist = str(triage.get("specialist") or "").strip().lower()
+
+    if not recommendation:
+        return None
+
+    parts: list[str] = [recommendation]
+    if disclaimer:
+        parts.append(disclaimer)
+
+    if specialist:
+        parts.append(_symptom_booking_nudge(specialist, clinic_id=clinic_id))
+    else:
+        parts.append(
+            "Če želite, lahko težavo opišete bolj natančno (npr. koža, sklepi, vid), "
+            "da vas usmerim k ustreznemu specialistu."
+        )
+
+    return "\n\n".join(parts)
 
 
 # Old rule-based classify_intent kept as fallback
@@ -1083,6 +1119,13 @@ def handle_unified_routing(
             if data:
                 state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
         return response_text
+
+    # Symptom statement that did not route to SERVICE_INFO:
+    # use quick triage instead of generic fallback.
+    if decision.primary_intent == IntentType.GENERAL and not is_in_flow(session_id):
+        triage_fallback = _quick_triage_fallback(message, clinic_id=clinic_id)
+        if triage_fallback:
+            return triage_fallback
 
     # Handle PRICE
     if decision.primary_intent == IntentType.PRICE:
