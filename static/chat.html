@@ -573,7 +573,7 @@
     }
 
     .welcome-message li:before {
-      content: "✓ ";
+      content: " ";
       color: var(--secondary);
       font-weight: bold;
       margin-right: 8px;
@@ -586,14 +586,14 @@
       <!-- Header -->
       <div class="chat-header">
         <div class="header-left">
-          <div class="header-icon">🏥</div>
+          <div class="header-icon"></div>
           <div class="header-info">
             <h1>Zdravstveni center</h1>
             <p>Asistent za naročanje pregledov</p>
           </div>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
-          <button class="new-session-btn" id="newSessionBtn">🔄 Nova seja</button>
+          <button class="new-session-btn" id="newSessionBtn"> Nova seja</button>
           <div class="status-badge">
             <div class="status-dot"></div>
             <span>Na voljo</span>
@@ -609,11 +609,11 @@
       <!-- Input Area -->
       <div class="input-area">
         <div class="quick-actions">
-          <div class="quick-chip" data-prompt="Kako poteka naročanje na pregled?">📅 Naročanje</div>
-          <div class="quick-chip" data-prompt="Katere preglede in posege izvajate?">🩺 Pregledi</div>
-          <div class="quick-chip" data-prompt="Imate cenik storitev?">💰 Cenik</div>
-          <div class="quick-chip" data-prompt="Kje se nahajate in kako do vas?">📍 Lokacija</div>
-          <div class="quick-chip" data-prompt="Rad bi naročil termin za dermatološki pregled.">🗓️ Naroči termin</div>
+          <div class="quick-chip" data-prompt="Kako poteka naročanje na pregled?"> Naročanje</div>
+          <div class="quick-chip" data-prompt="Katere preglede in posege izvajate?"> Pregledi</div>
+          <div class="quick-chip" data-prompt="Imate cenik storitev?"> Cenik</div>
+          <div class="quick-chip" data-prompt="Kje se nahajate in kako do vas?"> Lokacija</div>
+          <div class="quick-chip" data-prompt="Rad bi naročil termin za dermatološki pregled."> Naroči termin</div>
         </div>
         <div class="input-wrapper">
           <textarea
@@ -700,7 +700,7 @@
 
       const avatar = document.createElement('div');
       avatar.className = 'message-avatar';
-      avatar.textContent = type === 'bot' ? '🏥' : '👤';
+      avatar.textContent = type === 'bot' ? '' : '';
 
       const bubble = document.createElement('div');
       bubble.className = 'message-bubble';
@@ -727,7 +727,7 @@
 
       const avatar = document.createElement('div');
       avatar.className = 'message-avatar';
-      avatar.textContent = '🏥';
+      avatar.textContent = '';
 
       const indicator = document.createElement('div');
       indicator.className = 'typing-indicator';
@@ -761,7 +761,7 @@
 
       let finalText = displayText || 'Ni odgovora.';
       if (actionSuggestion) {
-        finalText += `\n\n💡 ${actionSuggestion}`;
+        finalText += `\n\n ${actionSuggestion}`;
       }
 
       return { text: finalText, metadata };
@@ -884,7 +884,7 @@
     function showWelcome() {
       const welcomeHTML = `
         <div class="welcome-message">
-          <h3>Pozdravljeni v Zdravstvenem centru! 👋</h3>
+          <h3>Pozdravljeni v Zdravstvenem centru! </h3>
           <p style="margin-bottom: 12px;">Sem vaš digitalni asistent. Pomagam vam z:</p>
           <ul>
             <li>Naročanje na preglede in posege</li>
@@ -893,7 +893,7 @@
             <li>Odgovori na splošna vprašanja</li>
           </ul>
           <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
-            💡 Uporabite hitre akcije spodaj ali preprosto napišite vprašanje.
+             Uporabite hitre akcije spodaj ali preprosto napišite vprašanje.
           </p>
         </div>
       `;

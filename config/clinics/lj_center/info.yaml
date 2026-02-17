@@ -43,9 +43,9 @@ facts:
     keywords:
       - kratek kontakt
     response: |
-      🚗 Parking: brezplačen pred objektom
-      📞 Telefon: 01 234 56 78
-      📧 Email: info@zdravstveni-center.si
+       Parking: brezplačen pred objektom
+       Telefon: 01 234 56 78
+       Email: info@zdravstveni-center.si
 
   delovni_cas:
     priority: fast
@@ -127,9 +127,9 @@ facts:
       - Kožne spremembe, madeže
       - Glivične okužbe
 
-      🔬 **Dermatološki pregled** (30 min, 25-150 €)
+       **Dermatološki pregled** (30 min, 25-150 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_ortoped:
     priority: low
@@ -146,9 +146,9 @@ facts:
       - Težave s sklepi
       - Poškodbe mišic in vezi
 
-      🦴 **Ortopedski pregled** (30 min, 40-80 €)
+       **Ortopedski pregled** (30 min, 40-80 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_okulist:
     priority: low
@@ -165,9 +165,9 @@ facts:
       - Očesne bolezni
       - Predpis očal in kontaktnih leč
 
-      👁️ **Očesni pregled** (30 min, 35-70 €)
+       **Očesni pregled** (30 min, 35-70 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_estetski_poseg:
     priority: low
@@ -184,9 +184,9 @@ facts:
       - Fillerji
       - Biorevitalizacija kože
 
-      💉 **Estetski poseg** (30 min, 80-300 €)
+       **Estetski poseg** (30 min, 80-300 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_laserski_poseg:
     priority: low
@@ -202,9 +202,9 @@ facts:
       - Odstranjevanje bradavic
       - Zdravljenje glivic nohtov
 
-      ⚡ **Laserski poseg** (30 min, 50-200 €)
+       **Laserski poseg** (30 min, 50-200 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_fizioterapija:
     priority: low
@@ -219,9 +219,9 @@ facts:
       - Masaže
       - Razgibalne vaje
 
-      💆 **Fizioterapija** (60 min, 40-80 €)
+       **Fizioterapija** (60 min, 40-80 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!
 
   service_kozmetika:
     priority: low
@@ -237,6 +237,6 @@ facts:
       - Tretmaji kože
       - Kozmetični posegi
 
-      ✨ **Kozmetični tretma** (60 min, 40-100 €)
+       **Kozmetični tretma** (60 min, 40-100 €)
 
-      🎯 Želite termin? Povejte mi datum!
+       Želite termin? Povejte mi datum!

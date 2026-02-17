@@ -81,7 +81,7 @@ unsupported_symptoms:
 
         Za začetek lahko pomaga počitek, dovolj tekočine in manj obremenitve (ekrani, hrup, stres). Če se glavobol stopnjuje, traja več dni ali se pojavijo dodatni simptomi, je priporočljiv čimprejšnji pregled.
 
-        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+         To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
         V našem centru nimamo nevrologa. Lahko pa vam ponudim možnosti terminov pri specialistih, ki so pri nas na voljo.
 
@@ -91,7 +91,7 @@ unsupported_symptoms:
 
         Do pregleda lahko poskusite z mirovanjem, hidracijo in izogibanjem sprožilcem (npr. napor, premalo spanja, dolgotrajno delo za zaslonom).
 
-        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+         To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
         Ker pri nas nimamo nevrologa, vam lahko ponudim termine pri specialistih, ki so pri nas na voljo.
 
@@ -101,7 +101,7 @@ unsupported_symptoms:
 
         Pri takih težavah je smiselno spremljati trajanje in jakost simptomov ter po potrebi čim prej opraviti pregled.
 
-        ⚠️ To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
+         To ni zdravniški nasvet ali diagnoza, ampak splošna usmeritev.
 
         Nevrologa pri nas žal nimamo, lahko pa vam pokažem razpoložljive možnosti pri specialistih, ki jih imamo.
 
@@ -117,7 +117,7 @@ unsupported_symptoms:
       - "zobobol"
       - "skelenje"
       - "dlesen"
-    response: "Žal mi je za težave z zobmi. 🦷 V našem centru nimamo zobozdravstvene ambulante, lahko pa ponudimo seznam nujnih zobozdravnikov v bližini ali termin pri splošnem zdravniku za protibolečinsko terapijo. Želite, da vas naročim na posvet?"
+    response: "Žal mi je za težave z zobmi.  V našem centru nimamo zobozdravstvene ambulante, lahko pa ponudimo seznam nujnih zobozdravnikov v bližini ali termin pri splošnem zdravniku za protibolečinsko terapijo. Želite, da vas naročim na posvet?"
     ui_override:
       type: "quick_replies"
       data:
@@ -125,7 +125,7 @@ unsupported_symptoms:
         - {label: "Ne, hvala", value: "NE"}
 info_responses:
   pozdrav: |
-    Pozdravljeni! 😊
+    Pozdravljeni! 
 
     Sem vaš digitalni pomočnik v zdravstvenem centru. Kako vam lahko pomagam?
 
@@ -139,9 +139,9 @@ info_responses:
     Naš zdravstveni center vodi strokovna ekipa zdravnikov in administracije.
 
     Za natančne informacije o vodstvu ali posameznih zdravnikih nas prosim kontaktirajte:
-    - 📞 01 234 56 78
-    - 📧 info@zdravstveni-center.si
-  hvala: "Hvala za sporočilo! Če boste še kaj potrebovali, sem tukaj za vas. 😊"
+    -  01 234 56 78
+    -  info@zdravstveni-center.si
+  hvala: "Hvala za sporočilo! Če boste še kaj potrebovali, sem tukaj za vas. "
   pozdrav_variants:
     - "Živjo! Kako vam lahko danes pomagam?"
     - "Dober dan! Sem vaš digitalni asistent. Kako lahko pomagam?"
@@ -160,75 +160,75 @@ info_responses:
 auth:
   admin_api_key: "sk_live_lj_12345"
   narocanje: |
-    **Naročanje poteka zelo enostavno - TUKAJ, z menoj!** 🎯
+    **Naročanje poteka zelo enostavno - TUKAJ, z menoj!** 
 
-    ✅ **Kako se naročite:**
+     **Kako se naročite:**
     1. Poveste mi, kateri pregled vas zanima (dermatolog, ortoped, okulist...)
     2. Izberete želeni datum
     3. Izberete ustrezen termin
     4. Podate svoje podatke (ime, email, telefon)
-    5. Potrdite naročilo ✅
+    5. Potrdite naročilo 
 
     **To je to!** Celoten postopek traja manj kot 2 minuti.
 
-    🚀 **Začnimo ZDAJ** - kateri pregled vas zanima?
+     **Začnimo ZDAJ** - kateri pregled vas zanima?
   kontakt: |
-    📍 **Naslov**:
+     **Naslov**:
     Zdravstveni center Ljubljana
     Zdraviliška ulica 12
     1000 Ljubljana
 
-    🕒 **Delovni čas**:
+     **Delovni čas**:
        Pon-Pet: 8:00 - 18:00
        Sobota: 9:00 - 13:00 (samo nujni primeri)
 
-    🚗 **Parking**: Brezplačen parking pred objektom
-    🚌 **Javni prevoz**: Avtobusne linije 6, 11, 20 (postaja "Zdravstveni center")
+     **Parking**: Brezplačen parking pred objektom
+     **Javni prevoz**: Avtobusne linije 6, 11, 20 (postaja "Zdravstveni center")
 
-    📞 **Telefon**: 01 234 56 78
-    📧 **Email**: info@zdravstveni-center.si
+     **Telefon**: 01 234 56 78
+     **Email**: info@zdravstveni-center.si
 
-    💬 **Naročanje terminov**: Lahko se naročite **TUKAJ, z menoj** - samo povejte kateri pregled vas zanima!
+     **Naročanje terminov**: Lahko se naročite **TUKAJ, z menoj** - samo povejte kateri pregled vas zanima!
   lokacija: |
-    📍 **Zdravstveni center Ljubljana**
+     **Zdravstveni center Ljubljana**
 
     **Naslov**:
     Zdraviliška ulica 12
     1000 Ljubljana
 
     **Kako do nas**:
-    🚗 Z avtomobilom: Sledite smeri "Center" → Izvoz "Zdravstveni center"
+     Z avtomobilom: Sledite smeri "Center" → Izvoz "Zdravstveni center"
        Brezplačen parking pred objektom za paciente
 
-    🚌 Z javnim prevozom:
+     Z javnim prevozom:
        - Avtobusne linije: 6, 11, 20
        - Postaja: "Zdravstveni center" (100m od objekta)
        - LPP mestni avtobus
 
-    🚶 Peš iz centra: približno 15 minut hoje
+     Peš iz centra: približno 15 minut hoje
 
-    📍 Google Maps: Poiščite "Zdravstveni center Ljubljana, Zdraviliška 12"
+     Google Maps: Poiščite "Zdravstveni center Ljubljana, Zdraviliška 12"
 
-    💬 **Naročite se TUKAJ** - preverim lahko proste termine za vas!
+     **Naročite se TUKAJ** - preverim lahko proste termine za vas!
   delovni_cas: |
-    🕒 **Delovni čas**:
+     **Delovni čas**:
 
     **Ponedeljek – Petek**: 8:00 – 18:00
     **Sobota**: 9:00 – 13:00 (samo nujni primeri)
     **Nedelja in prazniki**: Zaprto
 
-    📅 **Termini**:
+     **Termini**:
     - Pregledi so na voljo vsak 30 minut
     - Priporočamo naročanje vsaj 2 dni vnaprej
     - Nujne primere obravnavamo isti dan
 
-    💬 **Naročite se ZDAJ** - povejte mi datum in preverim proste termine za vas!
+     **Naročite se ZDAJ** - povejte mi datum in preverim proste termine za vas!
 
-    ℹ️ Za druga vprašanja: 01 234 56 78 ali info@zdravstveni-center.si
+    ℹ Za druga vprašanja: 01 234 56 78 ali info@zdravstveni-center.si
   storitve: |
     Najpogostejše storitve:
-    🔬 dermatolog, 🦴 ortoped, 👁️ okulist,
-    ⚡ laserski posegi, 💉 estetski posegi, 💆 kozmetika.
+     dermatolog,  ortoped,  okulist,
+     laserski posegi,  estetski posegi,  kozmetika.
 
     Napišite, kaj vas zanima, pa povem podrobnosti ali vas naročim.
   dermatolog: |
@@ -242,7 +242,7 @@ auth:
     - Lasersko zdravljenje glivic nohtov
     - Estetski posegi na koži
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   ortoped: |
     **Ortopedski pregled**
     Trajanje: 30 minut
@@ -254,11 +254,11 @@ auth:
     - Bolečine v kolenih, ramenih, vratu
     - Preventivni ortopedski pregledi
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   ortopedija: |
     Razumem, da imate bolečine. Nekaj nasvetov:
 
-    🧊 **Takojšnja pomoč:**
+     **Takojšnja pomoč:**
     - Počitek in razbremenitev
     - Hladen obkladek 15-20 min
     - Nežno razgibavanje ko bolečina popusti
@@ -268,13 +268,13 @@ auth:
     - Športne poškodbe
     - Bolečine v kolenih, ramenih, hrbtu
 
-    ⚠️ Če bolečina traja več dni, priporočam pregled.
+     Če bolečina traja več dni, priporočam pregled.
 
-    🎯 **Želite termin?** Povejte mi datum!
+     **Želite termin?** Povejte mi datum!
   dermatologija: |
     Razumem vaše skrbi glede kože. Nekaj nasvetov:
 
-    🧴 **Splošna nega:**
+     **Splošna nega:**
     - Izogibajte se praskanju
     - Uporabite blago kremo
     - Zaščita pred soncem
@@ -284,13 +284,13 @@ auth:
     - Diagnostika kožnih bolezni
     - Laserski in estetski posegi
 
-    ⚠️ Pri sumljivih spremembah priporočam čimprejšnji pregled.
+     Pri sumljivih spremembah priporočam čimprejšnji pregled.
 
-    🎯 **Želite termin?** Povejte mi datum!
+     **Želite termin?** Povejte mi datum!
   oftalmologija: |
     Razumem, da imate težave z vidom. Nekaj nasvetov:
 
-    👁️ **Takojšnja pomoč:**
+     **Takojšnja pomoč:**
     - Počitek oči (odmor od zaslonov)
     - Umetne solze za suhe oči
     - Zadostna osvetlitev pri branju
@@ -300,9 +300,9 @@ auth:
     - Predpis očal in kontaktnih leč
     - Merjenje očesnega pritiska
 
-    ⚠️ Pri nenadnih spremembah vida priporočam čimprejšnji pregled.
+     Pri nenadnih spremembah vida priporočam čimprejšnji pregled.
 
-    🎯 **Želite termin?** Povejte mi datum!
+     **Želite termin?** Povejte mi datum!
   okulist: |
     **Okulistični pregled**
     Trajanje: 30 minut
@@ -314,7 +314,7 @@ auth:
     - Merjenje očesnega pritiska
     - Kontrolni pregledi
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   laserski_poseg: |
     **Laserski posegi**
     Trajanje: 30 minut
@@ -325,7 +325,7 @@ auth:
     - Odstranjevanje bradavic
     - Lasersko zdravljenje glivic nohtov
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   estetski_poseg: |
     **Estetski posegi**
     Trajanje: 30 minut
@@ -337,7 +337,7 @@ auth:
     - Biorevitalizacija kože
     - Tretmaji s hialuronsko kislino
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   kozmetika: |
     **Kozmetični salon**
     Trajanje: 60 minut
@@ -349,7 +349,7 @@ auth:
     - Anti-age tretmaji
     - Hidratacija in regeneracija
 
-    🎯 **Naročite se ZDAJ** - povejte mi želeni datum!
+     **Naročite se ZDAJ** - povejte mi želeni datum!
   cene: |
     Cena je odvisna od storitve.
     Lahko povem točen razpon, če mi napišete, kateri pregled vas zanima.
@@ -375,12 +375,12 @@ auth:
 
     Večina naših storitev je samoplačniških, vendar nekatere lahko krijete preko ZZZS napotnice.
   parkiranje: |
-    🚗 **Parkiranje / parking za paciente**:
+     **Parkiranje / parking za paciente**:
 
-    ✅ Brezplačno parkiranje pred zdravstvenim centrom
-    ✅ 50 parkirnih mest
-    ✅ Parkirišče je označeno in dostopno
-    ✅ Prostor za invalide
+     Brezplačno parkiranje pred zdravstvenim centrom
+     50 parkirnih mest
+     Parkirišče je označeno in dostopno
+     Prostor za invalide
 
     **Lokacija**: Zdraviliška ulica 12, 1000 Ljubljana
 

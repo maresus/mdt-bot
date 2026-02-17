@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # POMEMBNO: Vsi odgovori morajo vsebovati to opozorilo
 MEDICAL_DISCLAIMER = """
-⚠️ **Opomba**: To ni zdravniška diagnoza. Za natančno oceno se vedno posvetujte z zdravnikom.
+ **Opomba**: To ni zdravniška diagnoza. Za natančno oceno se vedno posvetujte z zdravnikom.
 """
 
 
@@ -124,7 +124,7 @@ SYMPTOM_SPECIALIST_MAP = {
     r"(krv|krvav|nezavest|dihanj|prsih|srčn|omedlev)": {
         "specialist": "urgenca",
         "confidence": 1.0,
-        "message": "⚠️ POMEMBNO: Pri teh simptomih priporočam takojšnjo medicinsko pomoč. Pokličite 112 ali obiščite urgentni center.",
+        "message": " POMEMBNO: Pri teh simptomih priporočam takojšnjo medicinsko pomoč. Pokličite 112 ali obiščite urgentni center.",
         "urgent": True
     }
 }
@@ -395,11 +395,11 @@ class TriageService:
         message = analysis.get("message", "")
 
         if specialist == "urgenca":
-            lines.append("🚨 **URGENTNO**")
+            lines.append(" **URGENTNO**")
             lines.append("")
             lines.append(message)
         else:
-            lines.append("📋 **Priporočilo**")
+            lines.append(" **Priporočilo**")
             lines.append("")
             lines.append(message)
 

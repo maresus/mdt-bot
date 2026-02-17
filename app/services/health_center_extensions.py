@@ -301,19 +301,19 @@ def format_appointment_summary(
     services = get_services(clinic_id)
     service = services.get(service_type, {"name": service_type, "duration_minutes": 30, "price_range": "Na voljo ob potrditvi"})
 
-    patient_info = f"\n👤 Pacient: {patient_name}" if patient_name else ""
+    patient_info = f"\n Pacient: {patient_name}" if patient_name else ""
 
     return f"""
-🏥 **Zdravstveni center - Rezervacija termina**
+ **Zdravstveni center - Rezervacija termina**
 
-📅 Datum: {date}
-🕐 Čas: {time}
-⏱️ Trajanje: {service["duration_minutes"]} minut
-🩺 Storitev: {service["name"]}
-💰 Cena: {service["price_range"]}{patient_info}
+ Datum: {date}
+ Čas: {time}
+⏱ Trajanje: {service["duration_minutes"]} minut
+ Storitev: {service["name"]}
+ Cena: {service["price_range"]}{patient_info}
 
-📍 Lokacija: [Naslov zdravstvenega centra]
-📞 Kontakt: [Telefonska številka]
+ Lokacija: [Naslov zdravstvenega centra]
+ Kontakt: [Telefonska številka]
 
 **Navodila:**
 - Prosimo pridite 10 minut pred terminom
@@ -337,17 +337,17 @@ def format_all_services_summary(clinic_id: Optional[str] = None) -> str:
     """
     Formatira seznam vseh razpoložljivih storitev.
     """
-    lines = ["🏥 **Zdravstveni center - Storitve**\n"]
+    lines = [" **Zdravstveni center - Storitve**\n"]
 
     services = get_services(clinic_id)
     for service_type, info in services.items():
         lines.append(f"**{info['name']}**")
-        lines.append(f"⏱️ Trajanje: {info['duration_minutes']} min")
-        lines.append(f"💰 Cena: {info['price_range']}")
+        lines.append(f"⏱ Trajanje: {info['duration_minutes']} min")
+        lines.append(f" Cena: {info['price_range']}")
         lines.append(f"{info['description']}\n")
 
-    lines.append("📍 Lokacija: [Naslov zdravstvenega centra]")
-    lines.append("📞 Kontakt: [Telefonska številka]")
-    lines.append("🕐 Delovni čas: Pon-Pet 8:00-18:00")
+    lines.append(" Lokacija: [Naslov zdravstvenega centra]")
+    lines.append(" Kontakt: [Telefonska številka]")
+    lines.append(" Delovni čas: Pon-Pet 8:00-18:00")
 
     return "\n".join(lines)

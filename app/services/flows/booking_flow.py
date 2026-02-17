@@ -109,10 +109,10 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
 - Estetski poseg
 - Kozmetični salon"""
             deps.set_step(session_id, state, "date")
-            return f"""Super! 🩺 Naročilo na **{service_info['name']}**.
+            return f"""Super!  Naročilo na **{service_info['name']}**.
 
-📋 Trajanje: {service_info['duration_minutes']} minut
-💰 Cena: {service_info['price_range']}
+ Trajanje: {service_info['duration_minutes']} minut
+ Cena: {service_info['price_range']}
 
 Kateri datum vas zanima? (npr. 15.3.2026)"""
 
@@ -150,7 +150,7 @@ Kateri datum vas zanima? (npr. 15.3.2026)"""
             )
 
             if not valid and "datum" in error.lower():
-                return f"❌ {error}\n\nProsim izberite drug datum."
+                return f" {error}\n\nProsim izberite drug datum."
 
             deps.set_appointment_field(session_id, state, "date", date_str)
             deps.set_step(session_id, state, "time")
@@ -185,11 +185,11 @@ Katera ura vam ustreza?"""
             )
 
             if not valid:
-                return f"❌ {error}\n\nProsim izberite drug termin."
+                return f" {error}\n\nProsim izberite drug termin."
 
             deps.set_appointment_field(session_id, state, "time", time_str)
             deps.set_step(session_id, state, "name")
-            return f"""Termin {state['date']} ob {time_str} je prost! ✅
+            return f"""Termin {state['date']} ob {time_str} je prost! 
 
 Kako je vaše ime in priimek?"""
 
@@ -304,7 +304,7 @@ Ali so podatki pravilni? (DA / NE)"""
                     if email
                     else "Potrditev po e-pošti ni bila zahtevana."
                 )
-                return f"""✅ **Naročilo uspešno ustvarjeno!**
+                return f""" **Naročilo uspešno ustvarjeno!**
 
 Številka naročila: #{res_id}
 
@@ -315,7 +315,7 @@ Vidimo se {date} ob {time}!
 
             except Exception as e:
                 print(f"[BOOKING] Error creating appointment: {e}")
-                return f"""❌ Prišlo je do napake pri ustvarjanju naročila.
+                return f""" Prišlo je do napake pri ustvarjanju naročila.
 
 Prosim kontaktirajte nas na [telefonska številka] ali [email].
 

@@ -143,19 +143,19 @@ def answer_with_hybrid_kb(
 
         score_gap_ratio = confidence_meta.get("score_gap_ratio", 0)
         if overall_confidence >= 0.75 and score_gap_ratio > 0.3:
-            print("[CONFIDENCE] ✓ Very high confidence + clear winner - returning directly")
+            print("[CONFIDENCE]  Very high confidence + clear winner - returning directly")
             return top_result["text"]
 
         if overall_confidence >= required_confidence:
             if query_analysis["priority"] == "critical":
                 agreement = confidence_meta.get("bm25_vector_agreement", 0)
                 if agreement < 0.5:
-                    print("[CONFIDENCE] ⚠ Critical query but low method agreement - using LLM")
+                    print("[CONFIDENCE]  Critical query but low method agreement - using LLM")
                 else:
-                    print("[CONFIDENCE] ✓ High confidence for critical query - returning directly")
+                    print("[CONFIDENCE]  High confidence for critical query - returning directly")
                     return top_result["text"]
             else:
-                print("[CONFIDENCE] ✓ Meets query-type threshold - returning directly")
+                print("[CONFIDENCE]  Meets query-type threshold - returning directly")
                 return top_result["text"]
 
         if overall_confidence >= 0.35:
@@ -190,17 +190,17 @@ Odgovori na slovenščini na podlagi konteksta zgoraj."""},
             answer = response.choices[0].message.content.strip()
 
             if len(answer) < 20:
-                print("[CONFIDENCE] ⚠ LLM response too short - returning top result instead")
+                print("[CONFIDENCE]  LLM response too short - returning top result instead")
                 return top_result["text"]
 
             decline_phrases = ["ne vem", "nimam informacij", "ne najdem", "ne morem", "žal ne"]
             if any(phrase in answer.lower() for phrase in decline_phrases):
-                print("[CONFIDENCE] ⚠ LLM declined - returning top result instead")
+                print("[CONFIDENCE]  LLM declined - returning top result instead")
                 return top_result["text"]
 
             return answer
 
-        print(f"[CONFIDENCE] ✗ Low confidence ({overall_confidence:.3f}) - asking for clarification")
+        print(f"[CONFIDENCE]  Low confidence ({overall_confidence:.3f}) - asking for clarification")
 
         if query_analysis["type"] == "booking":
             return """Za naročanje potrebujem naslednje podatke:
@@ -212,12 +212,12 @@ Prosim, navedite obe informaciji."""
         if query_analysis["type"] == "price":
             return """Za točne cene mi prosim povejte katera storitev vas zanima:
 
-🔬 Dermatologija
-🦴 Ortopedija
-👁️ Oftalmologija
-⚡ Laserski posegi
-💉 Estetski posegi
-💆 Kozmetični salon
+ Dermatologija
+ Ortopedija
+ Oftalmologija
+ Laserski posegi
+ Estetski posegi
+ Kozmetični salon
 
 Katero storitev želite?"""
 

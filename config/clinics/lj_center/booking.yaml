@@ -50,8 +50,8 @@ messages:
     text: |
       Super, preklopim na **{service_name}**.
 
-      📋 Trajanje: {duration_minutes} minut
-      💰 Cena: {price_range}
+       Trajanje: {duration_minutes} minut
+       Cena: {price_range}
 
       Kateri datum vas zanima? (npr. 15.3.2026)
 
