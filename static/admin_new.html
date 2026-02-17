@@ -1755,9 +1755,19 @@
         if (funnelRes.ok) {
           const funnelData = await funnelRes.json();
           renderDashFunnel(funnelData);
+        } else {
+          // Backward-compatible fallback endpoint
+          const legacyFunnelRes = await fetch('/api/admin/funnel_stats?days=30');
+          if (legacyFunnelRes.ok) {
+            const legacyData = await legacyFunnelRes.json();
+            renderDashFunnel(legacyData);
+          } else {
+            renderDashFunnel(null);
+          }
         }
       } catch (err) {
         console.error('Dashboard load error:', err);
+        renderDashFunnel(null);
       }
     }
 
@@ -1814,18 +1824,54 @@
 
     function renderDashFunnel(data) {
       const container = document.getElementById('dash-funnel');
-      const stages = data.stages || [];
-      if (!stages.length) { container.innerHTML = '<div style="color: var(--text-muted);">Ni podatkov</div>'; return; }
-      const maxCount = stages[0]?.count || 1;
+      if (!data || typeof data !== 'object') {
+        container.innerHTML = '<div style="color: var(--text-muted);">Ni podatkov</div>';
+        return;
+      }
+
+      let stages = Array.isArray(data.stages) ? data.stages : [];
+      if (!stages.length) {
+        const started = Number(data.started || data.total_sessions || 0);
+        const completed = Number(data.completed || data.completed_bookings || 0);
+        const confirmed = Number(data.confirmed || 0);
+        if (started > 0 || completed > 0 || confirmed > 0) {
+          stages = [
+            { name: 'started', count: started, drop_rate: 0 },
+            { name: 'completed', count: completed, drop_rate: 0 },
+            { name: 'confirmed', count: confirmed, drop_rate: 0 },
+          ];
+        }
+      }
+
+      if (!stages.length) {
+        container.innerHTML = '<div style="color: var(--text-muted);">Ni podatkov</div>';
+        return;
+      }
+
+      const maxCount = Math.max(...stages.map(s => Number(s.count || 0)), 1);
       container.innerHTML = stages.map(s => `
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <span style="width: 80px; font-size: 12px; color: var(--text-muted);">${s.name}</span>
+          <span style="width: 90px; font-size: 12px; color: var(--text-muted);">${String(s.name || '-')}</span>
           <div style="flex: 1; height: 16px; background: var(--bg); border-radius: 4px; overflow: hidden;">
-            <div style="width: ${(s.count/maxCount*100)}%; height: 100%; background: ${s.drop_rate > 30 ? 'var(--warning)' : 'var(--primary)'};"></div>
+            <div style="width: ${(Number(s.count || 0)/maxCount*100)}%; height: 100%; background: ${Number(s.drop_rate || 0) > 30 ? 'var(--warning)' : 'var(--primary)'};"></div>
           </div>
-          <span style="font-size: 12px; font-weight: 600;">${s.count}</span>
+          <span style="font-size: 12px; font-weight: 600;">${Number(s.count || 0)}</span>
         </div>
       `).join('');
+    }
+
+    function formatSchedulerSuggestion(s, index) {
+      // Handle both object and string payloads.
+      if (s && typeof s === 'object') {
+        const date = s.date || '';
+        const time = s.time || '';
+        const dayName = s.day_name ? `${s.day_name}, ` : '';
+        const reason = s.reason ? ` (${s.reason})` : '';
+        const score = Number(s.score || 0);
+        const base = `${dayName}${date}${time ? ' ob ' + time : ''}${reason}`;
+        return `${index === 0 ? 'Priporoceno: ' : ''}${base}${score ? ` [score ${Math.round(score)}]` : ''}`;
+      }
+      return String(s ?? '');
     }
 
     // ==================== HANDOFF QUEUE ====================
@@ -1934,7 +1980,7 @@
           <div style="font-weight: 600; margin-bottom: 8px;">Predlagani termini:</div>
           ${suggestions.map((s, i) => `
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: ${i === 0 ? '#d1fae5' : '#f9fafb'}; border-radius: 8px; margin-bottom: 6px;">
-              <span style="font-weight: ${i === 0 ? '600' : '400'};">${i === 0 ? '⭐ ' : (i+1) + '. '}${s}</span>
+              <span style="font-weight: ${i === 0 ? '600' : '400'};">${i === 0 ? '1. ' : (i+1) + '. '}${formatSchedulerSuggestion(s, i)}</span>
               ${i === 0 ? '<span style="background: #065f46; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px;">Priporočeno</span>' : ''}
             </div>
           `).join('')}
