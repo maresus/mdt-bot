@@ -1214,6 +1214,7 @@ def search_chat_messages(
 # ============================================================
 
 from app.services.analytics_service import get_analytics_service
+from app.services.chat_quality_audit import run_daily_chat_quality_audit
 
 
 @router.get("/analytics/dashboard")
@@ -1314,6 +1315,24 @@ async def get_reminder_statistics():
         return get_reminder_stats()
     except Exception as e:
         print(f"[ADMIN] Error getting reminder stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/quality/daily-audit")
+def get_daily_quality_audit(days: int = 1, max_sessions: int = 2000, max_examples: int = 20):
+    """
+    Daily chat quality audit over saved chat_messages.
+    Intended to be called once per day from cron/automation.
+    """
+    _log("GET /quality/daily-audit", days=days, max_sessions=max_sessions, max_examples=max_examples)
+    try:
+        return run_daily_chat_quality_audit(
+            days=days,
+            max_sessions=max_sessions,
+            max_examples=max_examples,
+        )
+    except Exception as e:
+        print(f"[ADMIN] Error running daily quality audit: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
