@@ -330,6 +330,8 @@ INFO_KEYWORDS = {
     "naslov",
     "lokacija",
     "parking",
+    "parkirni",
+    "parkirni prostor",
     "parkplac",  # sleng
     "parkirišče",
     "parkirisce",
@@ -347,6 +349,7 @@ INFO_KEYWORDS = {
     "kje ste",
     "kje se nahajate",
     "kje se nhajaet",  # typo
+    "mate",      # sleng za "imate"
     "located",   # english
     "where",     # english
 }

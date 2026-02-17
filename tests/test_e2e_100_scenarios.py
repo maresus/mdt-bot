@@ -91,6 +91,11 @@ def _base_scenarios() -> list[Scenario]:
             ("telefon", "email", "kako vam lahko pomagam"),
         ),
         Scenario(
+            "INFO_PARKING_SLANG",
+            ("mate parkirni prostor",),
+            ("park", "naslov", "lokacij"),
+        ),
+        Scenario(
             "INFO_PRICE_GENERIC",
             ("kolk stane pregled",),
             ("cene", "storitev"),
