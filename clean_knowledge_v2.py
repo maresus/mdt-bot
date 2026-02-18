@@ -6,6 +6,7 @@ Keep medical information, services, prices, doctor info, and appointment info
 
 import json
 import re
+from pathlib import Path
 
 def clean_content(text, title):
     """Remove only the most repetitive navigation menus and footers"""
@@ -30,8 +31,9 @@ def clean_content(text, title):
     return text
 
 def main():
-    input_file = "/Volumes/SSD KLJUC/KOVACNIK AI/ZDRAVSTVENI CENTER/knowledge.jsonl"
-    output_file = "/Volumes/SSD KLJUC/KOVACNIK AI/ZDRAVSTVENI CENTER/knowledge_final.jsonl"
+    root = Path(__file__).resolve().parent
+    input_file = root / "knowledge.jsonl"
+    output_file = root / "knowledge_final.jsonl"
 
     entries = []
 

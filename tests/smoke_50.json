@@ -1,0 +1,268 @@
+[
+  {
+    "name": "1. Direktno naročilo",
+    "message": "Rad bi se naročil na pregled",
+    "expected_intent": "BOOKING_APPOINTMENT"
+  },
+  {
+    "name": "2. Z željami",
+    "message": "Želel bi termin pri dermatologu",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "3. Vljudno",
+    "message": "Prosim, lahko dobim termin za ortopeda?",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "4. Neformalno",
+    "message": "Ej, a je možn dobit termin?",
+    "expected_intent": "BOOKING_APPOINTMENT"
+  },
+  {
+    "name": "5. S simptomi",
+    "message": "Boli me koleno, rad bi pregled",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "6. Dolga oblika",
+    "message": "Pozdravljeni, rad bi se naročil na dermatološki pregled ker imam težave s kožo",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "7. Kratka oblika",
+    "message": "Termin ortoped",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "8. Z datumom",
+    "message": "Rad bi termin za 15.3.2026",
+    "expected_intent": "BOOKING_APPOINTMENT"
+  },
+  {
+    "name": "9. Kontrola",
+    "message": "Potrebujem kontrolo pri okulistu",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "OKULIST"
+  },
+  {
+    "name": "10. Rezervacija",
+    "message": "Rezerviral bi termin za kozmetiko",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "KOZMETIKA"
+  },
+  {
+    "name": "11. Kaj zdravite",
+    "message": "Katere bolezni zdravite?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "12. Kaj delate",
+    "message": "Kaj vse delate?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "13. Dermatolog info",
+    "message": "Kaj dela dermatolog?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "14. Ali imate",
+    "message": "Ali imate dermatologa?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "15. Kakšne storitve",
+    "message": "Kakšne storitve ponujate?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "16. Pregledi info",
+    "message": "Katere preglede izvajate?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "17. Specialist info",
+    "message": "Kdo je vaš ortoped?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "18. Postopek",
+    "message": "Kako poteka pregled pri okulistu?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "19. Kaj vključuje",
+    "message": "Kaj vključuje dermatološki pregled?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "20. Izkušnje",
+    "message": "Kakšne izkušnje ima vaš dermatolog?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "21. Cena pregleda",
+    "message": "Koliko stane pregled?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "22. Cenik",
+    "message": "Ali imate cenik?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "23. Cena ortoped",
+    "message": "Koliko stane ortopedski pregled?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "24. Zavarovanje",
+    "message": "Ali sprejemate zavarovanje?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "25. Lokacija",
+    "message": "Kje se nahajate?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "26. Delovni čas",
+    "message": "Kdaj ste odprti?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "27. Parking",
+    "message": "Ali imate parking?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "28. Kako pridem",
+    "message": "Kako pridem do vas?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "29. Telefon",
+    "message": "Kakšna je vaša telefonska številka?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "30. Email",
+    "message": "Kakšen je vaš email?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "31. Koleno",
+    "message": "Boli me koleno",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "32. Koža",
+    "message": "Imam izpuščaj na koži",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "33. Oči",
+    "message": "Slabo vidim na daleč",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "OKULIST"
+  },
+  {
+    "name": "34. Hrbet",
+    "message": "Že teden dni me boli hrbet",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "35. Simptom+booking",
+    "message": "Imam gube, rada bi se naročila na botox",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ESTETSKI_POSEG"
+  },
+  {
+    "name": "36. Da",
+    "message": "da",
+    "expected_intent": "AFFIRMATIVE"
+  },
+  {
+    "name": "37. Ja prosim",
+    "message": "ja prosim",
+    "expected_intent": "AFFIRMATIVE"
+  },
+  {
+    "name": "38. OK",
+    "message": "ok",
+    "expected_intent": "AFFIRMATIVE"
+  },
+  {
+    "name": "39. Ne",
+    "message": "ne",
+    "expected_intent": "NEGATIVE"
+  },
+  {
+    "name": "40. Ne hvala",
+    "message": "ne hvala",
+    "expected_intent": "NEGATIVE"
+  },
+  {
+    "name": "41. Pozdrav",
+    "message": "Zdravo!",
+    "expected_intent": "GREETING"
+  },
+  {
+    "name": "42. Dober dan čist",
+    "message": "Dober dan",
+    "expected_intent": "GREETING"
+  },
+  {
+    "name": "43. Hvala",
+    "message": "Hvala za pomoč",
+    "expected_intent": "GOODBYE"
+  },
+  {
+    "name": "44. Urgentno",
+    "message": "Rabim nujno pomoč!",
+    "expected_intent": "URGENCY"
+  },
+  {
+    "name": "45. Danes nujno",
+    "message": "Rabim termin danes, nujno!",
+    "expected_intent": "URGENCY"
+  },
+  {
+    "name": "46. Info + booking",
+    "message": "Koliko stane in kako se naročim na ortopeda?",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "47. Simptom + cena",
+    "message": "Boli me koleno, koliko stane pregled?",
+    "expected_intent": "PRICE",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "48. Pozdrav + booking",
+    "message": "Zdravo, rad bi termin pri dermatologu",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "49. Več storitev",
+    "message": "Zanima me dermatolog in ortoped",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "50. Kompleksno",
+    "message": "Že dalj časa me boli koleno in bi rad vedel koliko stane ter dobil termin",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  }
+]

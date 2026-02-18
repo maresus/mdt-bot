@@ -1,0 +1,240 @@
+[
+  {
+    "name": "1. živjo",
+    "message": "živjo",
+    "expected_intent": "GREETING",
+    "min_confidence": 1.0
+  },
+  {
+    "name": "2. dober dan",
+    "message": "dober dan",
+    "expected_intent": "GREETING"
+  },
+  {
+    "name": "3. pozdravljeni",
+    "message": "pozdravljeni",
+    "expected_intent": "GREETING"
+  },
+  {
+    "name": "4. hvala, adijo",
+    "message": "hvala, adijo",
+    "expected_intent": "GOODBYE"
+  },
+  {
+    "name": "5. rad bi naročil termin",
+    "message": "rad bi naročil termin",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "min_confidence": 0.6
+  },
+  {
+    "name": "6. naročil bi se na pregled pri dermatologu",
+    "message": "naročil bi se na pregled pri dermatologu",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "7. termin za ortopeda",
+    "message": "termin za ortopeda",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "8. bi se naročil na pregled oči",
+    "message": "bi se naročil na pregled oči",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "OKULIST"
+  },
+  {
+    "name": "9. naročilo na fizioterapijo",
+    "message": "naročilo na fizioterapijo",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "FIZIOTERAPIJA"
+  },
+  {
+    "name": "10. želim rezervirati termin za botox",
+    "message": "želim rezervirati termin za botox",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "ESTETSKI_POSEG"
+  },
+  {
+    "name": "11. lasersko odstranjevanje žilic",
+    "message": "naročilo za lasersko odstranjevanje žilic",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "LASERSKI_POSEG"
+  },
+  {
+    "name": "12. termin za kozmetični tretma",
+    "message": "termin za kozmetični tretma",
+    "expected_intent": "BOOKING_APPOINTMENT",
+    "expected_service": "KOZMETIKA"
+  },
+  {
+    "name": "13. kaj zdravi dermatolog?",
+    "message": "kaj zdravi dermatolog?",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "14. katere bolezni zdravite?",
+    "message": "katere bolezni zdravite?",
+    "expected_intent": "SERVICE_INFO"
+  },
+  {
+    "name": "15. kakšne ortopedske preglede delate?",
+    "message": "kakšne ortopedske preglede delate?",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "16. a zdravite akne?",
+    "message": "a zdravite akne?",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "DERMATOLOG"
+  },
+  {
+    "name": "17. kaj pomaga za bolečine v hrbtu?",
+    "message": "kaj pomaga za bolečine v hrbtu?",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "ORTOPED"
+  },
+  {
+    "name": "18. a delate botox?",
+    "message": "a delate botox?",
+    "expected_intent": "SERVICE_INFO",
+    "expected_service": "ESTETSKI_POSEG"
+  },
+  {
+    "name": "19. koliko stane pregled?",
+    "message": "koliko stane pregled?",
+    "expected_intent": "PRICE",
+    "min_confidence": 0.9
+  },
+  {
+    "name": "20. cenik storitev",
+    "message": "cenik storitev",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "21. a sprejemate zavarovanje?",
+    "message": "a sprejemate zavarovanje?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "22. koliko stane botox?",
+    "message": "koliko stane botox?",
+    "expected_intent": "PRICE"
+  },
+  {
+    "name": "23. kdaj ste odprti?",
+    "message": "kdaj ste odprti?",
+    "expected_intent": "INFO",
+    "min_confidence": 0.8
+  },
+  {
+    "name": "24. kje se nahajate?",
+    "message": "kje se nahajate?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "25. imate parking?",
+    "message": "imate parking?",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "26. telefonska številka",
+    "message": "telefonska številka",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "27. email naslov",
+    "message": "email naslov",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "28. delovni čas",
+    "message": "delovni čas",
+    "expected_intent": "INFO"
+  },
+  {
+    "name": "29. da",
+    "message": "da",
+    "expected_intent": "AFFIRMATIVE",
+    "expected_action": "ignore"
+  },
+  {
+    "name": "30. ok",
+    "message": "ok",
+    "expected_intent": "AFFIRMATIVE"
+  },
+  {
+    "name": "31. ne",
+    "message": "ne",
+    "expected_intent": "NEGATIVE"
+  },
+  {
+    "name": "32. ne hvala",
+    "message": "ne hvala",
+    "expected_intent": "NEGATIVE"
+  },
+  {
+    "name": "33. nujno rabim termin",
+    "message": "nujno rabim termin",
+    "expected_intent": "URGENCY",
+    "min_confidence": 0.9
+  },
+  {
+    "name": "34. zelo boli, rabim danes",
+    "message": "zelo boli, rabim danes",
+    "expected_intent": "URGENCY"
+  },
+  {
+    "name": "35. cena med naročanjem",
+    "message": "koliko stane pregled?",
+    "expected_intent": "PRICE",
+    "state": {
+      "flow": "appointment",
+      "step": "date"
+    },
+    "expected_action": "soft_interrupt"
+  },
+  {
+    "name": "36. info med naročanjem",
+    "message": "a imate parking?",
+    "expected_intent": "INFO",
+    "state": {
+      "flow": "appointment",
+      "step": "date"
+    },
+    "expected_action": "soft_interrupt"
+  },
+  {
+    "name": "37. storitev info med naročanjem",
+    "message": "kaj zdravi dermatolog?",
+    "expected_intent": "SERVICE_INFO",
+    "state": {
+      "flow": "appointment",
+      "step": "date"
+    },
+    "expected_action": "soft_interrupt"
+  },
+  {
+    "name": "38. delovni čas med naročanjem",
+    "message": "kdaj ste odprti?",
+    "expected_intent": "INFO",
+    "state": {
+      "flow": "appointment",
+      "step": "date"
+    },
+    "expected_action": "soft_interrupt"
+  },
+  {
+    "name": "39. kratko 'hm'",
+    "message": "hm",
+    "expected_intent": "GENERAL"
+  },
+  {
+    "name": "40. prazen string",
+    "message": "",
+    "expected_intent": "GENERAL"
+  }
+]

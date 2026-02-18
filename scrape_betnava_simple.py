@@ -1,238 +1,26 @@
 #!/usr/bin/env python3
-"""
-Scrape MC Betnava website and create knowledge.jsonl for chatbot
-Using only standard library (urllib)
-"""
+"""Compatibility wrapper for unified scraper (simple mode)."""
 
-import urllib.request
-import urllib.parse
-from html.parser import HTMLParser
-import json
-import re
-import time
+from __future__ import annotations
 
-# List of URLs to scrape
-URLS = [
-    "https://www.mc-betnava.si/dermatolog-maribor",
-    "https://www.mc-betnava.si/o-nas/narocanje",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ki-pregled-maribor",
-    "https://www.mc-betnava.si/dermatolog-maribor/laserski-posegi-maribor",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/ko%C5%BEna-znamenja",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/akne",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/aktini%C4%8Dne-keratoze",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/atopijski-dermatitis",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/luskavica",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/prekomerno-znojenje-hiperhidroza",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ke-bolezni/rosacea",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe/sifilis",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe/gonoreja",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe/genitalni-herpes",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe/oku%C5%BEba-s-klamidijo",
-    "https://www.mc-betnava.si/dermatolog-maribor/spolno-prenosljive-oku%C5%BEbe/genitalne-bradavice-kondilomi",
-    "https://www.mc-betnava.si/o-nas/zdravniki/asist-simona-senega%C4%8Dnik,-dr-med-,-specialistka-dermatovenerologije",
-    "https://www.mc-betnava.si/dermatolog-maribor/dermatolo%C5%A1ka-ambulanta",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/101-pomlajevanje-z-radiofrekvenco-pelleve",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/42-glajenje-gub-polnila-s-hialuronsko-kislino-filerji",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/41-glajenje-gub-botulinum-toksin-botox",
-    "https://www.mc-betnava.si/dermatolog-maribor/laserski-posegi-maribor/lasersko-odstranjevanje-%C5%BEilic-kapilar",
-    "https://www.mc-betnava.si/dermatolog-maribor/laserski-posegi-maribor/lasersko-zdravljenje-glivic-na-nohtih",
-    "https://www.mc-betnava.si/dermatolog-maribor/laserski-posegi-maribor/lasersko-odstranjevanje-bradavic",
-    "https://www.mc-betnava.si/dermatolog-maribor/laserski-posegi-maribor/lasersko-zdravljenje-mozoljev-maribor",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/medicinski-microneedling",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/biorevitalizacija-koze-prx-t33",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/glajenje-gub-s-polnili-s-hialuronsko-kislino-filerji",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/pomlajevanje-z-radiofrekvenco-pelleve",
-    "https://www.mc-betnava.si/dermatolog-maribor/estetski-posegi-maribor/glajenje-gub-z-botulinum-toksinom-botox",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/267-ali-ste-vedeli-o-kozi",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/spolno-prenosljive-bolezni",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/nega-ko%C5%BEe-pri-rosaceji",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/ko%C5%BEa-poleti",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/kako-lahko-sami-odpravimo-akne",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/odpravite-prekomerno-znojenje-z-botoxom",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/pomlajevanje-obraza",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/ipl-ni-laser",
-    "https://www.mc-betnava.si/dermatolog-maribor/nasveti/androgena-ple%C5%A1avost",
-    "https://www.mc-betnava.si/o-nas/zdravniki/zmago-krajnc-specialist-ortoped",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedska-ambulanta-maribor",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/350-artroskopija",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/341-osteoartroza-degenerativna-obraba-sklepov",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/342-operativno-zdravljenje-artroze-kolenskega-sklepa",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/344-skakal%C4%8Devo-koleno",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/345-konzervativno-zdravljenje-artroze",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/346-zivljenje-z-umetnim-sklepom",
-    "https://www.mc-betnava.si/ortoped-maribor/ortopedski-nasveti/349-bolecina-v-krizu",
-    "https://www.mc-betnava.si/o-nas/zdravniki/tina-kobale",
-    "https://www.mc-betnava.si/okulist-maribor",
-    "https://www.mc-betnava.si/okulist-maribor/o%C4%8Desni-pregled-maribor",
-    "https://www.mc-betnava.si/o-nas/zdravniki/simon-trpin-dr-med-specialist-oftalmolog",
-    "https://www.mc-betnava.si/o-nas/zdravniki/levin-vrhovec-dr-med-specialist-oftalmolog",
-    "https://www.mc-betnava.si/kozmetik-maribor/nega-obraza",
-    "https://www.mc-betnava.si/cenik/dermatoloske-storitve-cenik",
-    "https://www.mc-betnava.si/cenik/oftalmoloske-storitve-cenik",
-    "https://www.mc-betnava.si/cenik/ortopedski-pregledi-cenik",
-    "https://www.mc-betnava.si/kozmetik-maribor/cenik-kozmeti%C4%8Dnih-storitev",
-]
+import subprocess
+import sys
+from pathlib import Path
 
-class ContentExtractor(HTMLParser):
-    """Simple HTML parser to extract text content"""
 
-    def __init__(self):
-        super().__init__()
-        self.title = ""
-        self.content_parts = []
-        self.skip_tags = {'script', 'style', 'nav', 'header', 'footer', 'noscript', 'iframe'}
-        self.current_tag = None
-        self.in_title = False
-        self.skip_depth = 0
-
-    def handle_starttag(self, tag, attrs):
-        self.current_tag = tag
-
-        if tag == 'title':
-            self.in_title = True
-
-        if tag in self.skip_tags:
-            self.skip_depth += 1
-
-        # Skip elements with navigation/menu classes
-        if attrs:
-            for attr, value in attrs:
-                if attr == 'class' and value:
-                    if any(x in value.lower() for x in ['nav', 'menu', 'sidebar', 'footer', 'header', 'breadcrumb']):
-                        self.skip_depth += 1
-
-    def handle_endtag(self, tag):
-        if tag == 'title':
-            self.in_title = False
-
-        if tag in self.skip_tags:
-            self.skip_depth = max(0, self.skip_depth - 1)
-
-    def handle_data(self, data):
-        if self.skip_depth > 0:
-            return
-
-        cleaned = data.strip()
-        if cleaned:
-            if self.in_title:
-                self.title = cleaned
-            else:
-                # Add spacing for readability
-                if self.current_tag in {'p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}:
-                    self.content_parts.append(cleaned + ' ')
-                else:
-                    self.content_parts.append(cleaned + ' ')
-
-    def get_text(self):
-        text = ''.join(self.content_parts)
-        # Clean up whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
-        return text
-
-    def get_title(self):
-        # Clean title
-        title = self.title
-        title = re.sub(r'\s*[-|]\s*(MC\s*)?Betnava.*$', '', title, flags=re.IGNORECASE)
-        return title.strip() if title else "Untitled"
-
-def replace_center_name(text):
-    """Replace MC Betnava or Zdravstveni center Betnava with just BETNAVA"""
-    patterns = [
-        (r'Zdravstveni\s+center\s+Betnava', 'BETNAVA'),
-        (r'Zdravstvenega\s+centra\s+Betnava', 'BETNAVA'),
-        (r'Zdravstvenemu\s+centru\s+Betnava', 'BETNAVA'),
-        (r'MC\s+Betnava', 'BETNAVA'),
-        (r'mc-betnava', 'BETNAVA'),
-        (r'MC\s+BETNAVA', 'BETNAVA'),
+def main() -> int:
+    root = Path(__file__).resolve().parent
+    cmd = [
+        sys.executable,
+        str(root / "scripts" / "scrape" / "scraper.py"),
+        "--mode",
+        "simple",
+        "--out",
+        str(root / "knowledge.jsonl"),
     ]
+    return subprocess.call(cmd)
 
-    for pattern, replacement in patterns:
-        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
-
-    return text
-
-def scrape_url(url):
-    """Scrape a single URL and return content"""
-    print(f"Scraping: {url}")
-
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as response:
-            html = response.read().decode('utf-8', errors='ignore')
-
-        # Parse HTML
-        parser = ContentExtractor()
-        parser.feed(html)
-
-        title = parser.get_title()
-        content = parser.get_text()
-
-        if not content or len(content) < 50:
-            print(f"  Warning: Little or no content extracted from {url}")
-            return None
-
-        # Replace center name
-        title = replace_center_name(title)
-        content = replace_center_name(content)
-
-        return {
-            "text": content,
-            "metadata": {
-                "source": url,
-                "title": title
-            }
-        }
-
-    except Exception as e:
-        print(f"  Error scraping {url}: {str(e)}")
-        return None
-
-def main():
-    """Main function to scrape all URLs and create knowledge.jsonl"""
-
-    print(f"Starting to scrape {len(URLS)} URLs...")
-    print("-" * 80)
-
-    entries = []
-    unique_urls = list(set(URLS))  # Remove duplicates
-
-    for i, url in enumerate(unique_urls, 1):
-        print(f"\n[{i}/{len(unique_urls)}]")
-
-        entry = scrape_url(url)
-        if entry:
-            entries.append(entry)
-            print(f"  ✓ Successfully scraped: {entry['metadata']['title'][:60]}")
-
-        # Be polite - wait between requests
-        time.sleep(1)
-
-    print("\n" + "=" * 80)
-    print(f"Successfully scraped {len(entries)} pages out of {len(unique_urls)} URLs")
-
-    # Write to JSONL file
-    output_file = "/Volumes/SSD KLJUC/KOVACNIK AI/ZDRAVSTVENI CENTER/knowledge.jsonl"
-
-    with open(output_file, 'w', encoding='utf-8') as f:
-        for entry in entries:
-            json_line = json.dumps(entry, ensure_ascii=False)
-            f.write(json_line + '\n')
-
-    print(f"\nKnowledge base saved to: {output_file}")
-    print(f"Total entries: {len(entries)}")
-
-    # Print some statistics
-    if entries:
-        total_chars = sum(len(entry['text']) for entry in entries)
-        print(f"Total characters: {total_chars:,}")
-        print(f"Average entry size: {total_chars // len(entries):,} characters")
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
+

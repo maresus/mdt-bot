@@ -21,12 +21,13 @@ echo "[DEPLOY GATE] CONTINUE_ON_FAIL=$CONTINUE_ON_FAIL"
 
 declare -a STEPS=(
   "d3|$VENV_PY $ROOT_DIR/scripts/test_d3_modules.py"
-  "golden30|$VENV_PY $ROOT_DIR/scripts/test_golden_30.py"
+  "golden30|$VENV_PY -m scripts.run_routing_suite --suite tests/golden_30.json --name 'GOLDEN 30'"
   "golden_runner|$VENV_PY -m pytest $ROOT_DIR/tests/test_golden_runner.py -v"
-  "fuzzy30|$VENV_PY $ROOT_DIR/scripts/test_fuzzy_30.py"
+  "fuzzy30|$VENV_PY -m scripts.run_routing_suite --suite tests/fuzzy_30.json --name 'FUZZY 30'"
   "live_capture|$VENV_PY $ROOT_DIR/scripts/test_live_capture.py"
-  "routing|$VENV_PY $ROOT_DIR/scripts/test_routing.py"
-  "smoke_routing|$VENV_PY $ROOT_DIR/scripts/smoke_test_routing.py"
+  "routing|$VENV_PY -m scripts.run_routing_suite --suite tests/smoke_routing_40.json --name 'ROUTING 40'"
+  "smoke_50|$VENV_PY -m scripts.run_routing_suite --suite tests/smoke_50.json --name 'SMOKE 50'"
+  "smoke_110|$VENV_PY -m scripts.run_routing_suite --suite tests/smoke_110.json --name 'SMOKE 110'"
   "smoke_e2e_50|$VENV_PY $ROOT_DIR/scripts/smoke_test_e2e_50.py"
   "stress_d6|$VENV_PY $ROOT_DIR/scripts/stress_test_d6.py"
 )

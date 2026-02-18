@@ -6,6 +6,7 @@ Keep only medical information, services, prices, doctor info, and appointment in
 
 import json
 import re
+from pathlib import Path
 
 def clean_content(text):
     """Remove navigation menus, footers, and other non-essential content"""
@@ -43,8 +44,9 @@ def clean_content(text):
     return cleaned
 
 def main():
-    input_file = "/Volumes/SSD KLJUC/KOVACNIK AI/ZDRAVSTVENI CENTER/knowledge.jsonl"
-    output_file = "/Volumes/SSD KLJUC/KOVACNIK AI/ZDRAVSTVENI CENTER/knowledge_cleaned.jsonl"
+    root = Path(__file__).resolve().parent
+    input_file = root / "knowledge.jsonl"
+    output_file = root / "knowledge_cleaned.jsonl"
 
     entries = []
 
