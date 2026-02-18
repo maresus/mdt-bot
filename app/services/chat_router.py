@@ -980,8 +980,20 @@ def handle_unified_routing(
         if is_in_flow(session_id) and current_step == FlowStep.REASON.value:
             return None
         if is_in_flow(session_id) and current_step in {FlowStep.SERVICE.value, "select_service"}:
-            if extract_service_type(message, clinic_id=clinic_id):
-                return None
+            # During service-selection step, a detected service must continue booking flow
+            # (even if message was classified as SERVICE_INFO).
+            selected_service = extract_service_type(message, clinic_id=clinic_id) or decision.service_type
+            if selected_service:
+                state_mgr.transition_to_booking(service_type=selected_service, legacy_state=appointment_state)
+                start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+                state_mgr.clear_context_key("suggested_service")
+                if extract_date_from_message(message):
+                    return handle_appointment_booking(message, session_id)
+                return get_response(
+                    "booking.start_with_date",
+                    clinic_id=clinic_id,
+                    service_type=selected_service.lower(),
+                )
         service = decision.service_type
         if _looks_like_previsit_question(message):
             return _previsit_guidance_response(service, clinic_id=clinic_id)
