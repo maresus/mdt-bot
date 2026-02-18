@@ -116,6 +116,17 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
         elif has_service and not has_date:
             deps.set_step(session_id, state, "date")
 
+    # Additional self-heal when step is accidentally reset to "select_service"
+    # while booking data already exists (observed after deploy/restart edge cases).
+    if state.get("step") == "select_service":
+        has_service = bool(state.get("service_type"))
+        has_date = bool(state.get("date"))
+        has_time = bool(state.get("time"))
+        if has_service and has_date and not has_time:
+            deps.set_step(session_id, state, "time")
+        elif has_service and has_date and has_time:
+            deps.set_step(session_id, state, "name")
+
     if state.get("service_type") is not None and state.get("step") is None:
         date_str = deps.extract_date_from_message(message)
         if date_str:

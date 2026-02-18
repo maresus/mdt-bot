@@ -12,7 +12,8 @@ STOP_WORDS = {
 # Affirmative keywords
 AFFIRMATIVE_KEYWORDS = {
     "da", "ja", "yes", "seveda", "lahko", "ok", "okay",
-    "v redu", "sure", "dobro", "prosim", "please", "grem naprej", "nadaljuj"
+    "v redu", "sure", "dobro", "prosim", "please", "grem naprej", "nadaljuj",
+    "ajde", "idemo", "idem", "gremo", "dejmo", "idemooo"
 }
 
 # Greeting keywords
@@ -28,7 +29,10 @@ def tokenize_meaningful(message: str) -> set[str]:
 
 def is_affirmative(message: str) -> bool:
     """Check if message is an affirmative response."""
-    tokens = message.lower().strip().split()
+    lowered = message.lower().strip()
+    if lowered.startswith(("ajde", "idemo", "idem", "gremo", "dejmo")):
+        return True
+    tokens = lowered.split()
     if len(tokens) <= 2:
         return any(word in AFFIRMATIVE_KEYWORDS for word in tokens)
     return False

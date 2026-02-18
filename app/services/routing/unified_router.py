@@ -46,6 +46,7 @@ AFFIRMATIVE_WORDS = {
     "da", "ja", "ok", "okej", "okay", "seveda", "vredu", "lahko", "prosim", "grem", "gremo",
     "bom", "prišel", "prisla", "prsou", "pridem", "pridm", "yes", "yep", "sure", "cool",
     "tako", "je", "res", "v", "redu", "d", "a", "super", "odlično", "odlicno", "kul",
+    "ajde", "idemo", "idem", "dejmo", "idemooo",
     "please",  # english
     "dada",
 }
@@ -79,6 +80,8 @@ def _detect_affirmative_negative(message: str) -> IntentType | None:
     if text in {"da", "ja", "ok", "okej", "okay", "ne", "yes", "no", "nope", "d a", "n e"}:
         if text in {"ne", "no", "nope", "n e"}:
             return IntentType.NEGATIVE
+        return IntentType.AFFIRMATIVE
+    if text.startswith(("ajde", "idemo", "idem", "gremo", "dejmo")):
         return IntentType.AFFIRMATIVE
 
     # Check if ALL words are affirmative words

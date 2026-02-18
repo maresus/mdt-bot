@@ -140,6 +140,11 @@ BOOKING_KEYWORDS_EXTENDED = [
     "hocem",
     "želel",
     "želela",
+    "vrzi",
+    "vrži",
+    "naroči me",
+    "naroci me",
+    "book",
 ]
 
 HOURS_WORDS = [

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from typing import Any, Callable, Optional
 
 from app.services.routing.unified_router import IntentType
@@ -86,6 +85,28 @@ def handle_service_info_intent(
 
     if service:
         state_mgr.set_context_value("suggested_service", service)
+        booking_push_words = (
+            "naro",
+            "termin",
+            "rezerv",
+            "vrzi",
+            "vrži",
+            "naroči me",
+            "naroci me",
+            "book",
+        )
+        lowered = message.lower()
+        if any(word in lowered for word in booking_push_words):
+            transition_to_booking(state_mgr, service, appointment_state)
+            start_flow(session_id, flow_type_appointment, flow_step_date)
+            state_mgr.clear_context_key("suggested_service")
+            if extract_date_from_message(message):
+                return None
+            return get_response(
+                "booking.start_with_date",
+                clinic_id=clinic_id,
+                service_type=service.lower(),
+            )
         if looks_like_symptom_report(message):
             nudge = symptom_booking_nudge(service, clinic_id=clinic_id)
             return append_nudge_if_missing(advice_only(service), nudge)
@@ -189,6 +210,7 @@ def handle_price_intent(
     appointment_state: dict[str, Any],
     state_mgr: Any,
     service_price_info: Callable[[Optional[str], Optional[str]], str],
+    extract_service_type: Callable[[str, Optional[str]], Optional[str]],
     rag_info_answer: Callable[[str, str, Optional[str]], str],
     message: str,
     info_key_prices: str,
@@ -204,6 +226,8 @@ def handle_price_intent(
         if remembered_service:
             service = str(remembered_service)
             used_last_booking = True
+    if not service:
+        service = extract_service_type(message, clinic_id=clinic_id)
     if service:
         state_mgr.clear_context_key("awaiting_price_service")
         service_key = service.lower()

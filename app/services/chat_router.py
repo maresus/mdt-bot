@@ -749,6 +749,7 @@ def handle_unified_routing(
         appointment_state=appointment_state,
         state_mgr=state_mgr,
         service_price_info=_service_price_info,
+        extract_service_type=extract_service_type,
         rag_info_answer=_rag_info_answer,
         message=message,
         info_key_prices=INFO_KEY_PRICES,
