@@ -1,3 +1,6 @@
+from contextvars import copy_context
+
+from app.services.clinic_config import reset_current_clinic_id, set_current_clinic_id
 from app.services.session.store import InMemorySessionStore
 from app.services.session.unified_state import get_unified_state, reset_unified_state
 from app.services.triage_service import get_triage_service
@@ -41,3 +44,17 @@ def test_triage_session_roundtrip_in_store() -> None:
 
     assert triage.end_session(session_id) is True
     assert triage.get_session(session_id) is None
+
+
+def test_reset_current_clinic_id_tolerates_foreign_context_token() -> None:
+    token_box: dict[str, object] = {}
+
+    def _set_in_other_context() -> None:
+        token_box["token"] = set_current_clinic_id("other-context")
+
+    ctx = copy_context()
+    ctx.run(_set_in_other_context)
+    token = token_box["token"]
+
+    # Must not raise even when token was created in a different context.
+    reset_current_clinic_id(token)

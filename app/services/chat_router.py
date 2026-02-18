@@ -908,6 +908,17 @@ def handle_unified_routing(
         state_mgr.clear_context_key("suggested_service")
         return handle_appointment_booking(message, session_id)
 
+    # If user sends a date right after service recommendation, continue booking directly.
+    if (
+        not is_in_flow(session_id)
+        and suggested_service
+        and extract_date_from_message(message)
+    ):
+        state_mgr.transition_to_booking(service_type=suggested_service, legacy_state=appointment_state)
+        start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
+        state_mgr.clear_context_key("suggested_service")
+        return handle_appointment_booking(message, session_id)
+
     if decision.primary_intent == IntentType.NEGATIVE and is_in_flow(session_id):
         reset_unified_state(session_id)
         return get_response("general.booking_cancelled", clinic_id=clinic_id)

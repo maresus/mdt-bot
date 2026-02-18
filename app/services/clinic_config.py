@@ -175,7 +175,12 @@ def set_current_clinic_id(clinic_id: str | None):
 
 
 def reset_current_clinic_id(token) -> None:
-    _current_clinic_id.reset(token)
+    try:
+        _current_clinic_id.reset(token)
+    except ValueError:
+        # Token can be invalid across worker-thread context switches
+        # (e.g. sync dependencies executed via threadpool). Fall back to explicit clear.
+        _current_clinic_id.set(None)
 
 
 def get_current_clinic_id() -> str | None:
