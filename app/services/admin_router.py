@@ -28,6 +28,7 @@ from app.services.clinic_config import (
     set_current_clinic_id,
     reset_current_clinic_id,
 )
+from app.services.session.store import get_session_store
 
 # Compatibility aliases za admin panel
 TOTAL_TABLE_CAPACITY = 0  # Ni miz
@@ -157,6 +158,21 @@ def _get_ip(request: Request) -> Optional[str]:
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_read)])
 service = ReservationService()
+
+
+@router.get("/health/session-store")
+def session_store_health() -> dict[str, Any]:
+    store = get_session_store()
+    backend = "memory"
+    redis_enabled = False
+    if store.__class__.__name__ == "RedisSessionStore":
+        backend = "redis"
+        redis_enabled = bool(getattr(store, "_enabled", False))
+    return {
+        "backend": backend,
+        "redis_enabled": redis_enabled,
+        "store_class": store.__class__.__name__,
+    }
 
 def _current_room_ids() -> set[str]:
     try:

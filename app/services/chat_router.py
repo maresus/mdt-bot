@@ -2,7 +2,7 @@ import re
 import json
 import os
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Optional
 import uuid
 import threading
@@ -51,10 +51,8 @@ from app.services.session.unified_state import (
     FlowStep,
 )
 from app.services.routing.unified_router import route as unified_route, IntentType
-from app.services.routing.confidence import detect_service_type as detect_service_type_conf
 from app.services.routing.nlp_utils import is_affirmative, is_negative
 from app.services.routing.state_manager import ConversationTracker, SimpleCache
-from app.services.routing.intent_engine import classify_intent_llm
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
 from app.services.routing.advice import advice_only, advice_only_headache
 from app.services.routing.symptom_fallback import (
@@ -112,8 +110,6 @@ from app.services.routing.locale_sl import (
     CONTACT_WORDS,
     CONTACT_ROUTE_WORDS,
     CRITICAL_INFO_KEYS,
-    FULL_NAME_BLOCKED_SINGLE,
-    FULL_NAME_BLOCKED_TOKENS,
     GREETING_WORDS,
     HOURS_WORDS,
     PRICE_WORDS,
@@ -125,7 +121,6 @@ from app.services.routing.locale_sl import (
     SYMPTOM_MARKERS,
     SYMPTOM_PATTERNS,
     SYMPTOM_WORDS,
-    SKIP_SERVICE_KEYWORDS,
     TEAM_WORDS,
     THANKS_WORDS,
 )
@@ -155,6 +150,15 @@ from app.services.intent_handlers import (
     handle_unsupported_symptom_intent,
 )
 from app.services.chat_orchestrator import process_chat_turn
+from app.services.routing.parsers import (
+    classify_intent,
+    classify_intent_rules,
+    detect_service_from_message,
+    extract_date_from_message,
+    extract_service_type,
+    extract_time_from_message,
+    is_likely_full_name,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -319,270 +323,6 @@ chat_session_id: str = str(uuid.uuid4())[:8]
 last_user_message_by_session: dict[str, str] = {}
 
 
-def _service_mentioned_in_message(message: str, service: str) -> bool:
-    """Check if service is explicitly mentioned in the message (word boundary check)"""
-    import re
-    lowered = message.lower()
-    keywords = SERVICE_KEYWORDS.get(service, [])
-    # Use word boundary matching to avoid substring issues
-    for kw in keywords:
-        if re.search(r'\b' + re.escape(kw), lowered):
-            return True
-    return False
-
-
-def classify_intent(message: str, history: list = None, clinic_id: str | None = None) -> str:
-    """Classify intent - FAST rules first, LLM only for complex cases"""
-
-    # Hard guard: booking keywords without explicit service -> book_general (avoid LLM guessing)
-    has_price_kw = any(word in message.lower() for word in PRICE_WORDS)
-    if _has_booking_keywords(message) and not has_price_kw and extract_service_type(message, clinic_id=clinic_id) is None and not any(
-        phrase in message.lower()
-        for phrase in BOOKING_INFO_PHRASES
-    ):
-        return INTENT_BOOK_GENERAL
-
-    # FAST PATH: Try rules-based classification first (no API call!)
-    rules_intent = classify_intent_rules(message, history, clinic_id=clinic_id)
-
-    # If rules found a clear intent, use it immediately
-    if rules_intent in [
-        INTENT_GREETING,
-        INTENT_THANKS,
-        INTENT_INFO_HOURS,
-        INTENT_INFO_CONTACT,
-        INTENT_INFO_PRICES,
-        INTENT_INFO_SERVICES,
-        INTENT_CHECK_AVAILABILITY,
-        INTENT_INFO_NAROCANJE,
-        INTENT_HEALTH_SYMPTOMS,
-    ]:
-        return rules_intent
-
-    # If rules found a booking intent, use it
-    if rules_intent.startswith("book_") or rules_intent.startswith("info_"):
-        return rules_intent
-
-    # SLOW PATH: Only use LLM for ambiguous cases
-    result = classify_intent_llm(message, history)
-
-    intent = result.get("intent", "other")
-    service = result.get("service")
-
-    # Map to internal intent format
-    if intent == "booking":
-        if service and _service_mentioned_in_message(message, service):
-            return f"book_{service}"
-        return INTENT_BOOK_GENERAL
-    elif intent == "health_advice":
-        return INTENT_QUESTION  # Let it go through normal RAG flow
-    elif intent == "question":
-        return INTENT_QUESTION
-    elif intent == INTENT_INFO_NAROCANJE:
-        return INTENT_INFO_NAROCANJE
-    elif intent == INTENT_INFO_SERVICES:
-        return INTENT_INFO_SERVICES
-    elif intent == INTENT_INFO_PRICES:
-        return INTENT_INFO_PRICES
-    elif intent == INTENT_INFO_CONTACT:
-        return INTENT_INFO_CONTACT
-    elif intent == INTENT_INFO_HOURS:
-        return INTENT_INFO_HOURS
-    elif intent == INTENT_GREETING:
-        return INTENT_GREETING
-    else:
-        return INTENT_QUESTION
-
-
-# Keep for backward compatibility - booking keywords
-def _has_booking_keywords(message: str) -> bool:
-    lowered = message.lower()
-    return any(word in lowered for word in BOOKING_KEYWORDS)
-
-
-# Old rule-based classify_intent kept as fallback
-def classify_intent_rules(message: str, history: list = None, clinic_id: str | None = None) -> str:
-    """Rule-based fallback for intent classification"""
-    lowered = message.lower()
-    services = get_services(clinic_id=clinic_id)
-    service_map = get_service_map(clinic_id=clinic_id)
-
-    # ===== HEALTH SYMPTOMS: Check FIRST before service keywords =====
-    # Detect pain/symptom patterns like "pain in X" or "I have trouble with X"
-    if any(pattern in lowered for pattern in SYMPTOM_PATTERNS):
-        return INTENT_HEALTH_SYMPTOMS
-
-    # Also check for standalone symptom keywords without booking intent
-    has_symptom = any(word in lowered for word in SYMPTOM_WORDS)
-    has_booking = any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED)
-    if has_symptom and not has_booking:
-        return INTENT_HEALTH_SYMPTOMS
-
-    # Info about booking process (should NOT start booking)
-    if any(phrase in lowered for phrase in BOOKING_INFO_PHRASES):
-        return INTENT_INFO_NAROCANJE
-
-    # Availability checks should be handled explicitly
-    if any(phrase in lowered for phrase in AVAILABILITY_PHRASES):
-        return INTENT_CHECK_AVAILABILITY
-
-    # Mixed intent: booking + price -> answer price info first
-    has_price = any(word in lowered for word in PRICE_WORDS)
-    has_booking_kw = any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED)
-    if has_price and has_booking_kw:
-        return INTENT_INFO_PRICES
-
-    # Appointment booking intents (with and without diacritics)
-    if any(word in lowered for word in BOOKING_KEYWORDS_EXTENDED):
-        # Check which service
-        for service_key, variations in service_map.items():
-            if any(var in lowered for var in variations):
-                return f"book_{service_key}"
-        return INTENT_BOOK_GENERAL
-
-    # Working hours - check BEFORE availability because "kdaj ste odprti" contains "kdaj"
-    if any(word in lowered for word in HOURS_WORDS):
-        return INTENT_INFO_HOURS
-
-    # Check available slots
-    if any(word in lowered for word in AVAILABILITY_WORDS):
-        return INTENT_CHECK_AVAILABILITY
-
-    # Service information or booking (heuristic)
-    for service_key in services.keys():
-        if service_key in lowered or any(var in lowered for var in service_map.get(service_key, [])):
-            # If user likely wants to book (no info/price question), start booking
-            if "?" not in lowered and not any(tok in lowered for tok in SERVICE_INFO_TOKENS):
-                return f"book_{service_key}"
-            return f"info_{service_key}"
-
-    # General service list
-    if any(word in lowered for word in SERVICE_LIST_WORDS):
-        return INTENT_INFO_SERVICES
-
-    # Prices
-    if any(word in lowered for word in PRICE_WORDS):
-        return INTENT_INFO_PRICES
-
-    # Team / leadership
-    if any(word in lowered for word in TEAM_WORDS):
-        return INTENT_INFO_TEAM
-
-    # Contact / Location
-    if any(word in lowered for word in CONTACT_WORDS):
-        return INTENT_INFO_CONTACT
-
-    # Thanks
-    if any(word in lowered for word in THANKS_WORDS):
-        return INTENT_THANKS
-
-    # Greeting (with and without diacritics)
-    if any(word in lowered for word in GREETING_WORDS):
-        return INTENT_GREETING
-
-    # Health symptoms → let RAG/knowledge base handle (has health info)
-    # Don't intercept - return "question" so it goes through RAG
-    return INTENT_QUESTION
-
-def extract_date_from_message(message: str) -> Optional[str]:
-    """Extract date from message (DD.MM[.YYYY] format)."""
-    # Try DD.MM.YYYY or D.M.YYYY format
-    match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', message)
-    if match:
-        day, month, year = match.groups()
-        return f"{day.zfill(2)}.{month.zfill(2)}.{year}"
-
-    # Try DD.MM or D.M format and infer year.
-    # If inferred date in current year is already in the past, roll to next year.
-    match = re.search(r'(?<!\d)(\d{1,2})\.(\d{1,2})(?!\d)', message)
-    if match:
-        day_raw, month_raw = match.groups()
-        day = int(day_raw)
-        month = int(month_raw)
-        today = datetime.now()
-
-        try:
-            candidate = datetime(today.year, month, day)
-        except ValueError:
-            return None
-
-        if candidate.date() < today.date():
-            try:
-                candidate = datetime(today.year + 1, month, day)
-            except ValueError:
-                return None
-
-        return candidate.strftime("%d.%m.%Y")
-
-    # Try relative dates like "jutri", "danes", "naslednji teden"
-    lowered = message.lower()
-    today = datetime.now()
-
-    for token, offset in RELATIVE_DATES.items():
-        if token in lowered:
-            return (today + timedelta(days=offset)).strftime("%d.%m.%Y")
-
-    return None
-
-def extract_time_from_message(message: str) -> Optional[str]:
-    """Extract time from message (HH:MM, HH-MM, or HHMM format)"""
-    # Try HH:MM format
-    match = re.search(r'(\d{1,2}):(\d{2})', message)
-    if match:
-        hour, minute = match.groups()
-        return f"{hour.zfill(2)}:{minute}"
-
-    # Try HH.MM format (e.g., "15.00")
-    match = re.search(r'(\d{1,2})\.(\d{2})', message)
-    if match:
-        hour, minute = match.groups()
-        return f"{hour.zfill(2)}:{minute}"
-
-    # Try HH-MM format (e.g., "15-00")
-    match = re.search(r'(\d{1,2})-(\d{2})', message)
-    if match:
-        hour, minute = match.groups()
-        return f"{hour.zfill(2)}:{minute}"
-
-    # Try HHMM format without separator (e.g., "1500")
-    match = re.search(r'\b(\d{3,4})\b', message)
-    if match:
-        time_str = match.group(1)
-        if len(time_str) == 4:
-            hour, minute = time_str[:2], time_str[2:]
-            return f"{hour}:{minute}"
-        elif len(time_str) == 3:
-            hour, minute = time_str[0], time_str[1:]
-            return f"{hour.zfill(2)}:{minute}"
-
-    # Try HH format (e.g., "ob 10")
-    match = re.search(r'ob\s+(\d{1,2})', message.lower())
-    if match:
-        hour = match.group(1)
-        return f"{hour.zfill(2)}:00"
-
-    return None
-
-
-def is_likely_full_name(text: str) -> bool:
-    stripped = text.strip()
-    if len(stripped) < 3 or "?" in stripped:
-        return False
-    lowered = stripped.lower()
-    if any(token in lowered for token in FULL_NAME_BLOCKED_TOKENS):
-        return False
-    if any(char.isdigit() for char in stripped):
-        return False
-    parts = [p for p in stripped.split() if p]
-    if len(parts) >= 2:
-        return True
-    # Allow single-word names (e.g., "Miha") but avoid symptoms/services
-    single = parts[0].lower() if parts else ""
-    if single in FULL_NAME_BLOCKED_SINGLE:
-        return False
-    return len(single) >= 3
-
-
 def _short_contact_info() -> str:
     return get_response(INFO_CONTACT_SHORT)
 
@@ -619,34 +359,6 @@ def _service_info_response(service: Optional[str], clinic_id: str | None = None)
         return get_response(INFO_SERVICE_KOZMETIKA, clinic_id=clinic_id)
     return None
 
-
-def extract_service_type(message: str, clinic_id: str | None = None) -> Optional[str]:
-    """Extract service type from message (router confidence + fallback matching)."""
-    lowered = message.lower()
-    service_map = get_service_map(clinic_id=clinic_id)
-
-    # Primary path: use shared confidence detector (handles typos/synonyms/context).
-    detected = detect_service_type_conf(lowered, service_map=service_map)
-    if detected:
-        return detected.lower()
-
-    # Skip short keywords that cause false positives
-    skip_keywords = SKIP_SERVICE_KEYWORDS
-
-    for service_key, variations in service_map.items():
-        for var in variations:
-            # Skip problematic short keywords
-            if var in skip_keywords:
-                continue
-            # Use word boundary to avoid substring matches
-            if re.search(r'\b' + re.escape(var) + r'\b', lowered):
-                return service_key
-
-    return None
-
-def detect_service_from_message(message: str, clinic_id: str | None = None) -> Optional[str]:
-    """Backward-compatible alias for older call sites."""
-    return extract_service_type(message, clinic_id=clinic_id)
 
 BOOKING_FLOW_DEPS = BookingFlowDeps(
     get_appointment_state=get_appointment_state,
