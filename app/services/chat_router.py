@@ -324,10 +324,38 @@ chat_session_id: str = str(uuid.uuid4())[:8]
 last_user_message_by_session: dict[str, str] = {}
 
 def get_appointment_state(session_id: str) -> dict[str, Optional[str | int]]:
-    """Get or create appointment state for session"""
+    """Get or create appointment state for session.
+
+    On cold start/redeploy, legacy in-memory state is empty while unified state
+    can still exist in Redis. In that case hydrate legacy state from unified.
+    """
     if session_id not in appointment_states:
         appointment_states[session_id] = _blank_appointment_state()
-    return appointment_states[session_id]
+
+    state = appointment_states[session_id]
+
+    # Hydrate only when legacy state is effectively blank.
+    if not any(
+        state.get(k)
+        for k in ("step", "service_type", "date", "time", "name", "phone", "email", "reason")
+    ):
+        unified = get_unified_state(session_id)
+        appt = dict(unified.get("appointment_data") or {})
+        unified_step = unified.get("step")
+
+        if any(appt.get(k) for k in ("service_type", "date", "time", "name", "phone", "email", "reason")) or unified_step:
+            # Booking flow expects "select_service" in legacy layer.
+            step = "select_service" if unified_step == FlowStep.SERVICE.value else unified_step
+            state["step"] = step
+            state["service_type"] = appt.get("service_type")
+            state["date"] = appt.get("date")
+            state["time"] = appt.get("time")
+            state["name"] = appt.get("name")
+            state["phone"] = appt.get("phone")
+            state["email"] = appt.get("email")
+            state["reason"] = appt.get("reason")
+
+    return state
 
 def reset_appointment_state(state: dict[str, Optional[str | int]]) -> None:
     """Reset appointment state"""

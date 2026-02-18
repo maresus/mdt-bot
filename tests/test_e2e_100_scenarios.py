@@ -338,3 +338,27 @@ def test_booking_recovers_when_step_missing_mid_flow(client: TestClient) -> None
     reply = str(response.json().get("reply", "")).lower()
     assert "na kateri pregled se želite naročiti" not in reply
     assert ("termin 18.03.2026 ob 12:00 je prost" in reply) or ("prosim izberite drug termin" in reply)
+
+
+def test_booking_recovers_after_legacy_state_cold_start(client: TestClient) -> None:
+    session_id = "e2e-legacy-cold-start-recover"
+    clinic_id = "test_center"
+
+    for msg in ("rad bi se naročil", "dermatolog", "18.3.2026"):
+        response = client.post(
+            "/chat/",
+            json={"message": msg, "session_id": session_id, "clinic_id": clinic_id},
+        )
+        assert response.status_code == 200
+
+    # Simulate deploy/restart: legacy in-memory state wiped, unified state remains.
+    chat_router_module.appointment_states.clear()
+
+    response = client.post(
+        "/chat/",
+        json={"message": "08:00", "session_id": session_id, "clinic_id": clinic_id},
+    )
+    assert response.status_code == 200
+    reply = str(response.json().get("reply", "")).lower()
+    assert "na kateri pregled se želite naročiti" not in reply
+    assert ("termin 18.03.2026 ob 08:00 je prost" in reply) or ("prosim izberite drug termin" in reply)
