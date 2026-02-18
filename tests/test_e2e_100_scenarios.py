@@ -6,6 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import app.services.chat_router as chat_router_module
 from app.services.chat_router import router as chat_router
 
 
@@ -312,3 +313,28 @@ def test_e2e_100_complex_chat_scenarios(client: TestClient, scenario: Scenario) 
     assert any(expected in final_reply for expected in scenario.expect_any_final), (
         f"Unexpected final reply for {scenario.scenario_id}: {final_reply!r}"
     )
+
+
+def test_booking_recovers_when_step_missing_mid_flow(client: TestClient) -> None:
+    session_id = "e2e-step-recovery"
+    clinic_id = "test_center"
+
+    for msg in ("rad bi se naročil", "okulist", "18.3.2026"):
+        response = client.post(
+            "/chat/",
+            json={"message": msg, "session_id": session_id, "clinic_id": clinic_id},
+        )
+        assert response.status_code == 200
+
+    internal_session_id = f"{clinic_id}::{session_id}"
+    state = chat_router_module.get_appointment_state(internal_session_id)
+    state["step"] = None
+
+    response = client.post(
+        "/chat/",
+        json={"message": "12:00", "session_id": session_id, "clinic_id": clinic_id},
+    )
+    assert response.status_code == 200
+    reply = str(response.json().get("reply", "")).lower()
+    assert "na kateri pregled se želite naročiti" not in reply
+    assert ("termin 18.03.2026 ob 12:00 je prost" in reply) or ("prosim izberite drug termin" in reply)

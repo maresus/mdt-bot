@@ -92,6 +92,30 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
         deps.reset_loop_count(session_id)
         return "V redu, naročilo sem preklical. Če želite, lahko začnemo znova."
 
+    # Self-heal flow step if it is missing but partial booking data exists
+    # (e.g., after deploy/restart with incomplete legacy state sync).
+    if state.get("step") is None:
+        has_service = bool(state.get("service_type"))
+        has_date = bool(state.get("date"))
+        has_time = bool(state.get("time"))
+        has_name = bool(state.get("name"))
+        has_phone = bool(state.get("phone"))
+        has_email = state.get("email") is not None and str(state.get("email")).strip() != ""
+        has_reason = bool(state.get("reason"))
+
+        if has_service and has_date and not has_time:
+            deps.set_step(session_id, state, "time")
+        elif has_service and has_date and has_time and not has_name:
+            deps.set_step(session_id, state, "name")
+        elif has_service and has_date and has_time and has_name and not has_phone:
+            deps.set_step(session_id, state, "phone")
+        elif has_service and has_date and has_time and has_name and has_phone and not has_email and not has_reason:
+            deps.set_step(session_id, state, "email")
+        elif has_service and has_date and has_time and has_name and has_phone and has_reason:
+            deps.set_step(session_id, state, "confirm")
+        elif has_service and not has_date:
+            deps.set_step(session_id, state, "date")
+
     if state.get("service_type") is not None and state.get("step") is None:
         date_str = deps.extract_date_from_message(message)
         if date_str:
