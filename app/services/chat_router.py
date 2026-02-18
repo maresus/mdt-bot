@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 import uuid
 import threading
+from types import SimpleNamespace
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from app.models.chat import ChatRequest, ChatResponse
 from app.services.reservation_service import ReservationService
@@ -153,6 +154,7 @@ from app.services.intent_handlers import (
     handle_service_info_intent,
     handle_unsupported_symptom_intent,
 )
+from app.services.chat_orchestrator import process_chat_turn
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -1068,231 +1070,60 @@ def handle_unified_routing(
 
 @router.post("/", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    """Main chat endpoint (D4): unified router only, legacy path removed."""
+    """Main chat endpoint (D4): unified router only, delegated orchestrator."""
     global conversation_history, last_interaction, chat_session_id
 
-    message = request.message.strip()
-    raw_session_id = request.session_id or chat_session_id
-    strict_clinic = os.getenv("STRICT_CLINIC_ID", "false").strip().lower() in {"1", "true", "yes", "on"}
-    try:
-        clinic_id = resolve_clinic_id(request.clinic_id, strict=strict_clinic)
-    except ValueError:
-        available = list_available_clinics()
-        raise HTTPException(status_code=400, detail={"error": "unknown_clinic_id", "available": available})
+    state = {
+        "appointment_states": appointment_states,
+        "conversation_history": conversation_history,
+        "last_interaction": last_interaction,
+        "chat_session_id": chat_session_id,
+        "last_user_message_by_session": last_user_message_by_session,
+    }
 
-    token = set_current_clinic_id(clinic_id)
-    try:
-        session_id = f"{clinic_id}::{raw_session_id}"
-        state_mgr = StateManager(session_id)
+    deps = SimpleNamespace(
+        os=os,
+        resolve_clinic_id=resolve_clinic_id,
+        list_available_clinics=list_available_clinics,
+        set_current_clinic_id=set_current_clinic_id,
+        reset_current_clinic_id=reset_current_clinic_id,
+        StateManager=StateManager,
+        reset_appointment_state=reset_appointment_state,
+        reset_unified_state=reset_unified_state,
+        extract_service_type=extract_service_type,
+        service_price_info=_service_price_info,
+        is_in_flow=is_in_flow,
+        build_interrupt_response=build_interrupt_response,
+        get_current_step=get_current_step,
+        format_response=format_response,
+        get_response=get_response,
+        get_fast_pass_match=get_fast_pass_match,
+        INFO_KEY_PRICES=INFO_KEY_PRICES,
+        get_appointment_data=get_appointment_data,
+        get_appointment_state=get_appointment_state,
+        conversation_tracker=conversation_tracker,
+        looks_like_uncertain_help_request=_looks_like_uncertain_help_request,
+        default_help_prompt=_default_help_prompt,
+        handle_unified_routing=handle_unified_routing,
+        handle_appointment_booking=handle_appointment_booking,
+        response_cache=response_cache,
+        is_tourist_query=is_tourist_query,
+        answer_tourist_question=answer_tourist_question,
+        answer_with_hybrid_kb=answer_with_hybrid_kb,
+        get_uncertain_marker=_get_uncertain_marker,
+        unified_route=unified_route,
+        get_unified_state=get_unified_state,
+        save_chat_message=save_chat_message,
+    )
 
-        if not message:
-            payload = format_response(
-                get_response("general.empty_message", clinic_id=clinic_id),
-                state_manager=state_mgr,
-                metadata={"contract_version": "v0.1", "router": "unified_only"},
-            )
-            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
+    response = process_chat_turn(request=request, state=state, deps=deps)
 
-        # Session timeout hygiene
-        now = datetime.now()
-        if last_interaction and (now - last_interaction).total_seconds() > 3600:
-            conversation_history = []
-            if session_id in appointment_states:
-                reset_appointment_state(appointment_states[session_id])
-            reset_unified_state(session_id)
-        last_interaction = now
+    # Propagate potentially reassigned state holders.
+    conversation_history = state["conversation_history"]
+    last_interaction = state["last_interaction"]
+    chat_session_id = state["chat_session_id"]
 
-        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
-        if awaiting_price_service:
-            service_from_message = extract_service_type(message, clinic_id=clinic_id)
-            if service_from_message:
-                conversation_tracker.add_message(session_id, message)
-                state_mgr.clear_context_key("awaiting_price_service")
-                response_text = _service_price_info(service_from_message, clinic_id=clinic_id)
-                if is_in_flow(session_id):
-                    response_text = build_interrupt_response(
-                        response_text,
-                        get_current_step(session_id),
-                        True,
-                    )
-                payload = format_response(
-                    response_text,
-                    state_manager=state_mgr,
-                    metadata={
-                        "contract_version": "v0.1",
-                        "router": "unified_only",
-                        "price_followup": True,
-                    },
-                )
-                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-
-        fast_pass = get_fast_pass_match(message, clinic_id=clinic_id)
-        if fast_pass:
-            fast_key = str(fast_pass.get("key") or "")
-            if fast_key == INFO_KEY_PRICES and is_in_flow(session_id):
-                unified_service = str(get_appointment_data(session_id).get("service_type") or "").strip()
-                legacy_service = str(get_appointment_state(session_id).get("service_type") or "").strip()
-                suggested_service = str(state_mgr.get_context_value("suggested_service") or "").strip()
-                service_for_price = (unified_service or legacy_service or suggested_service).lower()
-
-                if service_for_price:
-                    conversation_tracker.add_message(session_id, message)
-                    response_text = _service_price_info(service_for_price, clinic_id=clinic_id)
-                    response_text = build_interrupt_response(
-                        response_text,
-                        get_current_step(session_id),
-                        True,
-                    )
-                    payload = format_response(
-                        response_text,
-                        state_manager=state_mgr,
-                        metadata={
-                            "contract_version": "v0.1",
-                            "router": "unified_only",
-                            "fast_pass": True,
-                            "category": fast_pass.get("category"),
-                            "price_context_service": service_for_price,
-                        },
-                    )
-                    return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-
-                state_mgr.set_context_value("awaiting_price_service", True)
-
-            conversation_tracker.add_message(session_id, message)
-            fast_reply = str(fast_pass.get("response", ""))
-            if is_in_flow(session_id):
-                fast_reply = build_interrupt_response(
-                    fast_reply,
-                    get_current_step(session_id),
-                    True,
-                )
-            payload = format_response(
-                fast_reply,
-                state_manager=state_mgr,
-                metadata={
-                    "contract_version": "v0.1",
-                    "router": "unified_only",
-                    "fast_pass": True,
-                    "category": fast_pass.get("category"),
-                },
-            )
-            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-
-        # Keep anti-loop guard for non-fast-pass traffic only.
-        # While user is in booking flow, repeated inputs are often normal
-        # (e.g., symptom restatement while awaiting date).
-        in_booking_flow = is_in_flow(session_id)
-        if (not in_booking_flow) and conversation_tracker.detect_loop(session_id, message):
-            loop_count = conversation_tracker.get_loop_count(session_id)
-            conversation_tracker.add_message(session_id, message)
-            if _looks_like_uncertain_help_request(message):
-                payload = format_response(
-                    _default_help_prompt(clinic_id=clinic_id),
-                    state_manager=state_mgr,
-                    metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": "soft"},
-                )
-                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-            if loop_count >= 2:
-                conversation_tracker.reset_loop_count(session_id)
-                payload = format_response(
-                    get_response("general.anti_loop.apology", clinic_id=clinic_id),
-                    state_manager=state_mgr,
-                    metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
-                )
-                return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-            payload = format_response(
-                get_response("general.anti_loop.warning", clinic_id=clinic_id),
-                state_manager=state_mgr,
-                metadata={"contract_version": "v0.1", "router": "unified_only", "loop_guard": True},
-            )
-            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-
-        conversation_tracker.add_message(session_id, message)
-
-        # Primary path: unified routing handler
-        response_text = handle_unified_routing(message, session_id, clinic_id=clinic_id)
-
-        # If unified handler delegates booking step details
-        if response_text is None and is_in_flow(session_id):
-            response_text = handle_appointment_booking(message, session_id)
-
-        # Final fallback (knowledge/general)
-        if response_text is None:
-            cached_response = response_cache.get(message)
-            if cached_response:
-                response_text = cached_response
-            else:
-                try:
-                    if is_tourist_query(message):
-                        response_text = answer_tourist_question(message)
-                    else:
-                        response_text = answer_with_hybrid_kb(
-                            message,
-                            history=conversation_history,
-                            session_id=session_id,
-                            clinic_id=clinic_id,
-                        )
-                    if len(response_text) > 50 and _get_uncertain_marker(clinic_id=clinic_id) not in response_text:
-                        response_cache.set(message, response_text)
-                except Exception as e:
-                    print(f"[UNIFIED_FALLBACK] Error: {e}")
-                    response_text = get_response("general.fallback_short", clinic_id=clinic_id)
-
-        # Persist lightweight history + metadata
-        conversation_history.append({"role": "user", "content": message})
-        conversation_history.append({"role": "assistant", "content": response_text})
-        last_user_message_by_session[session_id] = message
-        if len(conversation_history) > 20:
-            conversation_history = conversation_history[-20:]
-
-        decision = unified_route(message, get_unified_state(session_id))
-        metadata = {
-            "contract_version": "v0.1",
-            "router": "unified_only",
-            "intent": decision.primary_intent.value,
-            "confidence": round(float(decision.confidence), 3),
-            "action": decision.action.value,
-        }
-        ui_override = state_mgr.get_context_value("ui_override")
-        if ui_override:
-            metadata["ui"] = ui_override
-
-        try:
-            flow_state = get_unified_state(session_id)
-            appointment_state = get_appointment_state(session_id)
-            current_step = appointment_state.get("step") if appointment_state.get("step") is not None else None
-            metadata["flow"] = flow_state.get("flow")
-            metadata["booking_step"] = current_step
-        except Exception as e:
-            print(f"[UI_CONTRACT] Failed to build UI payload: {e}")
-
-        try:
-            state = get_appointment_state(session_id)
-            current_step = state.get("step") if state.get("step") is not None else None
-            save_chat_message(
-                session_id=session_id,
-                role="user",
-                content=message,
-                intent=decision.primary_intent.value,
-                booking_step=current_step,
-                response_cached=False,
-            )
-            save_chat_message(
-                session_id=session_id,
-                role="assistant",
-                content=response_text,
-                booking_step=current_step,
-                metadata=metadata,
-            )
-        except Exception as e:
-            print(f"[CHAT_HISTORY] Failed to save conversation: {e}")
-
-        payload = format_response(response_text, state_manager=state_mgr, metadata=metadata)
-        if ui_override:
-            state_mgr.clear_context_key("ui_override")
-        return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
-    finally:
-        reset_current_clinic_id(token)
+    return response
 
 
 # ============================================================
