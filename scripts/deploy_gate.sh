@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_PY="$ROOT_DIR/.venv/bin/python"
+ONLY="${DEPLOY_GATE_ONLY:-}"
+CONTINUE_ON_FAIL="${DEPLOY_GATE_CONTINUE:-false}"
 
 if [[ ! -x "$VENV_PY" ]]; then
   echo "[DEPLOY GATE] .venv manjka. Ustvari ga in namesti dependencies:"
@@ -14,32 +16,45 @@ export USE_UNIFIED_ROUTER="${USE_UNIFIED_ROUTER:-true}"
 
 echo "[DEPLOY GATE] Root: $ROOT_DIR"
 echo "[DEPLOY GATE] USE_UNIFIED_ROUTER=$USE_UNIFIED_ROUTER"
+echo "[DEPLOY GATE] ONLY=${ONLY:-<all>}"
+echo "[DEPLOY GATE] CONTINUE_ON_FAIL=$CONTINUE_ON_FAIL"
 
-echo "[1/9] test_d3_modules.py"
-"$VENV_PY" "$ROOT_DIR/scripts/test_d3_modules.py"
+declare -a STEPS=(
+  "d3|$VENV_PY $ROOT_DIR/scripts/test_d3_modules.py"
+  "golden30|$VENV_PY $ROOT_DIR/scripts/test_golden_30.py"
+  "golden_runner|$VENV_PY -m pytest $ROOT_DIR/tests/test_golden_runner.py -v"
+  "fuzzy30|$VENV_PY $ROOT_DIR/scripts/test_fuzzy_30.py"
+  "live_capture|$VENV_PY $ROOT_DIR/scripts/test_live_capture.py"
+  "routing|$VENV_PY $ROOT_DIR/scripts/test_routing.py"
+  "smoke_routing|$VENV_PY $ROOT_DIR/scripts/smoke_test_routing.py"
+  "smoke_e2e_50|$VENV_PY $ROOT_DIR/scripts/smoke_test_e2e_50.py"
+  "stress_d6|$VENV_PY $ROOT_DIR/scripts/stress_test_d6.py"
+)
 
-echo "[2/9] test_golden_30.py"
-"$VENV_PY" "$ROOT_DIR/scripts/test_golden_30.py"
+fails=0
+total=0
+for step in "${STEPS[@]}"; do
+  name="${step%%|*}"
+  cmd="${step#*|}"
+  if [[ -n "$ONLY" && "$name" != "$ONLY" ]]; then
+    continue
+  fi
+  total=$((total + 1))
+  echo "[DEPLOY GATE][$total] $name"
+  if bash -lc "$cmd"; then
+    echo "[DEPLOY GATE] PASS: $name"
+  else
+    echo "[DEPLOY GATE] FAIL: $name"
+    fails=$((fails + 1))
+    if [[ "$CONTINUE_ON_FAIL" != "true" ]]; then
+      exit 1
+    fi
+  fi
+done
 
-echo "[3/9] test_golden_runner.py"
-"$VENV_PY" -m pytest "$ROOT_DIR/tests/test_golden_runner.py" -v
-
-echo "[4/9] test_fuzzy_30.py"
-"$VENV_PY" "$ROOT_DIR/scripts/test_fuzzy_30.py"
-
-echo "[5/9] test_live_capture.py"
-"$VENV_PY" "$ROOT_DIR/scripts/test_live_capture.py"
-
-echo "[6/9] test_routing.py"
-"$VENV_PY" "$ROOT_DIR/scripts/test_routing.py"
-
-echo "[7/9] smoke_test_routing.py"
-"$VENV_PY" "$ROOT_DIR/scripts/smoke_test_routing.py"
-
-echo "[8/9] smoke_test_e2e_50.py"
-"$VENV_PY" "$ROOT_DIR/scripts/smoke_test_e2e_50.py"
-
-echo "[9/9] stress_test_d6.py"
-"$VENV_PY" "$ROOT_DIR/scripts/stress_test_d6.py"
+if [[ "$fails" -gt 0 ]]; then
+  echo "[DEPLOY GATE] FAIL - failed steps: $fails"
+  exit 1
+fi
 
 echo "[DEPLOY GATE] OK - Golden30 + routing smoke testi so uspešni."
