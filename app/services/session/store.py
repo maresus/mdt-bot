@@ -44,7 +44,14 @@ class RedisSessionStore:
         try:
             import redis  # type: ignore
 
-            self._client = redis.from_url(redis_url, decode_responses=True)
+            # Keep connect/read timeouts short so a bad Redis URL cannot stall requests.
+            self._client = redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=1,
+                socket_timeout=1,
+                retry_on_timeout=False,
+            )
             self._client.ping()
             self._enabled = True
             logger.info("Redis session store enabled")
