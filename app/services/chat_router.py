@@ -141,6 +141,18 @@ from app.services.flows.booking_interrupt_policy import (
     BookingInterruptDeps,
     handle_booking_interrupt,
 )
+from app.services.session_bridge import (
+    appointment_states,
+    get_appointment_state,
+    reset_appointment_state,
+)
+from app.services.intent_handlers import (
+    handle_greeting_goodbye_urgency,
+    handle_info_intent,
+    handle_price_intent,
+    handle_service_info_intent,
+    handle_unsupported_symptom_intent,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 USE_ROUTER_V2 = True
@@ -297,69 +309,12 @@ try:
 except Exception as e:
     print(f"[KB] Failed to load knowledge base: {e}")
 
-def _blank_appointment_state() -> dict[str, Optional[str | int]]:
-    """Blank state for appointment booking"""
-    return {
-        "step": None,
-        "service_type": None,  # dermatolog, ortoped, okulist, ...
-        "date": None,
-        "time": None,
-        "name": None,
-        "phone": None,
-        "email": None,
-        "reason": None,  # Razlog obiska
-        "patient_age": None,
-        "patient_health_card": None,
-        "note": None,
-        "waiting_resume_confirmation": False,  # Flag for OFF-TOPIC pause
-        "awaiting_booking_confirmation": False,
-    }
-
 # Session states
-appointment_states: dict[str, dict[str, Optional[str | int]]] = {}
 conversation_state: dict[str, dict[str, Any]] = {}  # Session → metadata (confidence, etc.)
 conversation_history: list[dict[str, str]] = []
 last_interaction: Optional[datetime] = None
 chat_session_id: str = str(uuid.uuid4())[:8]
 last_user_message_by_session: dict[str, str] = {}
-
-def get_appointment_state(session_id: str) -> dict[str, Optional[str | int]]:
-    """Get or create appointment state for session.
-
-    On cold start/redeploy, legacy in-memory state is empty while unified state
-    can still exist in Redis. In that case hydrate legacy state from unified.
-    """
-    if session_id not in appointment_states:
-        appointment_states[session_id] = _blank_appointment_state()
-
-    state = appointment_states[session_id]
-
-    # Hydrate only when legacy state is effectively blank.
-    if not any(
-        state.get(k)
-        for k in ("step", "service_type", "date", "time", "name", "phone", "email", "reason")
-    ):
-        unified = get_unified_state(session_id)
-        appt = dict(unified.get("appointment_data") or {})
-        unified_step = unified.get("step")
-
-        if any(appt.get(k) for k in ("service_type", "date", "time", "name", "phone", "email", "reason")) or unified_step:
-            # Booking flow expects "select_service" in legacy layer.
-            step = "select_service" if unified_step == FlowStep.SERVICE.value else unified_step
-            state["step"] = step
-            state["service_type"] = appt.get("service_type")
-            state["date"] = appt.get("date")
-            state["time"] = appt.get("time")
-            state["name"] = appt.get("name")
-            state["phone"] = appt.get("phone")
-            state["email"] = appt.get("email")
-            state["reason"] = appt.get("reason")
-
-    return state
-
-def reset_appointment_state(state: dict[str, Optional[str | int]]) -> None:
-    """Reset appointment state"""
-    state.update(_blank_appointment_state())
 
 
 def _service_mentioned_in_message(message: str, service: str) -> bool:
@@ -643,6 +598,24 @@ def _service_price_info(service_type: Optional[str], clinic_id: str | None = Non
         price_range=info["price_range"],
         duration_minutes=info["duration_minutes"],
     )
+
+
+def _service_info_response(service: Optional[str], clinic_id: str | None = None) -> Optional[str]:
+    if service == "DERMATOLOG":
+        return get_response(INFO_SERVICE_DERMATOLOG, clinic_id=clinic_id)
+    if service == "ORTOPED":
+        return get_response(INFO_SERVICE_ORTOPED, clinic_id=clinic_id)
+    if service == "OKULIST":
+        return get_response(INFO_SERVICE_OKULIST, clinic_id=clinic_id)
+    if service == "ESTETSKI_POSEG":
+        return get_response(INFO_SERVICE_ESTETSKI_POSEG, clinic_id=clinic_id)
+    if service == "LASERSKI_POSEG":
+        return get_response(INFO_SERVICE_LASERSKI_POSEG, clinic_id=clinic_id)
+    if service == "FIZIOTERAPIJA":
+        return get_response(INFO_SERVICE_FIZIOTERAPIJA, clinic_id=clinic_id)
+    if service == "KOZMETIKA":
+        return get_response(INFO_SERVICE_KOZMETIKA, clinic_id=clinic_id)
+    return None
 
 
 def extract_service_type(message: str, clinic_id: str | None = None) -> Optional[str]:
@@ -951,17 +924,15 @@ def handle_unified_routing(
         reset_unified_state(session_id)
         return get_response("general.booking_cancelled", clinic_id=clinic_id)
 
-    # Handle GREETING
-    if decision.primary_intent == IntentType.GREETING:
-        return get_response("general.greeting", clinic_id=clinic_id)
-
-    # Handle GOODBYE
-    if decision.primary_intent == IntentType.GOODBYE:
-        return get_response("general.goodbye", clinic_id=clinic_id)
-
-    # Hard safety guard for clearly urgent messages.
-    if _looks_like_urgent_message(message):
-        return get_response("general.urgency", clinic_id=clinic_id)
+    basic_intent_reply = handle_greeting_goodbye_urgency(
+        intent=decision.primary_intent,
+        message=message,
+        clinic_id=clinic_id,
+        get_response=get_response,
+        looks_like_urgent_message=_looks_like_urgent_message,
+    )
+    if basic_intent_reply:
+        return basic_intent_reply
 
     # Medication/prescription asks should not start booking flow directly.
     if _looks_like_medication_request(message):
@@ -998,128 +969,56 @@ def handle_unified_routing(
         # Already in flow - fall back to legacy step handling
         return None
 
-    # Handle URGENCY
-    if decision.primary_intent == IntentType.URGENCY:
-        return get_response("general.urgency", clinic_id=clinic_id)
+    service_info_reply = handle_service_info_intent(
+        intent=decision.primary_intent,
+        message=message,
+        clinic_id=clinic_id,
+        session_id=session_id,
+        current_step=get_current_step(session_id),
+        decision_service=decision.service_type,
+        state_mgr=state_mgr,
+        appointment_state=appointment_state,
+        is_in_flow=is_in_flow,
+        extract_service_type=extract_service_type,
+        start_flow=start_flow,
+        transition_to_booking=lambda mgr, service_type, legacy_state: mgr.transition_to_booking(
+            service_type=service_type, legacy_state=legacy_state
+        ),
+        flow_type_appointment=FlowType.APPOINTMENT,
+        flow_step_date=FlowStep.DATE,
+        extract_date_from_message=extract_date_from_message,
+        get_response=get_response,
+        looks_like_previsit_question=_looks_like_previsit_question,
+        previsit_guidance_response=_previsit_guidance_response,
+        looks_like_symptom_report=_looks_like_symptom_report,
+        symptom_booking_nudge=_symptom_booking_nudge,
+        append_nudge_if_missing=_append_nudge_if_missing,
+        advice_only=advice_only,
+        advice_only_headache=advice_only_headache,
+        quick_triage_fallback=_quick_triage_fallback,
+        service_info_response=_service_info_response,
+        get_info_response=_get_info_response,
+        service_price_info=_service_price_info,
+        info_key_services=INFO_KEY_SERVICES,
+    )
+    if service_info_reply is not None:
+        if decision.primary_intent == IntentType.SERVICE_INFO and extract_date_from_message(message) and is_in_flow(session_id):
+            return handle_appointment_booking(message, session_id)
+        return service_info_reply
 
-    # Handle SERVICE_INFO (symptoms, service questions)
-    if decision.primary_intent == IntentType.SERVICE_INFO:
-        current_step = get_current_step(session_id)
-        if is_in_flow(session_id) and current_step == FlowStep.REASON.value:
-            return None
-        if is_in_flow(session_id) and current_step in {FlowStep.SERVICE.value, "select_service"}:
-            # During service-selection step, a detected service must continue booking flow
-            # (even if message was classified as SERVICE_INFO).
-            selected_service = extract_service_type(message, clinic_id=clinic_id) or decision.service_type
-            if selected_service:
-                state_mgr.transition_to_booking(service_type=selected_service, legacy_state=appointment_state)
-                start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-                state_mgr.clear_context_key("suggested_service")
-                if extract_date_from_message(message):
-                    return handle_appointment_booking(message, session_id)
-                return get_response(
-                    "booking.start_with_date",
-                    clinic_id=clinic_id,
-                    service_type=selected_service.lower(),
-                )
-        service = decision.service_type
-        if _looks_like_previsit_question(message):
-            return _previsit_guidance_response(service, clinic_id=clinic_id)
-        awaiting_price_service = bool(state_mgr.get_context_value("awaiting_price_service"))
-        if service and awaiting_price_service:
-            state_mgr.clear_context_key("awaiting_price_service")
-            return _service_price_info(service.lower(), clinic_id=clinic_id)
-        if service:
-            state_mgr.set_context_value("suggested_service", service)
-            if _looks_like_symptom_report(message):
-                nudge = _symptom_booking_nudge(service, clinic_id=clinic_id)
-                return _append_nudge_if_missing(advice_only(service), nudge)
-        if _looks_like_symptom_report(message) and not service:
-            triage_fallback = _quick_triage_fallback(message, clinic_id=clinic_id)
-            if triage_fallback:
-                return triage_fallback
-            lowered = message.lower()
-            if any(k in lowered for k in ["glava", "glavobol", "migrena"]):
-                return advice_only_headache()
-            return _append_nudge_if_missing(
-                advice_only(None),
-                _symptom_booking_nudge(None, clinic_id=clinic_id),
-            )
-        if service == "DERMATOLOG":
-            return get_response(INFO_SERVICE_DERMATOLOG, clinic_id=clinic_id)
-        elif service == "ORTOPED":
-            return get_response(INFO_SERVICE_ORTOPED, clinic_id=clinic_id)
-        elif service == "OKULIST":
-            return get_response(INFO_SERVICE_OKULIST, clinic_id=clinic_id)
-        elif service == "ESTETSKI_POSEG":
-            return get_response(INFO_SERVICE_ESTETSKI_POSEG, clinic_id=clinic_id)
-        elif service == "LASERSKI_POSEG":
-            return get_response(INFO_SERVICE_LASERSKI_POSEG, clinic_id=clinic_id)
-        elif service == "FIZIOTERAPIJA":
-            return get_response(INFO_SERVICE_FIZIOTERAPIJA, clinic_id=clinic_id)
-        elif service == "KOZMETIKA":
-            return get_response(INFO_SERVICE_KOZMETIKA, clinic_id=clinic_id)
-        else:
-            # General service info
-            return _get_info_response(INFO_KEY_SERVICES, clinic_id=clinic_id)
-
-    # Handle UNSUPPORTED_SYMPTOM (empathetic fallback)
-    if decision.primary_intent == IntentType.UNSUPPORTED_SYMPTOM:
-        unsupported = _match_unsupported_symptom(message, clinic_id=clinic_id)
-        response_text = None
-        if unsupported:
-            raw_response = unsupported.get("response") or unsupported.get("message")
-            if isinstance(raw_response, list):
-                options = [str(item).strip() for item in raw_response if str(item).strip()]
-                if options:
-                    variant_id = str(unsupported.get("id") or "default")
-                    counter_key = f"unsupported_response_variant:{variant_id}"
-                    idx = int(state_mgr.get_context_value(counter_key, 0) or 0)
-                    response_text = options[idx % len(options)]
-                    state_mgr.set_context_value(counter_key, idx + 1)
-            elif isinstance(raw_response, str):
-                response_text = raw_response
-        if not response_text:
-            response_text = get_response("general.unsupported_symptom_default", clinic_id=clinic_id)
-        if not is_in_flow(session_id):
-            state_mgr.set_context_value("awaiting_specialist_prompt", True)
-            state_mgr.clear_context_key("awaiting_specialist_choice")
-        ui_override = unsupported.get("ui_override") if isinstance(unsupported, dict) else None
-        if isinstance(ui_override, dict):
-            state_mgr.set_context_value("ui_override", ui_override)
-        else:
-            quick_replies = None
-            if isinstance(unsupported, dict):
-                quick_replies = unsupported.get("quick_replies")
-            if not quick_replies:
-                quick_replies = get_domain_response(
-                    "general",
-                    "quick_replies_default",
-                    default=None,
-                    clinic_id=clinic_id,
-                )
-            if not quick_replies:
-                quick_replies = [
-                    {"label": "Da, predlagajte specialista", "value": "DA"},
-                    {"label": "Ne, hvala", "value": "NE"},
-                ]
-            if isinstance(quick_replies, dict):
-                quick_replies = [quick_replies]
-            data: list[dict[str, str]] = []
-            if isinstance(quick_replies, list):
-                for item in quick_replies:
-                    if isinstance(item, dict):
-                        label = str(item.get("label") or item.get("value") or "").strip()
-                        value = str(item.get("value") or item.get("label") or "").strip()
-                        if label and value:
-                            data.append({"label": label, "value": value})
-                    elif isinstance(item, str):
-                        text = item.strip()
-                        if text:
-                            data.append({"label": text, "value": text})
-            if data:
-                state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
-        return response_text
+    unsupported_reply = handle_unsupported_symptom_intent(
+        intent=decision.primary_intent,
+        message=message,
+        clinic_id=clinic_id,
+        session_id=session_id,
+        state_mgr=state_mgr,
+        is_in_flow=is_in_flow,
+        match_unsupported_symptom=_match_unsupported_symptom,
+        get_response=get_response,
+        get_domain_response=get_domain_response,
+    )
+    if unsupported_reply is not None:
+        return unsupported_reply
 
     # Symptom statement that did not route to SERVICE_INFO:
     # use quick triage instead of generic fallback.
@@ -1128,59 +1027,40 @@ def handle_unified_routing(
         if triage_fallback:
             return triage_fallback
 
-    # Handle PRICE
-    if decision.primary_intent == IntentType.PRICE:
-        service = decision.service_type or suggested_service or appointment_state.get("service_type")
-        last_booking = state_mgr.get_context_value("last_completed_booking", {}) or {}
-        used_last_booking = False
-        if not service and isinstance(last_booking, dict):
-            remembered_service = last_booking.get("service_type")
-            if remembered_service:
-                service = str(remembered_service)
-                used_last_booking = True
-        if service:
-            state_mgr.clear_context_key("awaiting_price_service")
-            service_key = service.lower()
-            reply = _service_price_info(service_key, clinic_id=clinic_id)
-            if used_last_booking:
-                date = str(last_booking.get("date") or "").strip()
-                time = str(last_booking.get("time") or "").strip()
-                if date and time:
-                    reply = f"{reply}\n\nImate že termin {date} ob {time}."
-            return reply
-        state_mgr.set_context_value("awaiting_price_service", True)
-        return _rag_info_answer(message, INFO_KEY_PRICES, clinic_id=clinic_id)
+    price_reply = handle_price_intent(
+        intent=decision.primary_intent,
+        clinic_id=clinic_id,
+        decision_service=decision.service_type,
+        suggested_service=suggested_service,
+        appointment_state=appointment_state,
+        state_mgr=state_mgr,
+        service_price_info=_service_price_info,
+        rag_info_answer=_rag_info_answer,
+        message=message,
+        info_key_prices=INFO_KEY_PRICES,
+    )
+    if price_reply is not None:
+        return price_reply
 
-    # Handle INFO
-    if decision.primary_intent == IntentType.INFO:
-        lowered = message.lower()
-        asks_location = any(k in lowered for k in ["kje", "naslov", "lokacij", "nahajate", "pridem", "pot"])
-        asks_hours = any(k in lowered for k in ["delovni", "delovn", "odprto", "odprti", "kdaj", "ura"])
-        if asks_location and asks_hours:
-            return (
-                f"{_get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)}\n\n"
-                f"{_get_info_response('delovni_cas', clinic_id=clinic_id)}"
-            )
-        info_key = pick_info_key(message)
-        if info_key == "cakalna_doba":
-            service = decision.service_type or suggested_service or appointment_state.get("service_type")
-            if service:
-                return (
-                    "Čakalna doba je odvisna od storitve in termina. "
-                    f"Za {str(service).lower()} lahko takoj preverim prvi prost termin."
-                )
-            return (
-                "Čakalna doba je odvisna od storitve. "
-                "Napišite prosim kateri pregled želite (npr. dermatolog, ortoped, okulist), "
-                "pa preverim prvi prost termin."
-            )
-        if info_key in CRITICAL_INFO_KEYS or info_key in INFO_KEYS_DIRECT:
-            if info_key == INFO_KEY_CONTACT and any(k in lowered for k in CONTACT_ROUTE_WORDS):
-                return _get_info_response(INFO_KEY_LOCATION, clinic_id=clinic_id)
-            return _get_info_response(info_key, clinic_id=clinic_id)
-        if info_key:
-            return _rag_info_answer(message, info_key, clinic_id=clinic_id)
-        return _rag_info_answer(message, INFO_KEY_SERVICES, clinic_id=clinic_id)
+    info_reply = handle_info_intent(
+        intent=decision.primary_intent,
+        message=message,
+        clinic_id=clinic_id,
+        decision_service=decision.service_type,
+        suggested_service=suggested_service,
+        appointment_state=appointment_state,
+        pick_info_key=pick_info_key,
+        get_info_response=_get_info_response,
+        rag_info_answer=_rag_info_answer,
+        contact_route_words=CONTACT_ROUTE_WORDS,
+        critical_info_keys=CRITICAL_INFO_KEYS,
+        info_keys_direct=INFO_KEYS_DIRECT,
+        info_key_contact=INFO_KEY_CONTACT,
+        info_key_location=INFO_KEY_LOCATION,
+        info_key_services=INFO_KEY_SERVICES,
+    )
+    if info_reply is not None:
+        return info_reply
 
     # For other intents, fall back to legacy system
     return None
