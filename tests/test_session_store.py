@@ -1,8 +1,10 @@
 from contextvars import copy_context
+from copy import deepcopy
 
 from app.services.clinic_config import reset_current_clinic_id, set_current_clinic_id
 from app.services.session.store import InMemorySessionStore
-from app.services.session.unified_state import get_unified_state, reset_unified_state
+from app.services.session import unified_state
+from app.services.session.unified_state import StateManager, get_unified_state, reset_unified_state
 from app.services.triage_service import get_triage_service
 
 
@@ -58,3 +60,36 @@ def test_reset_current_clinic_id_tolerates_foreign_context_token() -> None:
 
     # Must not raise even when token was created in a different context.
     reset_current_clinic_id(token)
+
+
+def test_state_manager_persists_with_copying_store(monkeypatch) -> None:
+    class CopyingStore:
+        def __init__(self) -> None:
+            self._data = {}
+
+        def get(self, key):
+            value = self._data.get(key)
+            return deepcopy(value) if value is not None else None
+
+        def set(self, key, value) -> None:
+            self._data[key] = deepcopy(value)
+
+        def delete(self, key) -> None:
+            self._data.pop(key, None)
+
+    store = CopyingStore()
+    monkeypatch.setattr(unified_state, "get_session_store", lambda: store)
+
+    sid = "test::copying-store::state"
+    mgr = StateManager(sid)
+    mgr.set_context_value("suggested_service", "DERMATOLOG")
+    assert StateManager(sid).get_context_value("suggested_service") == "DERMATOLOG"
+
+    legacy_state = {}
+    mgr.transition_to_booking(service_type="DERMATOLOG", legacy_state=legacy_state)
+    assert unified_state.is_in_flow(sid) is True
+    assert unified_state.get_current_step(sid) == "date"
+    assert unified_state.get_appointment_data(sid).get("service_type") == "DERMATOLOG"
+
+    StateManager(sid).set_appointment_field("date", "15.03.2026")
+    assert StateManager(sid).get_appointment_data().get("date") == "15.03.2026"

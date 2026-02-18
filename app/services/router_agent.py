@@ -74,10 +74,11 @@ def _unified_route_message(
     _metrics["unified_calls"] += 1
     text = message.lower()
 
-    # Get or create unified state
-    state = get_unified_state(session_id)
+    # Get state snapshot for routing only (do not mutate persisted state here).
+    persisted_state = get_unified_state(session_id)
+    state = dict(persisted_state)
 
-    # Set flow status based on active booking
+    # Set flow status for this routing pass
     if has_active_booking:
         state["flow"] = "appointment"
         state["step"] = booking_step or "date"
