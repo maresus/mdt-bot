@@ -1101,6 +1101,11 @@
         <!-- Right: Communication Panel -->
         <div class="modal-right">
           <div class="comm-header">💬 Komunikacija</div>
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setMessageFilter('all')" id="msg-filter-all">Vse</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setMessageFilter('email')" id="msg-filter-email">Email</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setMessageFilter('sms')" id="msg-filter-sms">SMS</button>
+          </div>
           <div class="message-timeline" id="message-timeline">
             <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">
               Sporočila se naložijo po odprtju termina
@@ -1108,7 +1113,10 @@
           </div>
           <div class="reply-form">
             <textarea id="reply-body" placeholder="Napiši odgovor pacientu..."></textarea>
-            <button type="button" class="btn btn-primary btn-sm" onclick="sendReply()">📧 Pošlji odgovor</button>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="sendReply('email')">📧 Pošlji email</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="sendReply('sms')">📱 Pošlji SMS</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1142,6 +1150,7 @@
     let searchTerm = '';
     let allReservations = [];
     let calendarData = {};
+    let currentMessageFilter = 'all';
 
     function setAdminToken() {
       alert('Ročni vnos tokena ni več potreben. Dostop je samodejen.');
@@ -1502,6 +1511,7 @@
       document.getElementById('edit-notes').value = r.special_needs || r.admin_notes || '';
       document.getElementById('delete-btn').style.display = 'inline-flex';
       refreshSlots();
+      setMessageFilter('all');
       loadMessages(id); // Load communication
       document.getElementById('edit-modal').classList.add('active');
     }
@@ -1509,6 +1519,23 @@
     function closeModal() {
       document.getElementById('edit-modal').classList.remove('active');
       document.getElementById('reply-body').value = ''; // Clear reply
+    }
+
+    function setMessageFilter(filterName) {
+      currentMessageFilter = filterName;
+      ['all', 'email', 'sms'].forEach(name => {
+        const el = document.getElementById(`msg-filter-${name}`);
+        if (!el) return;
+        if (name === filterName) {
+          el.classList.remove('btn-secondary');
+          el.classList.add('btn-primary');
+        } else {
+          el.classList.remove('btn-primary');
+          el.classList.add('btn-secondary');
+        }
+      });
+      const editId = parseInt(document.getElementById('edit-id').value || '0', 10);
+      if (editId) loadMessages(editId);
     }
 
     async function loadMessages(reservationId) {
@@ -1523,12 +1550,21 @@
         }
 
         // Sort newest first
-        const messages = data.messages.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        const messages = (data.messages || [])
+          .sort((a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0))
+          .filter(m => currentMessageFilter === 'all' || (m.channel || 'email') === currentMessageFilter);
+
+        if (messages.length === 0) {
+          timeline.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">Ni sporočil za izbran filter</div>';
+          return;
+        }
 
         timeline.innerHTML = messages.map(m => {
           const direction = m.direction === 'inbound' ? 'inbound' : 'outbound';
-          const label = direction === 'inbound' ? '📨 Gost' : '📤 Moj odgovor';
-          const timestamp = m.timestamp ? new Date(m.timestamp).toLocaleString('sl-SI') : '-';
+          const isSms = (m.channel || 'email') === 'sms';
+          const medium = isSms ? 'SMS' : 'Email';
+          const label = direction === 'inbound' ? `📨 Gost · ${medium}` : `📤 Moj odgovor · ${medium}`;
+          const timestamp = (m.created_at || m.timestamp) ? new Date(m.created_at || m.timestamp).toLocaleString('sl-SI') : '-';
 
           return `<div class="message-item ${direction}">
             <div class="message-meta">
@@ -1544,9 +1580,10 @@
       }
     }
 
-    async function sendReply() {
+    async function sendReply(channel = 'email') {
       const reservationId = parseInt(document.getElementById('edit-id').value);
       const email = document.getElementById('edit-email').value;
+      const phone = document.getElementById('edit-phone').value;
       const body = document.getElementById('reply-body').value.trim();
 
       if (!body) {
@@ -1554,27 +1591,45 @@
         return;
       }
 
+      if (channel === 'email' && !email) {
+        toast('Email manjka', 'error');
+        return;
+      }
+      if (channel === 'sms' && !phone) {
+        toast('Telefon manjka', 'error');
+        return;
+      }
+
       try {
-        toast('Pošiljam...', 'info');
-        const resp = await fetch(`${API}/send-message`, {
+        toast(channel === 'sms' ? 'Pošiljam SMS...' : 'Pošiljam email...', 'info');
+        const endpoint = channel === 'sms' ? `${API}/send-sms` : `${API}/send-message`;
+        const payload = channel === 'sms'
+          ? {
+              reservation_id: reservationId,
+              phone: phone,
+              body: body,
+              set_processing: false
+            }
+          : {
+              reservation_id: reservationId,
+              email: email,
+              subject: `Naročilo #${reservationId} - Odgovor`,
+              body: body,
+              set_processing: false
+            };
+        const resp = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            reservation_id: reservationId,
-            email: email,
-            subject: `Naročilo #${reservationId} - Odgovor`,
-            body: body,
-            set_processing: false
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!resp.ok) throw new Error('Send failed');
 
-        toast('Odgovor poslan!', 'success');
+        toast(channel === 'sms' ? 'SMS poslan!' : 'Email poslan!', 'success');
         document.getElementById('reply-body').value = '';
         loadMessages(reservationId); // Reload messages
       } catch (e) {
-        toast('Napaka pri pošiljanju', 'error');
+        toast(channel === 'sms' ? 'Napaka pri pošiljanju SMS' : 'Napaka pri pošiljanju emaila', 'error');
       }
     }
 

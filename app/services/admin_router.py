@@ -16,6 +16,7 @@ from app.services.sms_service import (
     send_booking_received_sms,
     send_cancellation_sms,
     send_confirmation_sms,
+    send_sms,
 )
 from app.services.reservation_service import ReservationService
 from app.services.chat_history_service import get_chat_history_service
@@ -289,6 +290,13 @@ class SendMessageRequest(BaseModel):
     reservation_id: int
     email: str
     subject: str
+    body: str
+    set_processing: bool = True
+
+
+class SendSmsRequest(BaseModel):
+    reservation_id: int
+    phone: str
     body: str
     set_processing: bool = True
 
@@ -701,6 +709,18 @@ def confirm_reservation(
     if res.get("phone"):
         sms_result = send_confirmation_sms(res)
         sms_sent = bool(sms_result.get("success"))
+        if sms_sent:
+            service.add_reservation_message(
+                reservation_id=reservation_id,
+                direction="outbound",
+                channel="sms",
+                subject="Potrditev termina (SMS)",
+                body=f"Termin potrjen: {res.get('date', '')} ob {res.get('time', '')}",
+                from_phone=os.getenv("TWILIO_PHONE_NUMBER", ""),
+                to_phone=res.get("phone") or "",
+                message_id=None,
+                provider_message_sid=sms_result.get("message_sid"),
+            )
     subject = _ensure_subject_tag(reservation_id, "Potrditev rezervacije")
     service.add_reservation_message(
         reservation_id=reservation_id,
@@ -740,6 +760,18 @@ def reject_reservation(
     if res.get("phone"):
         sms_result = send_cancellation_sms(res)
         sms_sent = bool(sms_result.get("success"))
+        if sms_sent:
+            service.add_reservation_message(
+                reservation_id=reservation_id,
+                direction="outbound",
+                channel="sms",
+                subject="Odpoved termina (SMS)",
+                body=f"Termin odpovedan: {res.get('date', '')} ob {res.get('time', '')}",
+                from_phone=os.getenv("TWILIO_PHONE_NUMBER", ""),
+                to_phone=res.get("phone") or "",
+                message_id=None,
+                provider_message_sid=sms_result.get("message_sid"),
+            )
     subject = _ensure_subject_tag(reservation_id, "Zavrnjena rezervacija")
     service.add_reservation_message(
         reservation_id=reservation_id,
@@ -776,6 +808,7 @@ def send_message(
         service.add_reservation_message(
             reservation_id=data.reservation_id,
             direction="outbound",
+            channel="email",
             subject=subject,
             body=data.body,
             from_email=os.getenv("ADMIN_EMAIL", "info@kovacnik.com"),
@@ -797,6 +830,54 @@ def send_message(
         details={"email": data.email, "subject": subject},
     )
     return {"ok": True}
+
+
+@router.post("/send-sms")
+def send_sms_message(
+    data: SendSmsRequest,
+    request: Request,
+    role: str = Depends(require_write),
+):
+    """Pošlje SMS pacientu in ga shrani v zgodovino rezervacije."""
+    if not data.phone:
+        raise HTTPException(status_code=400, detail="Telefon manjka")
+    body = (data.body or "").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="SMS sporočilo je prazno")
+
+    result = send_sms(data.phone, body)
+    if not result.get("success"):
+        raise HTTPException(status_code=502, detail=result.get("error") or "Napaka pri pošiljanju SMS")
+
+    if data.reservation_id:
+        service.add_reservation_message(
+            reservation_id=data.reservation_id,
+            direction="outbound",
+            channel="sms",
+            subject="SMS odgovor",
+            body=body,
+            from_phone=os.getenv("TWILIO_PHONE_NUMBER", ""),
+            to_phone=data.phone,
+            message_id=None,
+            provider_message_sid=result.get("message_sid"),
+        )
+
+    if data.set_processing:
+        service.update_reservation(
+            data.reservation_id,
+            status="processing",
+            guest_message=body,
+        )
+
+    log_admin_action(
+        action="send_sms",
+        reservation_id=data.reservation_id,
+        actor=_get_actor(request),
+        role=role,
+        ip=_get_ip(request),
+        details={"phone": data.phone, "mock": result.get("mock", False)},
+    )
+    return {"ok": True, "mock": result.get("mock", False), "message_sid": result.get("message_sid")}
 
 
 @router.get("/reservations/{reservation_id}/messages")
@@ -1104,6 +1185,18 @@ def create_admin_reservation(
         if created:
             sms_result = send_booking_received_sms(created)
             sms_sent = bool(sms_result.get("success"))
+            if sms_sent:
+                service.add_reservation_message(
+                    reservation_id=new_id,
+                    direction="outbound",
+                    channel="sms",
+                    subject="Naročilo prejeto (SMS)",
+                    body=f"Naročilo prejeto: {created.get('date', '')} ob {created.get('time', '')}",
+                    from_phone=os.getenv("TWILIO_PHONE_NUMBER", ""),
+                    to_phone=created.get("phone") or "",
+                    message_id=None,
+                    provider_message_sid=sms_result.get("message_sid"),
+                )
     log_admin_action(
         action="reservation_create",
         reservation_id=new_id,

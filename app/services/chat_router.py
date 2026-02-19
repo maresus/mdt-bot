@@ -968,6 +968,7 @@ async def voice_input(
 async def sms_webhook(
     From: str = Form(...),
     Body: str = Form(...),
+    To: str = Form(default=""),
     MessageSid: str = Form(default=""),
 ):
     """
@@ -987,20 +988,59 @@ async def sms_webhook(
         from app.services.sms_service import send_sms
 
         print(f"[SMS WEBHOOK] Received from {From}: {Body} (SID: {MessageSid})")
+        reservation_service = ReservationService()
+        reservation = reservation_service.find_latest_reservation_by_phone(From)
+        reservation_id = reservation.get("id") if reservation else None
 
-        # Procesiraj odgovor
-        result = handle_sms_response(From, Body)
+        if reservation_id:
+            reservation_service.add_reservation_message(
+                reservation_id=reservation_id,
+                direction="inbound",
+                channel="sms",
+                subject="Prejet SMS",
+                body=Body,
+                from_phone=From,
+                to_phone=To,
+                message_id=MessageSid or None,
+                provider_message_sid=MessageSid or None,
+            )
 
-        # Send reply to patient
-        if result.get("response_message"):
-            send_sms(From, result["response_message"])
+        sms_text = (Body or "").strip()
+        sms_text_l = sms_text.lower()
+        quick_actions = {"da", "yes", "ok", "pridem", "potrjujem", "prestav", "prestavi", "odpovej", "odpoved", "cancel", "ne"}
 
-        # Twilio TwiML response (empty - no outbound SMS via TwiML)
+        # 1) Quick actions for reminder flow (DA/PRESTAVI/ODPOVEJ)
+        if any(token in sms_text_l for token in quick_actions):
+            result = handle_sms_response(From, sms_text)
+            reply_text = result.get("response_message") or ""
+        else:
+            # 2) Generic SMS question routed through the same chat brain
+            sms_session_id = f"sms:{''.join(ch for ch in str(From) if ch.isdigit())}"
+            chat_req = ChatRequest(message=sms_text, session_id=sms_session_id, clinic_id=None)
+            chat_resp = await chat(chat_req)
+            reply_text = (chat_resp.reply or "").strip()
+
+        if not reply_text:
+            reply_text = "Hvala za sporočilo. Za pomoč pokličite 01 234 56 78."
+        send_result = send_sms(From, reply_text)
+
+        if reservation_id and reply_text:
+            reservation_service.add_reservation_message(
+                reservation_id=reservation_id,
+                direction="outbound",
+                channel="sms",
+                subject="SMS odgovor",
+                body=reply_text,
+                from_phone=To,
+                to_phone=From,
+                message_id=None,
+                provider_message_sid=send_result.get("message_sid"),
+            )
+
         twiml = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
         return Response(content=twiml, media_type="application/xml")
 
     except Exception as e:
         print(f"[SMS WEBHOOK] Error: {e}")
-        # Return empty response on error
         twiml = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
         return Response(content=twiml, media_type="application/xml")

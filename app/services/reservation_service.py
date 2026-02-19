@@ -102,6 +102,12 @@ class ReservationService:
             ("patient_health_card", "TEXT"),
             ("reason", "TEXT"),  # Razlog obiska
         ]
+        message_columns = [
+            ("channel", "TEXT DEFAULT 'email'"),
+            ("from_phone", "TEXT"),
+            ("to_phone", "TEXT"),
+            ("provider_message_sid", "TEXT"),
+        ]
 
         if self.use_postgres:
             conn = self._conn()
@@ -183,11 +189,15 @@ class ReservationService:
                         id SERIAL PRIMARY KEY,
                         reservation_id INTEGER NOT NULL,
                         direction TEXT NOT NULL,
+                        channel TEXT DEFAULT 'email',
                         subject TEXT,
                         body TEXT,
                         from_email TEXT,
                         to_email TEXT,
+                        from_phone TEXT,
+                        to_phone TEXT,
                         message_id TEXT,
+                        provider_message_sid TEXT,
                         created_at TEXT NOT NULL
                     )
                     """
@@ -207,6 +217,10 @@ class ReservationService:
                 for col, definition in new_columns:
                     cur.execute(
                         f"ALTER TABLE reservations ADD COLUMN IF NOT EXISTS {col} {definition}"
+                    )
+                for col, definition in message_columns:
+                    cur.execute(
+                        f"ALTER TABLE reservation_messages ADD COLUMN IF NOT EXISTS {col} {definition}"
                     )
                 conn.commit()
             finally:
@@ -293,11 +307,15 @@ class ReservationService:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     reservation_id INTEGER NOT NULL,
                     direction TEXT NOT NULL,
+                    channel TEXT DEFAULT 'email',
                     subject TEXT,
                     body TEXT,
                     from_email TEXT,
                     to_email TEXT,
+                    from_phone TEXT,
+                    to_phone TEXT,
                     message_id TEXT,
+                    provider_message_sid TEXT,
                     created_at TEXT NOT NULL
                 )
                 """
@@ -319,6 +337,11 @@ class ReservationService:
             for col, definition in new_columns:
                 if col not in existing_cols:
                     conn.execute(f"ALTER TABLE reservations ADD COLUMN {col} {definition};")
+            msg_info = conn.execute("PRAGMA table_info(reservation_messages)").fetchall()
+            existing_msg_cols = {row[1] for row in msg_info}
+            for col, definition in message_columns:
+                if col not in existing_msg_cols:
+                    conn.execute(f"ALTER TABLE reservation_messages ADD COLUMN {col} {definition};")
             conn.commit()
             conn.close()
 
@@ -779,6 +802,32 @@ class ReservationService:
         finally:
             cur.close()
             conn.close()
+
+    def find_latest_reservation_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        """Vrne zadnjo rezervacijo po telefonski številki (normalizirano na cifre)."""
+        def _normalize(value: str) -> str:
+            digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+            if digits.startswith("00"):
+                digits = digits[2:]
+            if digits.startswith("0"):
+                digits = "386" + digits[1:]
+            return digits
+
+        if not phone:
+            return None
+        normalized = _normalize(phone)
+        if not normalized:
+            return None
+        rows = self.read_reservations(limit=1000)
+        for row in rows:
+            candidate = _normalize(row.get("phone") or "")
+            if not candidate:
+                continue
+            if candidate == normalized:
+                return row
+            if candidate.endswith(normalized[-8:]) or normalized.endswith(candidate[-8:]):
+                return row
+        return None
 
     def read_reservations(
         self,
@@ -1440,9 +1489,13 @@ class ReservationService:
         direction: str,
         subject: str,
         body: str,
-        from_email: str,
-        to_email: str,
+        from_email: str = "",
+        to_email: str = "",
+        channel: str = "email",
+        from_phone: str = "",
+        to_phone: str = "",
         message_id: Optional[str] = None,
+        provider_message_sid: Optional[str] = None,
     ) -> bool:
         """Shrani sporočilo vezano na rezervacijo (inbound/outbound)."""
         created_at = datetime.now().isoformat()
@@ -1453,17 +1506,21 @@ class ReservationService:
             cur.execute(
                 (
                     "INSERT INTO reservation_messages "
-                    "(reservation_id, direction, subject, body, from_email, to_email, message_id, created_at) "
-                    f"VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})"
+                    "(reservation_id, direction, channel, subject, body, from_email, to_email, from_phone, to_phone, message_id, provider_message_sid, created_at) "
+                    f"VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})"
                 ),
                 (
                     reservation_id,
                     direction,
+                    channel or "email",
                     subject,
                     body,
                     from_email,
                     to_email,
+                    from_phone,
+                    to_phone,
                     message_id,
+                    provider_message_sid,
                     created_at,
                 ),
             )
@@ -1484,7 +1541,7 @@ class ReservationService:
             ph = self._placeholder()
             cur.execute(
                 (
-                    "SELECT reservation_id, direction, subject, body, from_email, to_email, message_id, created_at "
+                    "SELECT reservation_id, direction, channel, subject, body, from_email, to_email, from_phone, to_phone, message_id, provider_message_sid, created_at "
                     f"FROM reservation_messages WHERE reservation_id = {ph} ORDER BY created_at ASC"
                 ),
                 (reservation_id,),
@@ -1499,12 +1556,16 @@ class ReservationService:
                         {
                             "reservation_id": row[0],
                             "direction": row[1],
-                            "subject": row[2],
-                            "body": row[3],
-                            "from_email": row[4],
-                            "to_email": row[5],
-                            "message_id": row[6],
-                            "created_at": row[7],
+                            "channel": row[2],
+                            "subject": row[3],
+                            "body": row[4],
+                            "from_email": row[5],
+                            "to_email": row[6],
+                            "from_phone": row[7],
+                            "to_phone": row[8],
+                            "message_id": row[9],
+                            "provider_message_sid": row[10],
+                            "created_at": row[11],
                         }
                     )
             return messages
