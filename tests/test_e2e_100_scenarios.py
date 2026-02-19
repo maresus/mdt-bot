@@ -217,6 +217,11 @@ def _base_scenarios() -> list[Scenario]:
             ("naslov", "delovni čas", "sobota"),
         ),
         Scenario(
+            "RESCHEDULE_REDIRECT_TO_PHONE",
+            ("Rad bi prestavil termin iz 18.03.2026 na naslednji teden.",),
+            ("prestavitev termina trenutno ni možna preko klepeta", "pokličite", "01 234 56 78"),
+        ),
+        Scenario(
             "MIX_PRICE_THEN_BOOK",
             ("koliko stane pregled", "ortoped", "rad bi termin", "ortoped"),
             ("ortopedija", "kateri datum", "prosti termini", "cena"),

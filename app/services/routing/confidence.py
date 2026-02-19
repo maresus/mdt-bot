@@ -668,7 +668,7 @@ def compute_confidence(
         if has_booking_hint and has_service_kw:
             # If no explicit appointment keyword, favor SERVICE_INFO over booking
             if not has_appointment_kw:
-                if any(k in text for k in {"rabim", "potrebujem", "hočem", "hocem", "rad bi", "rada bi", "bi rad", "bi rada", "appointment", "book", "booking"}):
+                if any(k in text for k in {"rabim", "potrebujem", "hočem", "hocem", "rad bi", "rada bi", "bi rad", "bi rada", "appointment", "book", "booking", "need", "want"}):
                     return 0.85
                 return 0.45
             return 0.9

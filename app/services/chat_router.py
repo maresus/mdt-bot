@@ -247,6 +247,28 @@ def _get_uncertain_marker(clinic_id: str | None = None) -> str:
     return get_domain_response("general", "uncertain_marker", default="I'm not sure", clinic_id=clinic_id)
 
 
+def _extract_primary_phone(text: str) -> str | None:
+    match = re.search(r"(\+?\d[\d\s]{6,}\d)", text or "")
+    if not match:
+        return None
+    return re.sub(r"\s+", " ", match.group(1)).strip()
+
+
+def _looks_like_reschedule_request(message: str) -> bool:
+    lowered = (message or "").lower()
+    patterns = [
+        "prestav",
+        "prestavim",
+        "prestavitev",
+        "prestavi",
+        "premakni termin",
+        "premaknem termin",
+        "drug termin",
+        "naslednji teden",
+    ]
+    return any(p in lowered for p in patterns) and "termin" in lowered
+
+
 def _rag_info_answer(question: str, fallback_key: str, clinic_id: str | None = None) -> str:
     """Return KB/RAG-backed answer for info queries, fallback to hardcoded info."""
     try:
@@ -462,6 +484,14 @@ def handle_unified_routing(
     state_mgr.set_context_value("clinic_id", clinic_id)
     unified_state = state_mgr.get_state()
     context = state_mgr.ensure_context()
+
+    if _looks_like_reschedule_request(message):
+        contact_text = _get_info_response(INFO_KEY_CONTACT, clinic_id=clinic_id)
+        phone = _extract_primary_phone(contact_text) or "01 234 56 78"
+        return (
+            "Prestavitev termina trenutno ni možna preko klepeta. "
+            f"Za prestavitev prosim pokličite na {phone}."
+        )
 
     def _clear_booking_details_preserve_service() -> None:
         """Clear appointment details when changing service, keep only service type."""
