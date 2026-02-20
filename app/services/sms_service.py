@@ -18,6 +18,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from enum import Enum
+import requests
 
 # Twilio integration (optional)
 try:
@@ -28,9 +29,13 @@ except ImportError:
     print("[SMS] Twilio not installed. Run: pip install twilio")
 
 # Configuration from environment
+SMS_PROVIDER = os.getenv("SMS_PROVIDER", "twilio").strip().lower()  # twilio | smsapi
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")  # +1234567890
+SMSAPI_BASE_URL = os.getenv("SMSAPI_BASE_URL", "https://api.smsapi.com").strip().rstrip("/")
+SMSAPI_OAUTH_TOKEN = os.getenv("SMSAPI_OAUTH_TOKEN", os.getenv("SMSAPI_ACCESS_TOKEN", "")).strip()
+SMSAPI_SENDER = os.getenv("SMSAPI_SENDER", "").strip()
 SMS_MOCK_MODE = os.getenv("SMS_MOCK_MODE", "true").lower() in ("true", "1", "yes")
 
 # Clinic info
@@ -147,6 +152,88 @@ def _get_twilio_client() -> Optional["TwilioClient"]:
     return TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 
+def _send_via_twilio(formatted_phone: str, message: str, result: Dict[str, Any]) -> Dict[str, Any]:
+    client = _get_twilio_client()
+    if not client:
+        result["error"] = "Twilio client not available"
+        return result
+
+    if not TWILIO_PHONE_NUMBER:
+        result["error"] = "TWILIO_PHONE_NUMBER not configured"
+        return result
+
+    try:
+        twilio_message = client.messages.create(
+            body=message,
+            from_=TWILIO_PHONE_NUMBER,
+            to=formatted_phone
+        )
+        result["success"] = True
+        result["message_sid"] = twilio_message.sid
+        print(f"[SMS/TWILIO] Sent to {formatted_phone}: {twilio_message.sid}")
+    except Exception as e:
+        result["error"] = str(e)
+        print(f"[SMS/TWILIO] Error sending to {formatted_phone}: {e}")
+    return result
+
+
+def _send_via_smsapi(formatted_phone: str, message: str, result: Dict[str, Any]) -> Dict[str, Any]:
+    if not SMSAPI_OAUTH_TOKEN:
+        result["error"] = "SMSAPI_OAUTH_TOKEN not configured"
+        return result
+
+    endpoint = f"{SMSAPI_BASE_URL}/sms.do"
+    to_digits = "".join(ch for ch in formatted_phone if ch.isdigit())
+    payload = {
+        "to": to_digits,
+        "message": message,
+        "format": "json",
+    }
+    if SMSAPI_SENDER:
+        payload["from"] = SMSAPI_SENDER
+
+    try:
+        response = requests.post(
+            endpoint,
+            data=payload,
+            headers={"Authorization": f"Bearer {SMSAPI_OAUTH_TOKEN}"},
+            timeout=15,
+        )
+        if response.status_code != 200:
+            result["error"] = f"SMSAPI HTTP {response.status_code}: {response.text[:300]}"
+            print(f"[SMS/SMSAPI] {result['error']}")
+            return result
+
+        message_sid = None
+        try:
+            data = response.json()
+            if isinstance(data, list) and data:
+                first = data[0] or {}
+                message_sid = first.get("id") or first.get("message_id")
+                if first.get("error"):
+                    result["error"] = f"SMSAPI error: {first.get('error')}"
+                    return result
+            elif isinstance(data, dict):
+                message_sid = data.get("id") or data.get("message_id")
+                if data.get("error"):
+                    result["error"] = f"SMSAPI error: {data.get('error')}"
+                    return result
+        except Exception:
+            raw = (response.text or "").strip()
+            if raw.lower().startswith("error"):
+                result["error"] = f"SMSAPI error: {raw[:300]}"
+                return result
+            message_sid = raw[:120] if raw else None
+
+        result["success"] = True
+        result["message_sid"] = message_sid or f"SMSAPI_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        print(f"[SMS/SMSAPI] Sent to {formatted_phone}: {result['message_sid']}")
+    except Exception as e:
+        result["error"] = str(e)
+        print(f"[SMS/SMSAPI] Error sending to {formatted_phone}: {e}")
+    return result
+
+
 def send_sms(
     to_phone: str,
     message: str,
@@ -180,6 +267,7 @@ def send_sms(
         "message_sid": None,
         "error": None,
         "mock": use_mock,
+        "provider": SMS_PROVIDER,
         "to": formatted_phone,
         "message_length": len(message),
     }
@@ -194,31 +282,10 @@ def send_sms(
         result["message_sid"] = "MOCK_" + datetime.now().strftime("%Y%m%d%H%M%S")
         return result
 
-    # Production mode - use Twilio
-    client = _get_twilio_client()
-    if not client:
-        result["error"] = "Twilio client not available"
-        return result
-
-    if not TWILIO_PHONE_NUMBER:
-        result["error"] = "TWILIO_PHONE_NUMBER not configured"
-        return result
-
-    try:
-        twilio_message = client.messages.create(
-            body=message,
-            from_=TWILIO_PHONE_NUMBER,
-            to=formatted_phone
-        )
-        result["success"] = True
-        result["message_sid"] = twilio_message.sid
-        print(f"[SMS] Sent to {formatted_phone}: {twilio_message.sid}")
-
-    except Exception as e:
-        result["error"] = str(e)
-        print(f"[SMS] Error sending to {formatted_phone}: {e}")
-
-    return result
+    # Production mode
+    if SMS_PROVIDER == "smsapi":
+        return _send_via_smsapi(formatted_phone, message, result)
+    return _send_via_twilio(formatted_phone, message, result)
 
 
 def send_appointment_reminder(
