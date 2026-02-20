@@ -8,7 +8,7 @@ import uuid
 import threading
 from types import SimpleNamespace
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.models.chat import ChatRequest, ChatResponse
 from app.services.reservation_service import ReservationService
@@ -966,8 +966,9 @@ async def voice_input(
 
 @router.post("/sms-webhook")
 async def sms_webhook(
-    From: str = Form(...),
-    Body: str = Form(...),
+    request: Request,
+    From: str = Form(default=""),
+    Body: str = Form(default=""),
     To: str = Form(default=""),
     MessageSid: str = Form(default=""),
 ):
@@ -987,9 +988,20 @@ async def sms_webhook(
         from app.services.reminder_scheduler import handle_sms_response
         from app.services.sms_service import send_sms
 
-        print(f"[SMS WEBHOOK] Received from {From}: {Body} (SID: {MessageSid})")
+        form = await request.form()
+        from_value = (From or form.get("From") or form.get("from") or form.get("sender") or form.get("phone") or "").strip()
+        body_value = (Body or form.get("Body") or form.get("body") or form.get("message") or form.get("text") or "").strip()
+        to_value = (To or form.get("To") or form.get("to") or "").strip()
+        sid_value = (MessageSid or form.get("MessageSid") or form.get("message_id") or form.get("id") or "").strip()
+
+        if not from_value or not body_value:
+            print(f"[SMS WEBHOOK] Missing sender/body. form_keys={list(form.keys())}")
+            twiml = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+            return Response(content=twiml, media_type="application/xml")
+
+        print(f"[SMS WEBHOOK] Received from {from_value}: {body_value} (SID: {sid_value})")
         reservation_service = ReservationService()
-        reservation = reservation_service.find_latest_reservation_by_phone(From)
+        reservation = reservation_service.find_latest_reservation_by_phone(from_value)
         reservation_id = reservation.get("id") if reservation else None
 
         if reservation_id:
@@ -998,31 +1010,31 @@ async def sms_webhook(
                 direction="inbound",
                 channel="sms",
                 subject="Prejet SMS",
-                body=Body,
-                from_phone=From,
-                to_phone=To,
-                message_id=MessageSid or None,
-                provider_message_sid=MessageSid or None,
+                body=body_value,
+                from_phone=from_value,
+                to_phone=to_value,
+                message_id=sid_value or None,
+                provider_message_sid=sid_value or None,
             )
 
-        sms_text = (Body or "").strip()
+        sms_text = body_value
         sms_text_l = sms_text.lower()
         quick_actions = {"da", "yes", "ok", "pridem", "potrjujem", "prestav", "prestavi", "odpovej", "odpoved", "cancel", "ne"}
 
         # 1) Quick actions for reminder flow (DA/PRESTAVI/ODPOVEJ)
         if any(token in sms_text_l for token in quick_actions):
-            result = handle_sms_response(From, sms_text)
+            result = handle_sms_response(from_value, sms_text)
             reply_text = result.get("response_message") or ""
         else:
             # 2) Generic SMS question routed through the same chat brain
-            sms_session_id = f"sms:{''.join(ch for ch in str(From) if ch.isdigit())}"
+            sms_session_id = f"sms:{''.join(ch for ch in str(from_value) if ch.isdigit())}"
             chat_req = ChatRequest(message=sms_text, session_id=sms_session_id, clinic_id=None)
             chat_resp = await chat(chat_req)
             reply_text = (chat_resp.reply or "").strip()
 
         if not reply_text:
             reply_text = "Hvala za sporočilo. Za pomoč pokličite 01 234 56 78."
-        send_result = send_sms(From, reply_text)
+        send_result = send_sms(from_value, reply_text)
 
         if reservation_id and reply_text:
             reservation_service.add_reservation_message(
@@ -1031,8 +1043,8 @@ async def sms_webhook(
                 channel="sms",
                 subject="SMS odgovor",
                 body=reply_text,
-                from_phone=To,
-                to_phone=From,
+                from_phone=to_value,
+                to_phone=from_value,
                 message_id=None,
                 provider_message_sid=send_result.get("message_sid"),
             )
