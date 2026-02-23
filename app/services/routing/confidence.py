@@ -437,6 +437,7 @@ PRICE_KEYWORDS = {
 GREETING_KEYWORDS = {
     "zdravo",
     "zdravjo",   # typo
+    "zdwavo",    # typo
     "živjo",
     "zivjo",
     "dobro jutro",

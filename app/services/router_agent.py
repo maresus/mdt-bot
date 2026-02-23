@@ -233,7 +233,7 @@ def _legacy_route_message(
     service_type = None
 
     # Greeting/goodbye
-    if any(w in text for w in ["zdravo", "živjo", "dober dan", "hello", "pozdravljeni"]):
+    if any(w in text for w in ["zdravo", "zdravjo", "zdwavo", "živjo", "dober dan", "hello", "pozdravljeni"]):
         intent = "GREETING"
     elif any(w in text for w in ["hvala", "adijo", "nasvidenje"]):
         intent = "GOODBYE"

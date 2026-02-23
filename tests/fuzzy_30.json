@@ -1,6 +1,7 @@
 [
   {"name": "FZ01 greeting hej", "message": "hej", "expected_intent": "GREETING"},
   {"name": "FZ02 greeting zivjo", "message": "zivjo", "expected_intent": "GREETING"},
+  {"name": "FZ02b greeting zdwavo typo", "message": "zdwavo", "expected_intent": "GREETING"},
   {"name": "FZ03 goodbye hvala lp", "message": "hvala, lp", "expected_intent": "GOODBYE"},
 
   {"name": "FZ04 booking ortoped no diacritics", "message": "rad bi narocil termin za ortopeda", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},

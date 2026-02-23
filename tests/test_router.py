@@ -48,6 +48,11 @@ def test_greeting():
     assert decision.primary_intent == IntentType.GREETING
 
 
+def test_greeting_typo_zdwavo():
+    decision = _route("zdwavo")
+    assert decision.primary_intent == IntentType.GREETING
+
+
 def test_symptom_service_info():
     decision = _route("Imam izpuščaj na koži")
     assert decision.primary_intent == IntentType.SERVICE_INFO

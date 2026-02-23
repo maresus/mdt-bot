@@ -171,7 +171,7 @@ CONTACT_WORDS = ["kontakt", "telefon", "email", "naslov", "lokacija", "nahaja", 
 
 THANKS_WORDS = ["hvala", "najlepša hvala", "hvala lepa", "thanks", "thx"]
 
-GREETING_WORDS = ["pozdravljeni", "živjo", "zivjo", "dober dan", "zdravo", "hej", "halo", "bok"]
+GREETING_WORDS = ["pozdravljeni", "živjo", "zivjo", "dober dan", "zdravo", "zdravjo", "zdwavo", "hej", "halo", "bok"]
 
 FULL_NAME_BLOCKED_TOKENS = [
     "koliko",
