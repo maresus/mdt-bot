@@ -15,7 +15,9 @@ from app.services.fallback_pipeline import (
 
 
 def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any) -> ChatResponse:
-    message = request.message.strip()
+    raw_message = request.message.strip()
+    normalize_user_message = getattr(deps, "normalize_user_message", None)
+    message = normalize_user_message(raw_message) if callable(normalize_user_message) else raw_message
     raw_session_id = request.session_id or state["chat_session_id"]
     strict_clinic = deps.os.getenv("STRICT_CLINIC_ID", "false").strip().lower() in {"1", "true", "yes", "on"}
     try:
@@ -29,7 +31,7 @@ def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any)
         session_id = f"{clinic_id}::{raw_session_id}"
         state_mgr = deps.StateManager(session_id)
 
-        if not message:
+        if not raw_message:
             payload = deps.format_response(
                 deps.get_response("general.empty_message", clinic_id=clinic_id),
                 state_manager=state_mgr,
@@ -94,9 +96,9 @@ def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any)
                 deps=deps,
             )
 
-        state["conversation_history"].append({"role": "user", "content": message})
+        state["conversation_history"].append({"role": "user", "content": raw_message})
         state["conversation_history"].append({"role": "assistant", "content": response_text})
-        state["last_user_message_by_session"][session_id] = message
+        state["last_user_message_by_session"][session_id] = raw_message
         if len(state["conversation_history"]) > 20:
             state["conversation_history"] = state["conversation_history"][-20:]
 
@@ -127,10 +129,11 @@ def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any)
             deps.save_chat_message(
                 session_id=session_id,
                 role="user",
-                content=message,
+                content=raw_message,
                 intent=decision.primary_intent.value,
                 booking_step=current_step,
                 response_cached=False,
+                metadata={"normalized_message": message} if message != raw_message else None,
             )
             deps.save_chat_message(
                 session_id=session_id,

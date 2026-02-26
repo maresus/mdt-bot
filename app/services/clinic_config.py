@@ -4,6 +4,7 @@ import os
 import re
 from contextvars import ContextVar
 from pathlib import Path
+import sys
 from typing import Any, Dict
 
 import yaml
@@ -237,9 +238,13 @@ def get_fast_pass_match(message: str, clinic_id: str | None = None) -> dict[str,
     if len(lowered) < 3:
         return None
     tokens = re.findall(r"[a-zčšž0-9]+", lowered, flags=re.IGNORECASE)
+    # `thefuzz` -> `rapidfuzz` can trigger native crashes in some local Python 3.14 test environments.
+    # Production runs on Python 3.12, but disable fuzzy fast-pass locally on 3.14+ to keep test runs stable.
     try:
         from thefuzz import fuzz  # type: ignore
     except Exception:
+        fuzz = None
+    if sys.version_info >= (3, 14):
         fuzz = None
 
     def _pick_fast_response(entry: dict[str, Any], key: str) -> str | None:

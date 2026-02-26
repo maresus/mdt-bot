@@ -444,6 +444,7 @@ GREETING_KEYWORDS = {
     "dober dan",
     "hello",
     "hej",
+    "halo",
     "pozdravljeni",
 }
 

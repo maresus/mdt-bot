@@ -35,6 +35,73 @@ SYMPTOM_KEY_BY_SERVICE = {
 }
 
 
+def _infer_effective_booking_step(step: str | None, appointment_data: dict[str, Any]) -> str | None:
+    """Infer expected step when unified step is missing or stale."""
+    if step:
+        return step
+
+    has_service = bool(appointment_data.get("service_type"))
+    has_date = bool(appointment_data.get("date"))
+    has_time = bool(appointment_data.get("time"))
+    has_name = bool(appointment_data.get("name"))
+    has_phone = bool(appointment_data.get("phone"))
+    has_email = bool(str(appointment_data.get("email") or "").strip())
+    has_reason = bool(str(appointment_data.get("reason") or "").strip())
+
+    if not has_service:
+        return "select_service"
+    if not has_date:
+        return "date"
+    if not has_time:
+        return "time"
+    if not has_name:
+        return "name"
+    if not has_phone:
+        return "phone"
+    if not has_email:
+        return "email"
+    if not has_reason:
+        return "reason"
+    return "confirm"
+
+
+def should_prioritize_booking_step_input(
+    *,
+    message: str,
+    step: str | None,
+    appointment_data: dict[str, Any],
+    deps: BookingInterruptDeps,
+    decision_intent: IntentType | None = None,
+    service_hint: str | None = None,
+) -> bool:
+    """
+    Return True when user message clearly answers the expected booking step.
+    This bypasses generic routing/fallback and lets booking flow consume input.
+    """
+    effective_step = _infer_effective_booking_step(step, appointment_data)
+
+    if effective_step == "date" and deps.extract_date_from_message(message):
+        return True
+    if effective_step == "time" and deps.extract_time_from_message(message):
+        return True
+    if effective_step in {"service", "select_service", None} and not appointment_data.get("service_type"):
+        if deps.extract_service_type(message) or service_hint:
+            return True
+    if effective_step == "name" and deps.is_likely_full_name(message):
+        return True
+    if effective_step == "phone":
+        cleaned = "".join(ch for ch in message if ch.isdigit() or ch == "+")
+        if len(cleaned) >= 8:
+            return True
+    if effective_step == "email" and ("@" in message and "." in message.split("@")[-1]):
+        return True
+    if effective_step == "reason" and message.strip():
+        return True
+    if effective_step == "confirm" and decision_intent in {IntentType.AFFIRMATIVE, IntentType.NEGATIVE}:
+        return True
+    return False
+
+
 def handle_booking_interrupt(
     *,
     message: str,
@@ -52,24 +119,14 @@ def handle_booking_interrupt(
     state_view = {"step": step, **appointment_data}
 
     # If user is answering expected step, continue booking flow.
-    if step == "date" and deps.extract_date_from_message(message):
-        return None
-    if step == "time" and deps.extract_time_from_message(message):
-        return None
-    if step in {"service", "select_service", None} and not appointment_data.get("service_type"):
-        if deps.extract_service_type(message):
-            return None
-    if step == "name" and deps.is_likely_full_name(message):
-        return None
-    if step == "phone":
-        cleaned = "".join(ch for ch in message if ch.isdigit() or ch == "+")
-        if len(cleaned) >= 8:
-            return None
-    if step == "email" and ("@" in message and "." in message.split("@")[-1]):
-        return None
-    if step == "reason" and message.strip():
-        return None
-    if step == "confirm" and decision_intent in {IntentType.AFFIRMATIVE, IntentType.NEGATIVE}:
+    if should_prioritize_booking_step_input(
+        message=message,
+        step=step,
+        appointment_data=appointment_data,
+        deps=deps,
+        decision_intent=decision_intent,
+        service_hint=service_hint,
+    ):
         return None
 
     current_service = appointment_data.get("service_type")

@@ -52,6 +52,15 @@ from app.services.session.unified_state import (
 )
 from app.services.routing.unified_router import route as unified_route, IntentType
 from app.services.routing.nlp_utils import is_affirmative, is_negative
+from app.services.routing.message_normalizer import normalize_user_message
+from app.services.routing.appointment_change_requests import (
+    detect_appointment_change_request,
+    build_appointment_change_reply,
+)
+from app.services.routing.symptom_general_handler import (
+    should_handle_general_symptom_message,
+    build_general_symptom_clarify_reply,
+)
 from app.services.routing.state_manager import ConversationTracker, SimpleCache
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
 from app.services.routing.advice import advice_only, advice_only_headache
@@ -136,6 +145,7 @@ from app.services.flows.interrupt_flow import InterruptFlowDeps, resolve_interru
 from app.services.flows.booking_interrupt_policy import (
     BookingInterruptDeps,
     handle_booking_interrupt,
+    should_prioritize_booking_step_input,
 )
 from app.services.session_bridge import (
     appointment_states,
@@ -254,19 +264,13 @@ def _extract_primary_phone(text: str) -> str | None:
     return re.sub(r"\s+", " ", match.group(1)).strip()
 
 
+def _extract_primary_email(text: str) -> str | None:
+    match = re.search(r"([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})", text or "")
+    return match.group(1).strip() if match else None
+
+
 def _looks_like_reschedule_request(message: str) -> bool:
-    lowered = (message or "").lower()
-    patterns = [
-        "prestav",
-        "prestavim",
-        "prestavitev",
-        "prestavi",
-        "premakni termin",
-        "premaknem termin",
-        "drug termin",
-        "naslednji teden",
-    ]
-    return any(p in lowered for p in patterns) and "termin" in lowered
+    return detect_appointment_change_request(message) == "reschedule"
 
 
 def _rag_info_answer(question: str, fallback_key: str, clinic_id: str | None = None) -> str:
@@ -485,13 +489,12 @@ def handle_unified_routing(
     unified_state = state_mgr.get_state()
     context = state_mgr.ensure_context()
 
-    if _looks_like_reschedule_request(message):
+    change_action = detect_appointment_change_request(message)
+    if change_action in {"reschedule", "cancel"}:
         contact_text = _get_info_response(INFO_KEY_CONTACT, clinic_id=clinic_id)
         phone = _extract_primary_phone(contact_text) or "01 234 56 78"
-        return (
-            "Prestavitev termina trenutno ni možna preko klepeta. "
-            f"Za prestavitev prosim pokličite na {phone}."
-        )
+        email = _extract_primary_email(contact_text)
+        return build_appointment_change_reply(change_action, phone=phone, email=email)
 
     def _clear_booking_details_preserve_service() -> None:
         """Clear appointment details when changing service, keep only service type."""
@@ -592,9 +595,22 @@ def handle_unified_routing(
         state_mgr.set_flow(FlowType.IDLE)
         state_mgr.set_step(None)
 
-    decision = unified_route(message, unified_state)
     suggested_service = context.get("suggested_service")
     current_step = get_current_step(session_id)
+
+    # Flow-aware priority: if user clearly answers the expected booking step,
+    # bypass generic routing/fallback and let booking flow consume it directly.
+    if is_in_flow(session_id) and should_prioritize_booking_step_input(
+        message=message,
+        step=current_step,
+        appointment_data=get_appointment_data(session_id),
+        deps=BOOKING_INTERRUPT_DEPS,
+        decision_intent=None,
+        service_hint=suggested_service,
+    ):
+        return None
+
+    decision = unified_route(message, unified_state)
 
     # If user provides a date after service info prompt, start booking immediately
     date_str = extract_date_from_message(message)
@@ -614,6 +630,18 @@ def handle_unified_routing(
         state_mgr.transition_to_booking(service_type=decision.service_type, legacy_state=appointment_state)
         start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
         state_mgr.set_context_value("suggested_service", decision.service_type)
+        return handle_appointment_booking(message, session_id)
+
+    # One-line booking requests are sometimes classified as SERVICE_INFO due to service descriptions ("pregled").
+    # If a concrete service and date are already present, prefer booking flow over info response.
+    if (
+        not is_in_flow(session_id)
+        and decision.service_type
+        and extract_date_from_message(message)
+        and decision.primary_intent in {IntentType.SERVICE_INFO, IntentType.GENERAL}
+    ):
+        state_mgr.transition_to_booking(service_type=decision.service_type, legacy_state=appointment_state)
+        start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
         return handle_appointment_booking(message, session_id)
 
     # Log decision for debugging
@@ -688,6 +716,18 @@ def handle_unified_routing(
         if is_in_flow(session_id):
             return build_interrupt_response(response_text, get_current_step(session_id), True)
         return response_text
+
+    # Vague symptom/medical messages without a concrete specialist should not jump into booking service selection.
+    if should_handle_general_symptom_message(
+        message=message,
+        primary_intent=decision.primary_intent,
+        service_type=decision.service_type or suggested_service,
+        in_flow=is_in_flow(session_id),
+        looks_like_symptom_report=_looks_like_symptom_report,
+        looks_like_medical_statement=_looks_like_medical_statement,
+    ):
+        triage_fallback = _quick_triage_fallback(message, clinic_id=clinic_id)
+        return build_general_symptom_clarify_reply(triage_fallback=triage_fallback)
 
     # Handle BOOKING_APPOINTMENT intent
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:
@@ -857,6 +897,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         unified_route=unified_route,
         get_unified_state=get_unified_state,
         save_chat_message=save_chat_message,
+        normalize_user_message=normalize_user_message,
     )
 
     response = process_chat_turn(request=request, state=state, deps=deps)
@@ -990,9 +1031,9 @@ async def sms_webhook(
 
         form = await request.form()
         from_value = (From or form.get("From") or form.get("from") or form.get("sender") or form.get("phone") or "").strip()
-        body_value = (Body or form.get("Body") or form.get("body") or form.get("message") or form.get("text") or "").strip()
+        body_value = (Body or form.get("Body") or form.get("body") or form.get("message") or form.get("text") or form.get("m") or "").strip()
         to_value = (To or form.get("To") or form.get("to") or "").strip()
-        sid_value = (MessageSid or form.get("MessageSid") or form.get("message_id") or form.get("id") or "").strip()
+        sid_value = (MessageSid or form.get("MessageSid") or form.get("message_id") or form.get("smsId") or form.get("id") or "").strip()
 
         if not from_value or not body_value:
             print(f"[SMS WEBHOOK] Missing sender/body. form_keys={list(form.keys())}")
