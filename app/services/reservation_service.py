@@ -148,8 +148,23 @@ class ReservationService:
                         duration_minutes INTEGER,
                         patient_age INTEGER,
                         patient_health_card TEXT,
-                        reason TEXT
+                        reason TEXT,
+                        gdpr_consent TEXT
                     )
+                    """
+                )
+                # Migration: add gdpr_consent column if missing
+                cur.execute(
+                    """
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name='reservations' AND column_name='gdpr_consent'
+                        ) THEN
+                            ALTER TABLE reservations ADD COLUMN gdpr_consent TEXT;
+                        END IF;
+                    END $$;
                     """
                 )
                 cur.execute(
@@ -266,10 +281,16 @@ class ReservationService:
                     duration_minutes INTEGER,
                     patient_age INTEGER,
                     patient_health_card TEXT,
-                    reason TEXT
+                    reason TEXT,
+                    gdpr_consent TEXT
                 )
                 """
             )
+            # Migration: add gdpr_consent column if missing
+            try:
+                conn.execute("ALTER TABLE reservations ADD COLUMN gdpr_consent TEXT")
+            except Exception:
+                pass  # Column already exists
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS conversations (
@@ -709,6 +730,7 @@ class ReservationService:
         patient_age: Optional[int] = None,
         patient_health_card: Optional[str] = None,
         reason: Optional[str] = None,
+        gdpr_consent: Optional[str] = None,
     ) -> int:
         created_at = datetime.now().isoformat()
         # Admin / telefon / API vnosi se avtomatsko potrdijo
@@ -716,12 +738,12 @@ class ReservationService:
             status = "confirmed"
         conn = self._conn()
         ph = self._placeholder()
-        placeholders = ", ".join([ph] * 31)  # Changed from 26 to 31 (added 5 fields)
+        placeholders = ", ".join([ph] * 32)  # 32 fields including gdpr_consent
         sql = (
             f"INSERT INTO reservations "
             f"(date, nights, rooms, people, reservation_type, time, location, name, phone, email, note, status, created_at, source, "
             f"admin_notes, confirmed_at, confirmed_by, guest_message, country, kids, kids_small, confirm_via, event_type, special_needs, "
-            f"birth_date, time_window, service_type, duration_minutes, patient_age, patient_health_card, reason) "
+            f"birth_date, time_window, service_type, duration_minutes, patient_age, patient_health_card, reason, gdpr_consent) "
             f"VALUES ({placeholders})"
         )
         if self.use_postgres:
@@ -762,6 +784,7 @@ class ReservationService:
                     patient_age,
                     patient_health_card,
                     reason,
+                    gdpr_consent,
                 ),
             )
             if self.use_postgres:
@@ -923,6 +946,21 @@ class ReservationService:
             cur.execute(f"DELETE FROM reservations WHERE id = {ph}", (reservation_id,))
             conn.commit()
             return cur.rowcount > 0
+        finally:
+            cur.close()
+            conn.close()
+
+    def delete_all_reservations(self) -> int:
+        """Izbriše VSE rezervacije - za reset baze."""
+        conn = self._conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) as cnt FROM reservations")
+            row = cur.fetchone()
+            count = row["cnt"] if isinstance(row, dict) else row[0]
+            cur.execute("DELETE FROM reservations")
+            conn.commit()
+            return count
         finally:
             cur.close()
             conn.close()

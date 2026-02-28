@@ -664,6 +664,13 @@ def delete_reservation(
     return {"ok": True, "deleted_id": reservation_id}
 
 
+@router.delete("/reservations/all")
+def delete_all_reservations():
+    """Izbriše VSE rezervacije - za reset baze pred predajo stranki."""
+    count = service.delete_all_reservations()
+    return {"success": True, "deleted": count, "message": f"Izbrisanih {count} rezervacij"}
+
+
 @router.post("/reservations/{reservation_id}/confirm")
 def confirm_reservation(
     reservation_id: int,

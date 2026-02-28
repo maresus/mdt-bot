@@ -24,6 +24,7 @@ class FlowStep(str, Enum):
     PHONE = "phone"           # Contact phone
     EMAIL = "email"           # Contact email (optional)
     REASON = "reason"         # Visit reason
+    GDPR = "gdpr"             # GDPR consent
     CONFIRM = "confirm"       # Confirmation
 
 
@@ -164,6 +165,7 @@ def blank_unified_state() -> Dict[str, Any]:
             "phone": None,
             "email": None,
             "reason": None,
+            "gdpr_consent": None,
         },
         "interrupt_stack": [],
         "context": {},

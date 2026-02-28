@@ -901,8 +901,8 @@
             <input type="date" id="new-table-date" required>
           </div>
           <div class="form-group">
-            <label>Čas termina</label>
-            <input type="time" id="new-table-time">
+            <label>Čas termina *</label>
+            <input type="time" id="new-table-time" required>
           </div>
           <div class="form-group">
             <label>Časovno okno</label>
@@ -954,6 +954,12 @@
         <div class="form-group" style="margin-top:12px;">
           <label>Opombe (posebnosti, zdravila, želje)</label>
           <textarea id="new-table-special-needs"></textarea>
+        </div>
+        <div class="form-group" style="margin-top:12px; background:#f8f6f2; padding:12px; border-radius:8px;">
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.9rem; line-height:1.5;">
+            <input type="checkbox" id="new-table-gdpr" required style="margin-top:3px; width:18px; height:18px;">
+            <span>Strinjam se z uporabo posredovanih osebnih podatkov za namene naročanja na zdravstvene storitve v skladu z Uredbo GDPR.</span>
+          </label>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn secondary" onclick="closeNewTable()">Prekliči</button>
@@ -2646,6 +2652,8 @@
         phone: qs('new-table-phone').value,
         birth_date: qs('new-table-birth-date').value,
         special_needs: qs('new-table-special-needs').value,
+        gdpr_consent: qs('new-table-gdpr').checked,
+        gdpr_consent_date: new Date().toISOString(),
         status: 'confirmed',
         reservation_type: 'table',
         source: 'admin',

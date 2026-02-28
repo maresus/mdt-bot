@@ -50,6 +50,12 @@ def get_resume_prompt(state: State, deps: BookingFlowDeps) -> str:
         return "Kakšen je vaš email naslov? (za potrditev termina)"
     if step == "reason":
         return "Kakšen je razlog vašega obiska? (npr. pregled kožnega znamenja, bolečine v kolenu, ...)"
+    if step == "gdpr":
+        return """Za obdelavo vašega naročila potrebujemo vaše soglasje:
+
+**Strinjam se z uporabo posredovanih osebnih podatkov za namene naročanja na zdravstvene storitve v skladu z Uredbo GDPR.**
+
+Ali se strinjate? (DA / NE)"""
     if step == "confirm":
         summary = deps.format_appointment_summary(
             str(state.get("date") or ""),
@@ -102,6 +108,7 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
         has_phone = bool(state.get("phone"))
         has_email = state.get("email") is not None and str(state.get("email")).strip() != ""
         has_reason = bool(state.get("reason"))
+        has_gdpr = bool(state.get("gdpr_consent"))
 
         if has_service and has_date and not has_time:
             deps.set_step(session_id, state, "time")
@@ -111,7 +118,9 @@ def handle_appointment_booking(message: str, session_id: str, deps: BookingFlowD
             deps.set_step(session_id, state, "phone")
         elif has_service and has_date and has_time and has_name and has_phone and not has_email and not has_reason:
             deps.set_step(session_id, state, "email")
-        elif has_service and has_date and has_time and has_name and has_phone and has_reason:
+        elif has_service and has_date and has_time and has_name and has_phone and has_reason and not has_gdpr:
+            deps.set_step(session_id, state, "gdpr")
+        elif has_service and has_date and has_time and has_name and has_phone and has_reason and has_gdpr:
             deps.set_step(session_id, state, "confirm")
         elif has_service and not has_date:
             deps.set_step(session_id, state, "date")
@@ -258,23 +267,40 @@ Kako je vaše ime in priimek?"""
 
     if state.get("step") == "reason" or state.get("reason") is None:
         deps.set_appointment_field(session_id, state, "reason", message.strip())
-        deps.set_step(session_id, state, "confirm")
+        deps.set_step(session_id, state, "gdpr")
 
-        summary = deps.format_appointment_summary(
-            str(state.get("date") or ""),
-            str(state.get("time") or ""),
-            str(state.get("service_type") or ""),
-            str(state.get("name") or ""),
-        )
+        return """Za obdelavo vašega naročila potrebujemo vaše soglasje:
 
-        email_display = state.get("email") or "-"
-        return f"""{summary}
+**Strinjam se z uporabo posredovanih osebnih podatkov za namene naročanja na zdravstvene storitve v skladu z Uredbo GDPR.**
+
+Ali se strinjate? (DA / NE)"""
+
+    if state.get("step") == "gdpr":
+        if deps.is_affirmative(message):
+            from datetime import datetime
+            deps.set_appointment_field(session_id, state, "gdpr_consent", datetime.now().isoformat())
+            deps.set_step(session_id, state, "confirm")
+
+            summary = deps.format_appointment_summary(
+                str(state.get("date") or ""),
+                str(state.get("time") or ""),
+                str(state.get("service_type") or ""),
+                str(state.get("name") or ""),
+            )
+
+            email_display = state.get("email") or "-"
+            return f"""{summary}
 
 Razlog obiska: {state['reason']}
 Telefon: {state['phone']}
 Email: {email_display}
 
 Ali so podatki pravilni? (DA / NE)"""
+        if deps.is_negative(message):
+            deps.clear_appointment_data(session_id, state)
+            deps.reset_unified_state(session_id)
+            return "Brez soglasja GDPR žal ne moremo nadaljevati z naročilom. Če imate vprašanja, nas kontaktirajte po telefonu."
+        return "Prosim odgovorite z DA ali NE."
 
     if state.get("step") == "confirm":
         if deps.is_affirmative(message):
@@ -294,6 +320,7 @@ Ali so podatki pravilni? (DA / NE)"""
                     phone=state["phone"],
                     email=state["email"],
                     reason=state["reason"],
+                    gdpr_consent=state.get("gdpr_consent"),
                     source="chat",
                 )
 
