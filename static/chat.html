@@ -710,7 +710,10 @@
       messageDiv.appendChild(bubble);
 
       messagesContainer.appendChild(messageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      // Scroll to user message so it stays at top - user scrolls down to read response
+      if (type === 'user') {
+        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
       localStorage.setItem("last_chat_activity", Date.now().toString());
 
@@ -742,7 +745,7 @@
       typingDiv.appendChild(avatar);
       typingDiv.appendChild(indicator);
       messagesContainer.appendChild(typingDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      // Don't scroll - user message stays visible at top
     }
 
     // Hide typing indicator
@@ -882,22 +885,8 @@
 
     // Show welcome message
     function showWelcome() {
-      const welcomeHTML = `
-        <div class="welcome-message">
-          <h3>Pozdravljeni v Zdravstvenem centru! </h3>
-          <p style="margin-bottom: 12px;">Sem vaš digitalni asistent. Pomagam vam z:</p>
-          <ul>
-            <li>Naročanje na preglede in posege</li>
-            <li>Informacije o storitvah in cenikih</li>
-            <li>Delovni čas in kontaktne informacije</li>
-            <li>Odgovori na splošna vprašanja</li>
-          </ul>
-          <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
-             Uporabite hitre akcije spodaj ali preprosto napišite vprašanje.
-          </p>
-        </div>
-      `;
-      messagesContainer.innerHTML = welcomeHTML;
+      messagesContainer.innerHTML = '';
+      addMessage('Pozdravljeni! Kako vam lahko pomagam?', 'bot');
     }
 
     // Event Listeners
