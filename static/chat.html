@@ -740,6 +740,8 @@
       return text;
     }
 
+    let lastUserMsg = null;
+
     // Add message to chat
     function addMessage(text, type = 'bot', metadata = null) {
       const messageDiv = document.createElement('div');
@@ -757,10 +759,16 @@
       messageDiv.appendChild(bubble);
 
       messagesContainer.appendChild(messageDiv);
-      // Scroll to user message so it stays at top - user scrolls down to read response
+
       if (type === 'user') {
-        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        lastUserMsg = messageDiv;
+        // Scroll user message to TOP of messages area
+        messagesContainer.scrollTop = messageDiv.offsetTop;
+      } else if (lastUserMsg) {
+        // Keep user message at top when bot responds
+        messagesContainer.scrollTop = lastUserMsg.offsetTop;
       }
+      updateScrollIndicator();
 
       localStorage.setItem("last_chat_activity", Date.now().toString());
 
