@@ -156,6 +156,7 @@
       flex: 1;
       overflow-y: auto;
       padding: 24px;
+      position: relative;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -177,6 +178,35 @@
 
     .messages-container::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 36px;
+      background: #2d3e2f;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+    .scroll-indicator.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .scroll-indicator svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
     }
 
     /* Message Bubbles */
@@ -602,8 +632,13 @@
       </div>
 
       <!-- Messages -->
-      <div class="messages-container" id="messagesContainer">
-        <!-- Messages will be added here -->
+      <div class="messages-wrapper" style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0;">
+        <div class="messages-container" id="messagesContainer">
+          <!-- Messages will be added here -->
+        </div>
+        <div id="scrollIndicator" class="scroll-indicator">
+          <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </div>
       </div>
 
       <!-- Input Area -->
@@ -659,6 +694,18 @@
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
     const newSessionBtn = document.getElementById('newSessionBtn');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    // Scroll indicator logic
+    function updateScrollIndicator() {
+      const threshold = 50;
+      const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+      scrollIndicator.classList.toggle("visible", !isNearBottom);
+    }
+    messagesContainer.addEventListener("scroll", updateScrollIndicator);
+    scrollIndicator.addEventListener("click", () => {
+      messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: "smooth" });
+    });
 
     messageInput.addEventListener('focus', () => {
       setTimeout(() => {
