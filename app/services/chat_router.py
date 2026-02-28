@@ -561,6 +561,11 @@ def handle_unified_routing(
 
         if is_negative(message):
             state_mgr.clear_context_key("awaiting_specialist_prompt")
+            services = get_services(clinic_id=clinic_id)
+            service_names = [info["name"].lower() for info in services.values() if isinstance(info, dict) and info.get("name")]
+            if service_names:
+                services_text = ", ".join(service_names[:-1]) + f" ali {service_names[-1]}" if len(service_names) > 1 else service_names[0]
+                return f"V redu. Če si premislite, lahko napišete: {services_text}."
             return "V redu. Če si premislite, lahko napišete: ortoped, dermatolog ali okulist."
 
     if awaiting_specialist_choice and not is_in_flow(session_id):
@@ -573,9 +578,21 @@ def handle_unified_routing(
         if is_negative(message):
             state_mgr.clear_context_key("awaiting_specialist_choice")
             return "V redu. Če si premislite, sem tukaj."
+        # Detect "which specialists?" questions and provide full list
+        msg_lower = message.lower()
+        is_asking_list = any(kw in msg_lower for kw in ["kateri", "katere", "na voljo", "ponujate", "imate", "seznam"])
+        services = get_services(clinic_id=clinic_id)
+        service_names = [info["name"] for info in services.values() if isinstance(info, dict) and info.get("name")]
+        if is_asking_list and service_names:
+            services_text = ", ".join(service_names[:-1]) + f" in {service_names[-1]}" if len(service_names) > 1 else service_names[0] if service_names else ""
+            return f"V našem centru nudimo: {services_text}.\n\nKaterega izberete?"
         data = _specialist_quick_replies(clinic_id=clinic_id)
         if data:
             state_mgr.set_context_value("ui_override", {"type": "quick_replies", "data": data})
+        # Build dynamic specialist list
+        if service_names:
+            specialists_text = ", ".join(service_names[:-1]) + f" ali {service_names[-1]}" if len(service_names) > 1 else service_names[0] if service_names else ""
+            return f"Izberite specialista: {specialists_text}."
         return "Izberite specialista: dermatolog, ortoped ali okulist."
 
     # Keep unified state in sync with legacy appointment state.
