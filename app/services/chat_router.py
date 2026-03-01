@@ -61,6 +61,13 @@ from app.services.routing.symptom_general_handler import (
     should_handle_general_symptom_message,
     build_general_symptom_clarify_reply,
 )
+from app.services.routing.question_intent_guard import (
+    looks_like_waiting_time_question,
+    looks_like_service_provider_question,
+    looks_like_booking_push_message,
+    build_waiting_time_reply,
+    build_service_provider_reply,
+)
 from app.services.routing.state_manager import ConversationTracker, SimpleCache
 from app.services.routing.interrupt_handler import build_interrupt_response, build_resume_prompt
 from app.services.routing.advice import advice_only, advice_only_headache
@@ -745,6 +752,27 @@ def handle_unified_routing(
     ):
         triage_fallback = _quick_triage_fallback(message, clinic_id=clinic_id)
         return build_general_symptom_clarify_reply(triage_fallback=triage_fallback)
+
+    # Waiting-time questions should not be misrouted into booking service-selection.
+    if not is_in_flow(session_id) and looks_like_waiting_time_question(message):
+        waiting_service = decision.service_type or suggested_service or extract_service_type(message, clinic_id=clinic_id)
+        return build_waiting_time_reply(waiting_service)
+
+    # Service-provider questions (e.g. "kdo opravlja dermatološki pregled") should return info, not booking start.
+    if (
+        not is_in_flow(session_id)
+        and decision.service_type
+        and looks_like_service_provider_question(message)
+        and not looks_like_booking_push_message(message)
+    ):
+        info = get_service_info(decision.service_type.lower(), clinic_id=clinic_id)
+        if info:
+            return build_service_provider_reply(
+                service_type=decision.service_type,
+                service_name=str(info.get("name") or decision.service_type),
+                duration_minutes=info.get("duration_minutes"),
+                price_range=info.get("price_range"),
+            )
 
     # Handle BOOKING_APPOINTMENT intent
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:

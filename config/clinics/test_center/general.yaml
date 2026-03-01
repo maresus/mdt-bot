@@ -1,7 +1,10 @@
 version: 1
 messages:
   greeting:
-    text: "Pozdravljeni! Kako vam lahko pomagam?"
+    variants:
+      - "Pozdravljeni! Kako vam lahko pomagam?"
+      - "Pozdravljeni. Kako vam lahko danes pomagam?"
+      - "Dober dan. Povejte, kako vam lahko pomagam."
 
   goodbye:
     text: "Hvala za zaupanje. Lep dan!"
@@ -10,7 +13,10 @@ messages:
     text: "Oprostite, tega nisem razumel. Lahko vprašanje preoblikujete?"
 
   help_prompt:
-    text: "Kako vam lahko pomagam?"
+    variants:
+      - "Kako vam lahko pomagam?"
+      - "Kaj vas danes zanima?"
+      - "Povejte, kako vam lahko pomagam naprej."
 
   more_info_label:
     text: "Več informacij:"
