@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 # CONFIGURATION (via environment variables)
 # ─────────────────────────────────────────────────────────────────────────────
 
-OOD_HARD_ENABLED = os.getenv("OOD_HARD_ENABLED", "true").lower() == "true"
-OOD_MEDICAL_ENABLED = os.getenv("OOD_MEDICAL_ENABLED", "true").lower() == "true"
-OOD_SOFT_ENABLED = os.getenv("OOD_SOFT_ENABLED", "true").lower() == "true"
+OOD_HARD_ENABLED = os.getenv("OOD_HARD_ENABLED", "false").lower() == "true"
+OOD_MEDICAL_ENABLED = os.getenv("OOD_MEDICAL_ENABLED", "false").lower() == "true"
+OOD_SOFT_ENABLED = os.getenv("OOD_SOFT_ENABLED", "false").lower() == "true"
 OOD_SOFT_DRY_RUN = os.getenv("OOD_SOFT_DRY_RUN", "true").lower() == "true"
 OOD_THRESHOLD = max(0.0, min(1.0, float(os.getenv("OOD_THRESHOLD", "0.45"))))
 OOD_LOG_SAMPLES = os.getenv("OOD_LOG_SAMPLES", "true").lower() == "true"
