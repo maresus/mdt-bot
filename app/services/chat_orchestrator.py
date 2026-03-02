@@ -12,6 +12,7 @@ from app.services.fallback_pipeline import (
     handle_price_followup,
     resolve_response_fallback,
 )
+from app.services.routing.ood_policy import check_ood as ood_check
 
 
 def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any) -> ChatResponse:
@@ -79,6 +80,25 @@ def process_chat_turn(*, request: ChatRequest, state: dict[str, Any], deps: Any)
         )
         if loop_guard_response is not None:
             return loop_guard_response
+
+        # ── OOD Policy Guard ────────────────────────────────────────────────
+        # Check for out-of-domain messages early in the pipeline
+        unified_state = deps.get_unified_state(session_id)
+        ood_result = ood_check(
+            message,
+            rag_similarity=None,
+            session_data={
+                "flow_type": unified_state.get("flow"),
+                "step": unified_state.get("step"),
+            },
+        )
+        if ood_result.is_ood and ood_result.response:
+            payload = deps.format_response(
+                ood_result.response,
+                state_manager=state_mgr,
+                metadata={"contract_version": "v0.1", "router": "ood_guard", "ood_level": ood_result.level.value},
+            )
+            return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
 
         deps.conversation_tracker.add_message(session_id, message)
 
