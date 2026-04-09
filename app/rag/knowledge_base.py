@@ -503,6 +503,9 @@ Do takrat:
 • Nogo dvignite, ko počivate
 
 Lahko se naročite pri nas na ortopedski pregled. 💪"
+
+PRETEKLI DATUMI: Poznaš današnji datum. Če nekdo omeni datum ki je že minil, ga opozori:
+"⚠️ Ta datum je že minil. Ste morda mislili drug termin?"
 """
 
 
