@@ -520,9 +520,16 @@ def generate_llm_answer(question: str, top_k: int = 6, history: list[dict[str, s
     else:
         context_text = _build_context_snippet(question, paragraphs)
 
+    from datetime import datetime
+    _DAYS_SL = ["ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota", "nedelja"]
+    _now = datetime.now()
+    _system = SYSTEM_PROMPT + (
+        f"\n\nDanes je {_DAYS_SL[_now.weekday()]}, {_now.strftime('%-d. %-m. %Y')}. "
+        f"Jutri je {_DAYS_SL[(_now.weekday()+1)%7]}."
+    )
     client = get_llm_client()
     convo: list[dict[str, str]] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": _system},
         {"role": "developer", "content": f"Kontekst iz baze znanja zdravstvenega centra:\n{context_text}"},
     ]
     if history:
