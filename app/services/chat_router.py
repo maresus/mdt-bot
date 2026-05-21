@@ -496,6 +496,14 @@ def handle_unified_routing(
     unified_state = state_mgr.get_state()
     context = state_mgr.ensure_context()
 
+    # Always redirect booking intent to widget form — no step-by-step flow
+    _quick_booking_check = unified_route(message, state_mgr.get_state())
+    if _quick_booking_check.primary_intent == IntentType.BOOKING_APPOINTMENT:
+        _svc = _quick_booking_check.service_type
+        if _svc:
+            return f"Odlično! Za naročilo na **{_svc}** kliknite gumb 📅 Naroči se spodaj — obrazec je hiter in enostaven."
+        return "Z veseljem! Kliknite gumb **📅 Naroči se** spodaj — izpolnite ime, telefon in storitev, pa vas bomo kontaktirali za potrditev termina."
+
     change_action = detect_appointment_change_request(message)
     if change_action in {"reschedule", "cancel"}:
         contact_text = _get_info_response(INFO_KEY_CONTACT, clinic_id=clinic_id)
@@ -774,29 +782,12 @@ def handle_unified_routing(
                 price_range=info.get("price_range"),
             )
 
-    # Handle BOOKING_APPOINTMENT intent
+    # Handle BOOKING_APPOINTMENT intent — redirect to form button
     if decision.primary_intent == IntentType.BOOKING_APPOINTMENT:
-        if not is_in_flow(session_id):
-            # Start new booking flow
-            service_type = decision.service_type
-            if service_type:
-                state_mgr.transition_to_booking(service_type=service_type, legacy_state=appointment_state)
-                start_flow(session_id, FlowType.APPOINTMENT, FlowStep.DATE)
-                # One-shot booking message may already include date/time
-                # (e.g. "rad bi termin pri dermatologu 26.02 ob 11").
-                if extract_date_from_message(message):
-                    return handle_appointment_booking(message, session_id)
-                return get_response(
-                    "booking.start_with_date",
-                    clinic_id=clinic_id,
-                    service_type=service_type.lower(),
-                )
-            else:
-                state_mgr.transition_to_booking(service_type=None, legacy_state=appointment_state)
-                start_flow(session_id, FlowType.APPOINTMENT, FlowStep.SERVICE)
-                return get_response("booking.start_with_service", clinic_id=clinic_id)
-        # Already in flow - fall back to legacy step handling
-        return None
+        service_type = decision.service_type
+        if service_type:
+            return f"Odlično! Za naročilo na **{service_type}** kliknite gumb 📅 Naroči se spodaj — izpolnite ime, telefon in datum, pa vas bomo kontaktirali za potrditev."
+        return "Z veseljem vam pomagamo z naročilom! Kliknite gumb **📅 Naroči se** spodaj — obrazec je hiter in enostaven."
 
     service_info_reply = handle_service_info_intent(
         intent=decision.primary_intent,
