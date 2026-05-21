@@ -75,7 +75,8 @@
       font-size: 12px;
       font-weight: 600;
     }
-    .stat-badge.pending  { background: var(--warning-light); color: #92400e; }
+    .stat-badge.pending  { background: var(--warning-light); color: #92400e; cursor: pointer; }
+    .stat-badge.pending:hover { filter: brightness(0.95); }
     .stat-badge.today    { background: var(--brand-light);   color: var(--brand-dark); }
     .stat-badge.confirmed { background: var(--success-light); color: #14532d; }
     .header-spacer { flex: 1; }
@@ -240,6 +241,44 @@
       flex-shrink: 0;
     }
     .btn-new:hover { background: var(--brand-dark); }
+
+    /* ── VIEW TOGGLE ── */
+    .view-toggle {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .btn-view {
+      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
+      cursor: pointer; transition: all .15s;
+    }
+    .btn-view.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn-view:hover:not(.active) { background: var(--border); }
+
+    /* ── PENDING LIST ── */
+    .pending-list { display: flex; flex-direction: column; gap: 10px; }
+    .pending-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .pending-card:hover { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-light); }
+    .pending-card .pc-date {
+      min-width: 80px; text-align: center;
+      background: var(--bg); border-radius: 6px; padding: 6px 8px;
+    }
+    .pending-card .pc-date .pc-day { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+    .pending-card .pc-date .pc-mon { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+    .pending-card .pc-date .pc-time { font-size: 12px; font-weight: 600; color: var(--brand); margin-top: 2px; }
+    .pending-card .pc-info { flex: 1; min-width: 0; }
+    .pending-card .pc-name { font-weight: 600; font-size: 14px; }
+    .pending-card .pc-service { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .pending-card .pc-note { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .avail-badge {
+      padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .avail-badge.free { background: var(--success-light); color: #14532d; }
+    .avail-badge.taken { background: var(--danger-light); color: #7f1d1d; }
+    .avail-badge.notime { background: var(--bg); color: var(--muted); }
+    .pc-actions { display: flex; gap: 6px; }
 
     /* ── RIGHT PANEL ── */
     #right-panel {
@@ -664,7 +703,7 @@
     Zdravstveni center Admin
   </div>
   <div class="stat-badges">
-    <span class="stat-badge pending">
+    <span class="stat-badge pending" onclick="setView('pending')" title="Prikaži čakajoče">
       <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#f59e0b"/></svg>
       <span id="stat-pending">0</span> čaka
     </span>
@@ -731,6 +770,10 @@
     <div class="day-header">
       <span class="day-title" id="day-title">Izberite dan v koledarju</span>
       <span class="day-count" id="day-count" style="display:none"></span>
+      <div class="view-toggle" style="margin-left:auto;">
+        <button class="btn-view active" id="btn-view-cal" onclick="setView('calendar')">📅 Koledar</button>
+        <button class="btn-view" id="btn-view-pending" onclick="setView('pending')">⏳ Čakajoči <span id="pending-count-badge"></span></button>
+      </div>
     </div>
     <div id="slots-container">
       <div class="empty-state" id="empty-state">
@@ -741,6 +784,7 @@
         <p>Izberite dan v koledarju</p>
       </div>
       <div id="slots-list" style="display:none"></div>
+      <div id="pending-list-view" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -1176,8 +1220,18 @@ function renderDayView() {
   countEl.style.display = 'inline-block';
   emptyEl.style.display = 'none';
   slotsEl.style.display = 'block';
+  document.getElementById('pending-list-view').style.display = 'none';
 
-  // Map reservations by time
+  // Map ALL reservations (all services) by time for this day — for conflict detection
+  const allDayRes = allReservations.filter(r => toISODate(r.date) === selectedDate);
+  const allResMap = {};
+  allDayRes.forEach(r => {
+    const t = (r.time || '').substring(0,5);
+    if (!allResMap[t]) allResMap[t] = [];
+    allResMap[t].push(r);
+  });
+
+  // Map filtered reservations by time
   const resMap = {};
   dayRes.forEach(r => {
     const t = (r.time || '').substring(0,5);
@@ -1188,23 +1242,29 @@ function renderDayView() {
   slotsEl.innerHTML = '';
   TIME_SLOTS.forEach(slot => {
     const recs = resMap[slot] || [];
+    const allRecs = allResMap[slot] || [];
     if (recs.length > 0) {
+      // Multiple appointments per slot = parallel doctors, show all
       recs.forEach(r => {
-        slotsEl.appendChild(buildSlotRow(slot, r));
+        slotsEl.appendChild(buildSlotRow(slot, r, allRecs.length > 1));
       });
+    } else if (allRecs.length > 0 && svc) {
+      // Other services have this slot but filtered service is free
+      slotsEl.appendChild(buildEmptySlot(slot, true, allRecs.length));
     } else {
-      slotsEl.appendChild(buildEmptySlot(slot));
+      slotsEl.appendChild(buildEmptySlot(slot, false, 0));
     }
   });
 }
 
-function buildSlotRow(slotTime, r) {
+function buildSlotRow(slotTime, r, hasParallel) {
   const row = document.createElement('div');
   row.className = 'slot-row has-appt';
+  const parallelNote = hasParallel ? `<span style="font-size:10px;color:var(--brand);margin-left:6px;">+vzporedno</span>` : '';
   row.innerHTML = `
     <div class="slot-time">${slotTime}</div>
     <div class="slot-info">
-      <div class="slot-name">${esc(r.name || '—')}</div>
+      <div class="slot-name">${esc(r.name || '—')}${parallelNote}</div>
       <div class="slot-service">${esc(r.location || '')}</div>
     </div>
     <div class="slot-actions">
@@ -1218,13 +1278,16 @@ function buildSlotRow(slotTime, r) {
   return row;
 }
 
-function buildEmptySlot(slotTime) {
+function buildEmptySlot(slotTime, otherServicesBooked, count) {
   const row = document.createElement('div');
   row.className = 'slot-row';
+  const hint = otherServicesBooked
+    ? `<span style="font-size:10px;color:var(--muted);margin-left:8px;">${count} drug${count===1?'a':'ih'} storitev</span>`
+    : '';
   row.innerHTML = `
     <div class="slot-time">${slotTime}</div>
     <div class="slot-info">
-      <span class="slot-empty" onclick="openAddModal('${slotTime}')">— prosto —</span>
+      <span class="slot-empty" onclick="openAddModal('${slotTime}')">— prosto —</span>${hint}
     </div>
     <div></div>
   `;
@@ -1477,6 +1540,115 @@ async function submitAdd() {
 }
 
 // ── Service filter change ─────────────────────
+// ── View Mode ─────────────────────────────────
+let currentView = 'calendar'; // 'calendar' | 'pending'
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('btn-view-cal').classList.toggle('active', view === 'calendar');
+  document.getElementById('btn-view-pending').classList.toggle('active', view === 'pending');
+  if (view === 'calendar') {
+    renderDayView();
+  } else {
+    renderPendingList();
+  }
+}
+
+// ── Pending List ──────────────────────────────
+function isSlotTaken(date, time, service) {
+  if (!time) return null; // unknown
+  const slot = time.substring(0, 5);
+  return allReservations.some(r =>
+    toISODate(r.date) === toISODate(date) &&
+    (r.time || '').substring(0, 5) === slot &&
+    r.location === service &&
+    r.status === 'confirmed' &&
+    String(r.id) !== String(editingId)
+  );
+}
+
+function renderPendingList() {
+  const emptyEl = document.getElementById('empty-state');
+  const slotsEl = document.getElementById('slots-list');
+  const pendingEl = document.getElementById('pending-list-view');
+  const titleEl = document.getElementById('day-title');
+  const countEl = document.getElementById('day-count');
+
+  emptyEl.style.display = 'none';
+  slotsEl.style.display = 'none';
+  pendingEl.style.display = 'block';
+
+  const pending = allReservations
+    .filter(r => r.status === 'pending')
+    .sort((a, b) => (toISODate(a.date) || '').localeCompare(toISODate(b.date) || ''));
+
+  titleEl.textContent = 'Čakajoče rezervacije';
+  countEl.textContent = `${pending.length} odprtih`;
+  countEl.style.display = 'inline-block';
+
+  // Update badge
+  const badge = document.getElementById('pending-count-badge');
+  if (badge) badge.textContent = pending.length > 0 ? `(${pending.length})` : '';
+
+  if (pending.length === 0) {
+    pendingEl.innerHTML = `<div class="empty-state" style="display:flex">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <p>Ni čakajočih naročil. Vse je urejeno!</p>
+    </div>`;
+    return;
+  }
+
+  const SL_MONTHS_SHORT = ['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
+  pendingEl.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'pending-list';
+
+  pending.forEach(r => {
+    const iso = toISODate(r.date);
+    let dayNum = '?', monStr = '';
+    if (iso) {
+      const d = new Date(iso + 'T00:00:00');
+      dayNum = d.getDate();
+      monStr = SL_MONTHS_SHORT[d.getMonth()];
+    }
+
+    const taken = iso ? isSlotTaken(iso, r.time, r.location) : null;
+    let availHtml = '';
+    if (taken === null) {
+      availHtml = `<span class="avail-badge notime">brez ure</span>`;
+    } else if (taken) {
+      availHtml = `<span class="avail-badge taken">⚠ zasedeno</span>`;
+    } else {
+      availHtml = `<span class="avail-badge free">✓ prosto</span>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'pending-card';
+    card.innerHTML = `
+      <div class="pc-date">
+        <div class="pc-day">${dayNum}</div>
+        <div class="pc-mon">${monStr}</div>
+        <div class="pc-time">${r.time ? r.time.substring(0,5) : '—'}</div>
+      </div>
+      <div class="pc-info">
+        <div class="pc-name">${esc(r.name || '—')}</div>
+        <div class="pc-service">${esc(r.location || '—')}</div>
+        ${r.phone ? `<div class="pc-note">📞 ${esc(r.phone)}</div>` : ''}
+        ${r.note ? `<div class="pc-note">${esc(r.note)}</div>` : ''}
+      </div>
+      ${availHtml}
+      <div class="pc-actions">
+        <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
+        <button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>
+        <button class="btn-icon btn-reject" onclick="quickReject('${r.id}')">Zavrni</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  pendingEl.appendChild(list);
+}
+
 function onServiceChange() {
   refreshAll();
 }
@@ -1485,7 +1657,15 @@ function onServiceChange() {
 async function refreshAll() {
   await loadReservations();
   renderCalendar();
-  renderDayView();
+  if (currentView === 'pending') {
+    renderPendingList();
+  } else {
+    renderDayView();
+  }
+  // Update pending count badge
+  const pending = allReservations.filter(r => r.status === 'pending').length;
+  const badge = document.getElementById('pending-count-badge');
+  if (badge) badge.textContent = pending > 0 ? `(${pending})` : '';
 }
 
 // ── Toast ─────────────────────────────────────
