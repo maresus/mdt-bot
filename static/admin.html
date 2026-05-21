@@ -206,22 +206,18 @@
       background: var(--brand) !important;
       color: #fff !important;
     }
-    .cal-day.selected .dot { background: #fff !important; }
-    .cal-dots {
-      display: flex;
-      gap: 2px;
-      justify-content: center;
-      min-height: 6px;
+    .cal-day.selected .cal-count { background: rgba(255,255,255,0.3) !important; color: #fff !important; }
+    .cal-count {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 999px;
+      line-height: 1.4;
+      min-width: 16px;
+      text-align: center;
     }
-    .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-    }
-    .dot.pending  { background: var(--warning); }
-    .dot.confirmed { background: var(--success); }
-    .dot.processing { background: var(--brand); }
-    .dot.rejected { background: var(--muted); }
+    .cal-count.has-pending { background: var(--warning-light); color: #92400e; }
+    .cal-count.all-confirmed { background: var(--success-light); color: #14532d; }
 
     .btn-new {
       margin: 0 16px 16px;
@@ -366,6 +362,32 @@
       padding: 2px 0;
     }
     .slot-empty:hover { color: var(--brand); }
+
+    /* Grouped slot (vzporedni termini) */
+    .slot-group {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 4px; overflow: hidden;
+    }
+    .slot-group-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px 4px;
+      border-bottom: 1px solid var(--bg);
+    }
+    .slot-group-time { font-size: 13px; font-weight: 700; color: var(--text); min-width: 44px; }
+    .slot-group-label { font-size: 11px; color: var(--muted); }
+    .slot-sub {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 12px; border-bottom: 1px solid var(--bg);
+      transition: background .1s;
+    }
+    .slot-sub:last-child { border-bottom: none; }
+    .slot-sub:hover { background: var(--bg); }
+    .slot-sub-info { flex: 1; min-width: 0; }
+    .slot-sub-name { font-weight: 600; font-size: 13px; }
+    .slot-sub-service { font-size: 11px; color: var(--muted); }
+    .slot-sub-actions { display: flex; gap: 4px; align-items: center; }
+
     .slot-actions {
       display: flex;
       gap: 4px;
@@ -1156,18 +1178,15 @@ function renderCalendar() {
     numEl.textContent = d;
     el.appendChild(numEl);
 
-    // Dots
-    const dotsEl = document.createElement('div');
-    dotsEl.className = 'cal-dots';
-    if (dayMap[iso]) {
-      const statuses = [...new Set(dayMap[iso])].slice(0, 3);
-      statuses.forEach(st => {
-        const dot = document.createElement('span');
-        dot.className = `dot ${st}`;
-        dotsEl.appendChild(dot);
-      });
+    // Count badge instead of dots
+    if (dayMap[iso] && dayMap[iso].length > 0) {
+      const statuses = dayMap[iso];
+      const hasPending = statuses.some(s => s === 'pending');
+      const countEl = document.createElement('span');
+      countEl.className = `cal-count ${hasPending ? 'has-pending' : 'all-confirmed'}`;
+      countEl.textContent = statuses.length;
+      el.appendChild(countEl);
     }
-    el.appendChild(dotsEl);
 
     el.onclick = () => selectDay(iso);
     grid.appendChild(el);
@@ -1243,16 +1262,15 @@ function renderDayView() {
   TIME_SLOTS.forEach(slot => {
     const recs = resMap[slot] || [];
     const allRecs = allResMap[slot] || [];
-    if (recs.length > 0) {
-      // Multiple appointments per slot = parallel doctors, show all
-      recs.forEach(r => {
-        slotsEl.appendChild(buildSlotRow(slot, r, allRecs.length > 1));
-      });
-    } else if (allRecs.length > 0 && svc) {
-      // Other services have this slot but filtered service is free
-      slotsEl.appendChild(buildEmptySlot(slot, true, allRecs.length));
+    if (recs.length === 0) {
+      // Empty slot — if other services occupy it, note how many
+      const othersCount = svc ? allRecs.length : 0;
+      slotsEl.appendChild(buildEmptySlot(slot, othersCount > 0, othersCount));
+    } else if (recs.length === 1) {
+      slotsEl.appendChild(buildSlotRow(slot, recs[0], false));
     } else {
-      slotsEl.appendChild(buildEmptySlot(slot, false, 0));
+      // Multiple appointments at same time (parallel doctors) — group in one block
+      slotsEl.appendChild(buildGroupedSlot(slot, recs));
     }
   });
 }
@@ -1292,6 +1310,35 @@ function buildEmptySlot(slotTime, otherServicesBooked, count) {
     <div></div>
   `;
   return row;
+}
+
+function buildGroupedSlot(slotTime, recs) {
+  const wrap = document.createElement('div');
+  wrap.className = 'slot-group';
+  const header = document.createElement('div');
+  header.className = 'slot-group-header';
+  header.innerHTML = `
+    <span class="slot-group-time">${slotTime}</span>
+    <span class="slot-group-label">${recs.length} vzporednih terminov</span>`;
+  wrap.appendChild(header);
+  recs.forEach(r => {
+    const sub = document.createElement('div');
+    sub.className = 'slot-sub';
+    sub.innerHTML = `
+      <div class="slot-sub-info">
+        <div class="slot-sub-name">${esc(r.name || '—')}</div>
+        <div class="slot-sub-service">${esc(r.location || '')}</div>
+      </div>
+      <div class="slot-sub-actions">
+        <span class="badge ${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
+        <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
+        ${r.status !== 'confirmed' ? `<button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>` : ''}
+        ${r.status !== 'rejected'  ? `<button class="btn-icon btn-reject"  onclick="quickReject('${r.id}')">Zavrni</button>`  : ''}
+        <button class="btn-icon btn-delete" onclick="quickDelete('${r.id}')">&#128465;</button>
+      </div>`;
+    wrap.appendChild(sub);
+  });
+  return wrap;
 }
 
 // ── Quick Actions ─────────────────────────────
