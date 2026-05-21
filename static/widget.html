@@ -164,6 +164,77 @@
       color: var(--muted); background: var(--bg);
     }
     .powered a { color: var(--accent); text-decoration: none; }
+
+    /* Booking form overlay */
+    .booking-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none; align-items: flex-end; justify-content: center;
+      z-index: 100;
+    }
+    .booking-overlay.open { display: flex; }
+    .booking-sheet {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 18px 28px;
+      width: 100%; max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slide-up 0.25s ease;
+    }
+    @keyframes slide-up {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .sheet-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .sheet-header h2 { font-size: 1rem; font-weight: 700; }
+    .sheet-close {
+      background: none; border: none; font-size: 1.2rem;
+      cursor: pointer; color: var(--muted); padding: 4px;
+    }
+    .form-field { margin-bottom: 12px; }
+    .form-field label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      color: var(--muted); margin-bottom: 4px;
+    }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-family: inherit; font-size: 0.88rem;
+      background: var(--bg); outline: none;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-field textarea { min-height: 70px; resize: none; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .submit-btn {
+      width: 100%; padding: 12px;
+      background: var(--green); color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; margin-top: 6px;
+    }
+    .submit-btn:hover { filter: brightness(0.95); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .form-success {
+      text-align: center; padding: 20px 10px;
+      display: none;
+    }
+    .form-success .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .form-success p { font-size: 0.9rem; color: var(--muted); }
+
+    .narocise-btn {
+      padding: 8px 16px; border-radius: 20px;
+      background: var(--green); color: #fff;
+      border: none; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .narocise-btn:hover { filter: brightness(0.9); }
   </style>
 </head>
 <body>
@@ -181,10 +252,13 @@
     </div>
     <div class="messages" id="messages"></div>
     <div class="quick-btns" id="quickBtns">
-        <button class="quick-btn" data-msg="Kako poteka naročanje na pregled?">Naročanje</button>
+      <button class="quick-btn" data-msg="Kako poteka naročanje na pregled?">Naročanje</button>
       <button class="quick-btn" data-msg="Imate cenik storitev?">Cenik</button>
       <button class="quick-btn" data-msg="Kje vas najdem?">Kontakt</button>
       <button class="quick-btn" data-msg="Katere preglede in posege izvajate?">Pregledi</button>
+    </div>
+    <div style="padding:8px 16px;background:var(--card);border-top:1px solid var(--border);flex-shrink:0;">
+      <button class="narocise-btn" id="narociseBtn" style="width:100%;justify-content:center;padding:10px 16px;font-size:0.9rem;">📅 Naroči se na pregled</button>
     </div>
     <div class="input-area">
       <textarea id="input" placeholder="Napišite sporočilo..." rows="1"></textarea>
@@ -193,6 +267,59 @@
       </button>
     </div>
     <div class="powered">Ustvaril zdravstveni center</div>
+  </div>
+
+  <!-- Booking overlay -->
+  <div class="booking-overlay" id="bookingOverlay">
+    <div class="booking-sheet">
+      <div class="sheet-header">
+        <h2>📅 Naročite se na pregled</h2>
+        <button class="sheet-close" id="closeSheet">✕</button>
+      </div>
+      <div id="bookingForm">
+        <div class="form-row">
+          <div class="form-field">
+            <label>Ime in priimek *</label>
+            <input type="text" id="bf-name" placeholder="Janez Novak" required />
+          </div>
+          <div class="form-field">
+            <label>Telefon *</label>
+            <input type="tel" id="bf-phone" placeholder="041 123 456" required />
+          </div>
+        </div>
+        <div class="form-field">
+          <label>E-pošta</label>
+          <input type="email" id="bf-email" placeholder="ime@email.com" />
+        </div>
+        <div class="form-field">
+          <label>Storitev *</label>
+          <select id="bf-service">
+            <option value="">— Izberite storitev —</option>
+            <option value="Dermatolog">Dermatolog</option>
+            <option value="Ortoped">Ortoped</option>
+            <option value="Okulist">Okulist</option>
+            <option value="Laserski poseg">Laserski poseg</option>
+            <option value="Estetski poseg">Estetski poseg</option>
+            <option value="Fizioterapija">Fizioterapija</option>
+            <option value="Kozmetika">Kozmetika</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Želeni datum</label>
+          <input type="date" id="bf-date" />
+        </div>
+        <div class="form-field">
+          <label>Opomba (opcijsko)</label>
+          <textarea id="bf-note" placeholder="Opišite težavo ali dodajte posebne zahteve…"></textarea>
+        </div>
+        <button class="submit-btn" id="submitBooking">Pošlji prijavo</button>
+      </div>
+      <div class="form-success" id="formSuccess">
+        <div class="icon">✅</div>
+        <h3 style="margin-bottom:8px">Hvala za prijavo!</h3>
+        <p>Kontaktirali vas bomo v kratkem za potrditev termina.</p>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -418,6 +545,92 @@
     if (!hasHistory) {
       addMessageToDOM('Pozdravljeni! Kako vam lahko pomagam?', 'bot', false);
     }
+
+    // Booking form logic
+    const overlay = document.getElementById('bookingOverlay');
+    const narociseBtn = document.getElementById('narociseBtn');
+    const closeSheet = document.getElementById('closeSheet');
+    const submitBooking = document.getElementById('submitBooking');
+    const formSuccess = document.getElementById('formSuccess');
+    const bookingForm = document.getElementById('bookingForm');
+
+    function openBookingForm(preselect) {
+      overlay.classList.add('open');
+      if (preselect) {
+        const sel = document.getElementById('bf-service');
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value.toLowerCase().includes(preselect.toLowerCase())) {
+            sel.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      // Set min date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('bf-date').min = today;
+    }
+
+    function closeBookingForm() {
+      overlay.classList.remove('open');
+    }
+
+    narociseBtn.addEventListener('click', () => openBookingForm());
+    closeSheet.addEventListener('click', closeBookingForm);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeBookingForm(); });
+
+    submitBooking.addEventListener('click', async () => {
+      const name = document.getElementById('bf-name').value.trim();
+      const phone = document.getElementById('bf-phone').value.trim();
+      const service = document.getElementById('bf-service').value;
+
+      if (!name || !phone || !service) {
+        alert('Prosimo izpolnite ime, telefon in storitev.');
+        return;
+      }
+
+      submitBooking.disabled = true;
+      submitBooking.textContent = 'Pošiljam…';
+
+      const payload = {
+        message: `Naročilo za pregled: ${service}. Ime: ${name}, tel: ${phone}` +
+          (document.getElementById('bf-email').value ? `, email: ${document.getElementById('bf-email').value}` : '') +
+          (document.getElementById('bf-date').value ? `, datum: ${document.getElementById('bf-date').value}` : '') +
+          (document.getElementById('bf-note').value ? `, opomba: ${document.getElementById('bf-note').value}` : ''),
+        session_id: sessionId,
+        booking_form: {
+          name,
+          phone,
+          email: document.getElementById('bf-email').value.trim(),
+          service,
+          date: document.getElementById('bf-date').value,
+          note: document.getElementById('bf-note').value.trim(),
+        }
+      };
+
+      try {
+        await fetch('/chat/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      } catch(e) {}
+
+      bookingForm.style.display = 'none';
+      formSuccess.style.display = 'block';
+
+      addMessageToDOM(`Naročen/-a za: ${service}\nIme: ${name} | Tel: ${phone}`, 'user');
+      addMessageToDOM('Hvala za prijavo! Kontaktirali vas bomo za potrditev termina.', 'bot');
+
+      setTimeout(() => {
+        closeBookingForm();
+        bookingForm.style.display = 'block';
+        formSuccess.style.display = 'none';
+        submitBooking.disabled = false;
+        submitBooking.textContent = 'Pošlji prijavo';
+        document.getElementById('bf-name').value = '';
+        document.getElementById('bf-phone').value = '';
+        document.getElementById('bf-email').value = '';
+        document.getElementById('bf-service').selectedIndex = 0;
+        document.getElementById('bf-date').value = '';
+        document.getElementById('bf-note').value = '';
+      }, 3000);
+    });
   </script>
 </body>
 </html>
