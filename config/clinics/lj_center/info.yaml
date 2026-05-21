@@ -64,6 +64,28 @@ facts:
       - |
         Ordinacija obratuje od ponedeljka do petka: 08:00–18:00.
 
+  postopek_narocanja:
+    priority: fast
+    category: NAROCANJE_INFO
+    keywords:
+      - kako poteka naročanje
+      - kako se naročim
+      - kako naročim
+      - postopek naročanja
+      - kako rezerviram
+      - kako naroči
+      - postopek
+    response:
+      - |
+        Naročanje je enostavno — kliknite gumb **📅 Naroči se** spodaj.
+
+        Izpolnite ime, telefon in vrsto pregleda (dermatolog, ortoped, okulist...).
+        Kontaktirali vas bomo za potrditev termina.
+      - |
+        Kliknite **📅 Naroči se** v spodnjem delu pogovora.
+
+        Potrebujemo vaše ime, telefon in vrsto pregleda — kontaktirali vas bomo za potrditev.
+
   parkiranje:
     priority: medium
     category: PARKIRANJE_INFO
