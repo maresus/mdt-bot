@@ -945,6 +945,29 @@ async def chat(request: ChatRequest) -> ChatResponse:
         normalize_user_message=normalize_user_message,
     )
 
+    # Handle booking form submission before normal chat processing
+    if request.booking_form and (request.booking_form.name or request.booking_form.phone):
+        bf = request.booking_form
+        try:
+            rs = ReservationService()
+            rs.create_reservation(
+                date=bf.date or "",
+                people=1,
+                reservation_type="appointment",
+                source="widget_form",
+                name=bf.name,
+                phone=bf.phone,
+                email=bf.email,
+                note=bf.note,
+                service_type=bf.service,
+            )
+        except Exception:
+            pass
+        return ChatResponse(
+            reply="Hvala za prijavo! Kontaktirali vas bomo za potrditev termina.",
+            session_id=request.session_id,
+        )
+
     response = process_chat_turn(request=request, state=state, deps=deps)
 
     # Propagate potentially reassigned state holders.

@@ -71,9 +71,8 @@ def widget_ui() -> HTMLResponse:
 def admin_panel() -> HTMLResponse:
     """
     Admin panel za upravljanje terminov.
-    Krajša pot do /static/admin_new.html
     """
-    html_path = Path("static/admin_new.html")
+    html_path = Path("static/admin.html")
     if not html_path.exists():
         return HTMLResponse(
             "<h1>Admin panel ni najden.</h1>",
