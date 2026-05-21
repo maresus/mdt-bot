@@ -8,16 +8,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap');
     :root {
-      --bg: #faf8f5;
-      --card: #fffaf3;
-      --text: #2f302b;
-      --muted: #6b5f4e;
-      --border: #e4dfd7;
-      --green: #2d3e2f;
-      --accent: #c19a6b;
-      --bot-bg: #f1ece4;
+      --bg: #f0f5ff;
+      --card: #f8faff;
+      --text: #1e293b;
+      --muted: #4a5b8a;
+      --border: #c7d7f5;
+      --green: #1a56db;
+      --accent: #2563eb;
+      --bot-bg: #e8f0fe;
       --user-bg: #ffffff;
-      --bot-text: #2f302b;
+      --bot-text: #1e293b;
     }
     html, body {
       height: 100%;
@@ -39,7 +39,7 @@
     }
     .header-icon {
       width: 36px; height: 36px;
-      background: #e5f3ea;
+      background: #dbeafe;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
@@ -57,8 +57,8 @@
       cursor: pointer;
     }
     .clear-btn.secondary {
-      background: #f1ede5;
-      color: #4b3a28;
+      background: #e0eaff;
+      color: #1e3a6e;
     }
     .clear-btn:hover { filter: brightness(0.95); }
     .messages {
@@ -87,7 +87,7 @@
       gap: 6px;
     }
     .ui-actions .ui-btn {
-      background: #fff5e6;
+      background: #dbeafe;
       border: 1px solid var(--border);
       color: var(--text);
       padding: 6px 10px;
@@ -128,7 +128,7 @@
     }
     .quick-btns {
       display: flex; flex-wrap: wrap; gap: 6px;
-      padding: 0 16px 12px; background: #fff;
+      padding: 0 16px 12px; background: var(--card);
     }
     .quick-btn {
       padding: 6px 12px; border-radius: 20px;
@@ -136,7 +136,7 @@
       font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
     }
     .quick-btn:hover {
-      background: #fff5e6; color: var(--text); border-color: var(--accent);
+      background: #dbeafe; color: var(--text); border-color: var(--accent);
     }
     .input-area {
       padding: 12px 16px; background: var(--card);
@@ -240,7 +240,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="header-icon">🏡</div>
+      <div class="header-icon">🏥</div>
       <div class="header-text">
         <h1>Zdravstveni center</h1>
         <p>Vprašajte me o pregledih in naročanju</p>
@@ -257,8 +257,8 @@
       <button class="quick-btn" data-msg="Kje vas najdem?">Kontakt</button>
       <button class="quick-btn" data-msg="Katere preglede in posege izvajate?">Pregledi</button>
     </div>
-    <div id="narociseBar" style="padding:10px 16px;background:#f7f4ef;border-top:1px solid #e4dfd7;flex-shrink:0;display:block;">
-      <button class="narocise-btn" id="narociseBtn" style="width:100%;justify-content:center;padding:12px 16px;font-size:0.92rem;background:#2d6a4f;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;">📅 Naroči se na pregled</button>
+    <div id="narociseBar" style="padding:10px 16px;background:#e8f0fe;border-top:1px solid #c7d7f5;flex-shrink:0;display:block;">
+      <button class="narocise-btn" id="narociseBtn" style="width:100%;justify-content:center;padding:12px 16px;font-size:0.92rem;background:#1a56db;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;">📅 Naroči se na pregled</button>
     </div>
     <div class="input-area">
       <textarea id="input" placeholder="Napišite sporočilo..." rows="1"></textarea>
@@ -304,9 +304,15 @@
             <option value="Kozmetika">Kozmetika</option>
           </select>
         </div>
-        <div class="form-field">
-          <label>Želeni datum</label>
-          <input type="date" id="bf-date" />
+        <div class="form-row">
+          <div class="form-field">
+            <label>Želeni datum</label>
+            <input type="date" id="bf-date" />
+          </div>
+          <div class="form-field">
+            <label>Želena ura</label>
+            <input type="time" id="bf-time" min="08:00" max="18:00" />
+          </div>
         </div>
         <div class="form-field">
           <label>Opomba (opcijsko)</label>
@@ -591,10 +597,12 @@
       submitBooking.disabled = true;
       submitBooking.textContent = 'Pošiljam…';
 
+      const bfTime = document.getElementById('bf-time').value;
       const payload = {
         message: `Naročilo za pregled: ${service}. Ime: ${name}, tel: ${phone}` +
           (document.getElementById('bf-email').value ? `, email: ${document.getElementById('bf-email').value}` : '') +
           (document.getElementById('bf-date').value ? `, datum: ${document.getElementById('bf-date').value}` : '') +
+          (bfTime ? `, ura: ${bfTime}` : '') +
           (document.getElementById('bf-note').value ? `, opomba: ${document.getElementById('bf-note').value}` : ''),
         session_id: sessionId,
         booking_form: {
@@ -602,7 +610,7 @@
           phone,
           email: document.getElementById('bf-email').value.trim(),
           service,
-          date: document.getElementById('bf-date').value,
+          date: document.getElementById('bf-date').value + (bfTime ? ` ${bfTime}` : ''),
           note: document.getElementById('bf-note').value.trim(),
         }
       };
@@ -628,6 +636,7 @@
         document.getElementById('bf-email').value = '';
         document.getElementById('bf-service').selectedIndex = 0;
         document.getElementById('bf-date').value = '';
+        document.getElementById('bf-time').value = '';
         document.getElementById('bf-note').value = '';
       }, 3000);
     });
