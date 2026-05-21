@@ -3,2621 +3,1528 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zdravstveni center – Naročila pregledov</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Zdravstveni center – Admin</title>
   <style>
     :root {
-      --brand: #7b5e3b;
-      --bg: #f5f4f1;
-      --card: #fff;
-      --muted: #7a7a7a;
-      --border: #e6e2da;
-      --shadow: 0 10px 30px rgba(0,0,0,0.06);
-      --radius: 14px;
+      --brand: #1a56db;
+      --brand-light: #dbeafe;
+      --brand-dark: #1e40af;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --info: #0891b2;
+      --info-light: #cffafe;
+      --border: #e5e7eb;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
-      color: #1b1f1a;
-      line-height: 1.6;
-      padding-bottom: 32px;
-    }
-    .page {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 20px;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 18px;
-    }
-    .title { font-size: 1.3rem; font-weight: 700; display: flex; gap: 10px; align-items: center; }
-    .subtitle { color: var(--muted); font-size: 0.95rem; }
-    .chip { background: #f2ede6; color: #5b4327; padding: 6px 10px; border-radius: 999px; font-weight: 600; }
-    .btn {
-      border: none;
-      cursor: pointer;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 600;
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      transition: transform 0.05s ease, box-shadow 0.2s ease;
-      background: var(--brand);
-      color: #fff;
-      box-shadow: 0 8px 20px rgba(123,94,59,0.25);
-    }
-    .btn.secondary { background: #f1ede5; color: #4b3a28; box-shadow: none; }
-    .btn:hover { transform: translateY(-1px); }
-
-    /* Stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .stat {
-      background: var(--card);
-      padding: 14px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 6px;
-    }
-    .stat .label { color: var(--muted); font-size: 0.9rem; }
-    .stat .value { font-size: 1.8rem; font-weight: 700; color: var(--brand); }
-    .stat .hint { color: var(--muted); font-size: 0.85rem; }
-    .list-card { margin-bottom: 16px; }
-    .list-card ol { padding-left: 18px; display: grid; gap: 6px; }
-    .list-card li { font-size: 0.95rem; }
-    .list-card .count { color: var(--muted); font-size: 0.85rem; }
-
-    /* Filters */
-    .filters {
-      background: var(--card);
-      padding: 14px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .filter-row {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-    select, input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
+      color: var(--text);
       font-size: 14px;
+      line-height: 1.5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    /* Date grouping */
-    .date-group { margin-bottom: 12px; border: 1px solid #e6e2da; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
-    .date-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #faf8f4; cursor: pointer; font-weight: 600; }
-    .date-header:hover { background: #f5f2ec; }
-    .date-count { color: #7a7a7a; font-weight: 400; }
-    .date-toggle { margin-left: auto; transition: transform 0.2s; }
-    .date-toggle.collapsed { transform: rotate(-90deg); }
-    .date-reservations { padding: 8px; }
-    .date-reservations.hidden { display: none; }
-    .reservation-row {
-      display: grid;
-      grid-template-columns: 60px 110px 150px 80px 200px 120px 1fr 120px 140px;
-      gap: 8px;
+    /* ── HEADER ── */
+    #header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
       align-items: center;
-      padding: 10px 12px;
-      border-bottom: 1px solid #f0ede8;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+      z-index: 10;
     }
-    .reservation-row:last-child { border-bottom: none; }
-    .reservation-row:hover { background: #f9f7f2; }
-    .reservation-row.continuation { background: #faf9f7; border-left: 3px solid #e0dcd5; }
-    .reservation-row.continuation:hover { background: #f5f3f0; }
-    .badge {
+    #header .logo {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #header .logo svg { width: 22px; height: 22px; }
+    .stat-badges {
+      display: flex;
+      gap: 8px;
+      margin-left: 8px;
+    }
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
       padding: 4px 10px;
       border-radius: 999px;
-      font-weight: 600;
       font-size: 12px;
-      display: inline-flex;
+      font-weight: 600;
+    }
+    .stat-badge.pending  { background: var(--warning-light); color: #92400e; }
+    .stat-badge.today    { background: var(--brand-light);   color: var(--brand-dark); }
+    .stat-badge.confirmed { background: var(--success-light); color: #14532d; }
+    .header-spacer { flex: 1; }
+    .btn-refresh {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
       align-items: center;
       gap: 6px;
+      transition: background .15s;
     }
-    .status-pending { background: #fff4d6; color: #8a6500; }
-    .status-confirmed { background: #d7f2dd; color: #226536; }
-    .status-rejected { background: #fbe0e0; color: #9a1f1f; }
-    .status-processing { background: #e3ecff; color: #2f54a3; }
-    .type-room { color: #50351e; }
-    .type-table { color: #134f2b; }
-    .muted { color: var(--muted); font-size: 12px; }
-    .tooltip { max-width: 240px; }
-    .btn-inline {
+    .btn-refresh:hover { background: var(--brand-dark); }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL ── */
+    #left-panel {
+      width: 340px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-top {
+      padding: 14px 16px 0;
+      flex-shrink: 0;
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    select.service-filter {
+      width: 100%;
+      padding: 7px 10px;
       border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 12px;
-      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
       cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+    select.service-filter:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+    /* Calendar */
+    #calendar {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+    }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .cal-month-label {
+      font-size: 15px;
       font-weight: 700;
-      font-size: 18px;
-      line-height: 1.2;
-      color: #4b3a28;
     }
-    .btn-inline.danger { color: #b3261e; border-color: #f3c7c2; }
-    .btn-inline.success { color: #1f7a3c; border-color: #b7e3c6; }
-    .res-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .month-picker { display:flex; gap:10px; align-items:center; margin: 10px 0; flex-wrap: wrap; }
-    .month-picker select, .month-picker input { width: auto; }
-    .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0; }
+    .cal-nav {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      transition: background .1s;
+    }
+    .cal-nav:hover { background: var(--bg); }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 4px 0 8px;
+      text-transform: uppercase;
+    }
+    .cal-day {
+      position: relative;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background .1s;
+      gap: 2px;
+    }
+    .cal-day:hover:not(.empty) { background: var(--bg); }
+    .cal-day.empty { cursor: default; color: var(--border); }
+    .cal-day.today { color: var(--brand); font-weight: 700; }
+    .cal-day.selected {
+      background: var(--brand) !important;
+      color: #fff !important;
+    }
+    .cal-day.selected .dot { background: #fff !important; }
+    .cal-dots {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+      min-height: 6px;
+    }
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .dot.pending  { background: var(--warning); }
+    .dot.confirmed { background: var(--success); }
+    .dot.processing { background: var(--brand); }
+    .dot.rejected { background: var(--muted); }
 
-    @media (max-width: 960px) {
-      .reservation-row {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        font-size: 13px;
-      }
+    .btn-new {
+      margin: 0 16px 16px;
+      padding: 10px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .btn-new:hover { background: var(--brand-dark); }
+
+    /* ── RIGHT PANEL ── */
+    #right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .day-header {
+      padding: 14px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .day-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .day-count {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    #slots-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      gap: 12px;
+    }
+    .empty-state svg { opacity: .3; }
+    .empty-state p { font-size: 15px; }
+
+    /* Time slots */
+    .slot-row {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      min-height: 52px;
+      transition: background .1s;
+    }
+    .slot-row:hover { background: var(--bg); }
+    .slot-row.has-appt { background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .slot-row.has-appt:hover { background: #fafafa; }
+    .slot-time {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .slot-row.has-appt .slot-time { color: var(--text); }
+    .slot-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .slot-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .slot-service {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .slot-empty {
+      font-size: 12px;
+      color: var(--border);
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .slot-empty:hover { color: var(--brand); }
+    .slot-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
     }
 
-    /* Modal */
-    .modal {
-      position: fixed; inset: 0;
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge.pending    { background: var(--warning-light);  color: #92400e; }
+    .badge.processing { background: var(--brand-light);    color: var(--brand-dark); }
+    .badge.confirmed  { background: var(--success-light);  color: #14532d; }
+    .badge.rejected   { background: #f3f4f6; color: var(--muted); }
+
+    /* Action buttons */
+    .btn-icon {
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity .15s, background .15s;
+    }
+    .btn-icon:hover { opacity: .85; }
+    .btn-edit    { background: var(--brand-light); color: var(--brand); }
+    .btn-confirm { background: var(--success-light); color: var(--success); }
+    .btn-reject  { background: var(--danger-light); color: var(--danger); }
+    .btn-delete  { background: var(--bg); color: var(--muted); }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+
+    /* Edit modal – slide from right */
+    #edit-modal-panel {
+      width: 520px;
+      max-width: 100vw;
+      height: 100vh;
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+      transform: translateX(100%);
+      transition: transform .25s ease;
+    }
+    .modal-overlay.open #edit-modal-panel {
+      transform: translateX(0);
+    }
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-close:hover { background: var(--bg); }
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .modal-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Form fields */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--card);
+      transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      margin-bottom: 24px;
+    }
+    .btn-primary   { background: var(--brand);   color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-success   { background: var(--success);  color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-danger    { background: var(--danger);   color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover  { background: var(--brand-dark); }
+    .btn-success:hover  { background: #15803d; }
+    .btn-danger:hover   { background: #b91c1c; }
+    .btn-secondary:hover { background: #e5e7eb; }
+
+    /* Message thread */
+    .message-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .msg-bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .msg-bubble.outbound {
+      align-self: flex-end;
+      background: var(--brand);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-bubble.inbound {
+      align-self: flex-start;
+      background: var(--bg);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-meta {
+      font-size: 10px;
+      opacity: .65;
+      margin-top: 4px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .msg-subject { font-weight: 600; font-size: 11px; margin-bottom: 4px; }
+    .channel-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,.25);
+    }
+    .msg-bubble.inbound .channel-badge { background: rgba(0,0,0,.1); }
+
+    .send-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .send-form textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+    }
+    .send-form textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+    .send-form input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .send-form input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+    }
+
+    /* ── ADD MODAL (centered) ── */
+    #add-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 110;
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.35);
-      z-index: 1000;
-      padding: 16px;
     }
-    .modal.active { display: flex; }
-    .modal-body {
-      background: #fff;
-      border-radius: 16px;
-      max-width: 720px;
-      width: 100%;
-      max-height: 90vh;
-      overflow: auto;
-      padding: 20px;
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 12px;
-    }
-    .modal-title { font-size: 1.2rem; font-weight: 700; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-    .form-group { display: grid; gap: 6px; }
-    label { font-weight: 600; font-size: 13px; color: #3b2d1e; }
-    textarea { min-height: 90px; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
-    .message-thread {
-      background: #faf8f3;
-      border: 1px solid #e6e2da;
-      border-radius: 8px;
-      padding: 10px;
-      max-height: 180px;
-      overflow-y: auto;
-      font-size: 13px;
-      color: #1f2937;
-    }
-    .message-thread .msg {
-      border-bottom: 1px dashed #e6e2da;
-      padding: 8px 0;
-    }
-    .message-thread .msg:last-child { border-bottom: 0; }
-    .message-thread .meta {
-      color: #7a7a7a;
-      font-size: 12px;
-      margin-bottom: 4px;
-    }
-    .msg-refresh {
-      margin-left: 8px;
-      border: 1px solid #e6e2da;
-      background: #fff;
-      border-radius: 999px;
-      padding: 4px 8px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .msg-badge {
-      display: inline-block;
-      min-width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #e54848;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: #4b3a28;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: var(--shadow);
-    }
-    .tab.active { background: var(--brand); color: #fff; }
-    .tab.small { padding: 6px 10px; font-size: 12px; }
-    .vip-badge { background: #2f8f5b; color: #fff; border-radius: 999px; padding: 2px 6px; font-size: 11px; margin-left: 6px; }
-    .group-badge { background: #c27d00; color: #fff; border-radius: 999px; padding: 2px 6px; font-size: 11px; margin-left: 6px; }
-
-    .card {
+    #add-modal-overlay.open { display: flex; }
+    #add-modal-panel {
       background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px;
+      border-radius: 12px;
+      width: 480px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .add-modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .add-modal-body { padding: 20px; }
+    .add-modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
 
-    .toast-container {
+    /* ── TOAST ── */
+    #toast-container {
       position: fixed;
-      top: 16px;
-      right: 16px;
-      display: grid;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
-      z-index: 2000;
-      max-width: 320px;
     }
     .toast {
-      padding: 12px 14px;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      color: #1b1f1a;
-      background: #fff;
-      border-left: 4px solid var(--brand);
-      animation: fade-in 0.2s ease;
-      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn .2s ease;
+      max-width: 320px;
     }
-    .toast.success { border-color: #2f8f5b; }
-    .toast.error { border-color: #c0392b; }
-    .toast.warning { border-color: #c48c1c; }
-    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 960px) {
-      table { min-width: 0; }
-      th, td { font-size: 13px; }
-      .table-wrap { overflow-x: auto; }
-    }
-
-    .table-day-layout {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-      align-items: start;
+    .toast.success { background: #fff; border-left: 4px solid var(--success); }
+    .toast.error   { background: #fff; border-left: 4px solid var(--danger); }
+    .toast.info    { background: #fff; border-left: 4px solid var(--brand); }
+    @keyframes toastIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
     }
 
-    .slot-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
-      gap: 6px;
-    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    .slot {
-      border: 1px solid #e6e2da;
-      border-radius: 8px;
-      padding: 6px 8px;
-      text-align: center;
-      font-size: 12px;
-      line-height: 1.2;
-      background: #f7fafc;
-      color: #3b4a3f;
-    }
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-    .slot.busy {
-      background: #fde7e7;
-      border-color: #f2b8b8;
-      color: #7a1f1f;
-      font-weight: 600;
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
     }
-
-    .slot.free {
-      background: #e9f7f1;
-      border-color: #bfe5d3;
-      color: #1e5142;
-    }
-
-    @media (max-width: 960px) {
-      .table-day-layout {
-        grid-template-columns: 1fr;
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <div>
-        <div class="title">🏥 Zdravstveni center - Naročila pregledov</div>
-        <div class="subtitle" id="current-date"></div>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<div id="header">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2a5 5 0 0 1 5 5v1h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2V7a5 5 0 0 1 5-5zm0 9v2m0 0v2m0-2h2m-2 0h-2"/>
+    </svg>
+    Zdravstveni center Admin
+  </div>
+  <div class="stat-badges">
+    <span class="stat-badge pending">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#f59e0b"/></svg>
+      <span id="stat-pending">0</span> čaka
+    </span>
+    <span class="stat-badge today">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#1a56db"/></svg>
+      <span id="stat-today">0</span> danes
+    </span>
+    <span class="stat-badge confirmed">
+      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#16a34a"/></svg>
+      <span id="stat-confirmed">0</span> potrjenih
+    </span>
+  </div>
+  <div class="header-spacer"></div>
+  <button class="btn-refresh" onclick="refreshAll()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M23 4v6h-6M1 20v-6h6"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </svg>
+    Osveži
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- LEFT PANEL -->
+  <div id="left-panel">
+    <div class="panel-top">
+      <div class="filter-label">Filtriranje po storitvi</div>
+      <select class="service-filter" id="service-filter" onchange="onServiceChange()">
+        <option value="">Vse storitve</option>
+        <option>Ortopedski pregled</option>
+        <option>Dermatološki pregled</option>
+        <option>Laserski poseg</option>
+        <option>Estetski poseg</option>
+        <option>Fizioterapija</option>
+        <option>Okulistični pregled</option>
+        <option>Predpis očal/leč</option>
+        <option>Kozmetični salon</option>
+      </select>
+    </div>
+
+    <div id="calendar">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()" title="Prejšnji mesec">&#8592;</button>
+        <span class="cal-month-label" id="cal-month-label"></span>
+        <button class="cal-nav" onclick="calNext()" title="Naslednji mesec">&#8594;</button>
       </div>
-      <button class="btn secondary" onclick="setAdminToken()" title="Napredno">🔐 Napredno</button>
-    </header>
-
-    <div class="tabs" id="view-tabs">
-      <button class="tab active" id="tab-view-res">📋 Naročila</button>
+      <div class="cal-grid" id="cal-grid"></div>
     </div>
 
-    <div class="tabs">
-      <button class="tab" id="tab-room" onclick="setTab('room')" style="display:none;">🛏️ Sobe</button>
-      <button class="tab active" id="tab-table" onclick="setTab('table')">🩺 Pregledi</button>
-      <a class="tab" id="tab-inquiries" href="/admin/inquiries">📝 Povpraševanja</a>
-    </div>
-
-    <div id="view-reservations">
-    <div class="stats" id="stats-cards">
-      <div class="stat"><div class="label">Danes</div><div class="value" id="stat-danes">0</div><div class="hint">Naročila</div></div>
-      <div class="stat"><div class="label">Ta teden</div><div class="value" id="stat-teden">0</div><div class="hint">Naročila</div></div>
-      <div class="stat"><div class="label">Ta mesec</div><div class="value" id="stat-mesec">0</div><div class="hint">Naročila</div></div>
-      <div class="stat"><div class="label">Potrjenih</div><div class="value" id="stat-confirmed">0</div></div>
-      <div class="stat"><div class="label">Čaka</div><div class="value" id="stat-pending">0</div></div>
-      <div class="stat" style="display:none;"><div class="label">🛏️ Sobe</div><div class="value" id="stat-room">0</div></div>
-      <div class="stat"><div class="label">🩺 Pregledi</div><div class="value" id="stat-table">0</div></div>
-      <div class="stat"><div class="label">🤖 AI danes</div><div class="value" id="stat-ai-today">0</div></div>
-      <div class="stat"><div class="label">🤖 AI ta mesec</div><div class="value" id="stat-ai-month">0</div></div>
-      <div class="stat"><div class="label">🤖 AI letos</div><div class="value" id="stat-ai-year">0</div></div>
-    </div>
-
-  <div class="month-picker">
-    <label for="month-select">Mesec:</label>
-    <select id="month-select" onchange="selectMonth(this.value)">
-      <option value="0">Januar</option>
-      <option value="1">Februar</option>
-      <option value="2">Marec</option>
-      <option value="3">April</option>
-      <option value="4">Maj</option>
-      <option value="5">Junij</option>
-      <option value="6">Julij</option>
-      <option value="7">Avgust</option>
-      <option value="8">September</option>
-      <option value="9">Oktober</option>
-      <option value="10">November</option>
-      <option value="11">December</option>
-    </select>
-    <label for="year-input">Leto:</label>
-    <input id="year-input" type="number" style="width:100px;" value="">
-    <button class="btn secondary" onclick="applyMonthYear()">Nastavi</button>
+    <button class="btn-new" onclick="openAddModal(null)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Novo naročilo
+    </button>
   </div>
 
-  <div class="inline-actions">
-    <button class="btn" onclick="openNewTable()">+ Novo naročilo pregleda</button>
-    <button class="btn secondary" onclick="openNewRoom()" style="display:none;">+ Nova rezervacija sobe</button>
-  </div>
-
-  <div id="pending-container" class="card" style="margin-top:12px;"></div>
-
-  <div id="room-calendar-block" class="card" style="margin-top: 20px; display:none;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <button class="btn secondary" onclick="changeMonth(-1)">◀ Prejšnji</button>
-      <h3 id="calendar-title" style="margin: 0;">Koledar (sobe)</h3>
-      <button class="btn secondary" onclick="changeMonth(1)">Naslednji ▶</button>
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <div class="day-header">
+      <span class="day-title" id="day-title">Izberite dan v koledarju</span>
+      <span class="day-count" id="day-count" style="display:none"></span>
     </div>
-
-    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-bottom: 8px;">
-      <div style="font-weight: 600; color: #7a7a7a;">PON</div>
-      <div style="font-weight: 600; color: #7a7a7a;">TOR</div>
-      <div style="font-weight: 600; color: #7a7a7a;">SRE</div>
-      <div style="font-weight: 600; color: #7a7a7a;">ČET</div>
-      <div style="font-weight: 600; color: #7a7a7a;">PET</div>
-      <div style="font-weight: 600; color: #7a7a7a;">SOB</div>
-      <div style="font-weight: 600; color: #7a7a7a;">NED</div>
-    </div>
-
-    <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-    </div>
-
-    <div style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
-      <span style="font-weight:600;">Legenda:</span>
-      <span style="color:#27ae60;">Potrjeno</span>
-      <span style="color:#c27d00;">Čaka</span>
-      <span style="color:#e74c3c;">Današnji dan = rdeča obroba</span>
-      <span style="color:#7a7a7a;">Prikazani so vsi zasedeni dnevi bivanja (check-in do noči pred odhodom). Klik na dan pokaže podrobnosti.</span>
-    </div>
-  </div>
-
-  <div id="table-calendar-block" class="card" style="margin-top: 12px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <button class="btn secondary" onclick="changeMonth(-1)">◀ Prejšnji</button>
-      <h3 id="table-calendar-title" style="margin: 0;">Koledar pregledov</h3>
-      <button class="btn secondary" onclick="changeMonth(1)">Naslednji ▶</button>
-    </div>
-    <div class="tabs small" id="appointment-tabs" style="margin-bottom: 10px;">
-      <button class="tab small active" data-appt="ALL" onclick="setAppointmentFilter('ALL')">Vsi pregledi</button>
-      <button class="tab small" data-appt="Ortopedski pregled" onclick="setAppointmentFilter('Ortopedski pregled')">Ortopedija</button>
-      <button class="tab small" data-appt="Dermatološki pregled" onclick="setAppointmentFilter('Dermatološki pregled')">Dermatologija</button>
-      <button class="tab small" data-appt="Okulistični pregled" onclick="setAppointmentFilter('Okulistični pregled')">Okulistika</button>
-      <button class="tab small" data-appt="Fizioterapija" onclick="setAppointmentFilter('Fizioterapija')">Fizioterapija</button>
-      <button class="tab small" data-appt="Laserski poseg" onclick="setAppointmentFilter('Laserski poseg')">Laser</button>
-      <button class="tab small" data-appt="Estetski poseg" onclick="setAppointmentFilter('Estetski poseg')">Estetika</button>
-      <button class="tab small" data-appt="Kozmetični salon" onclick="setAppointmentFilter('Kozmetični salon')">Kozmetika</button>
-      <button class="tab small" data-appt="Predpis očal/leč" onclick="setAppointmentFilter('Predpis očal/leč')">Očala/leče</button>
-    </div>
-    <div id="table-calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;"></div>
-    <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px;">
-      <span>💚 <50% kapacitete</span>
-      <span>💛 50-80%</span>
-      <span>❤️ >80%</span>
-    </div>
-  </div>
-
-  <div id="day-sidebar" class="card" style="margin-top: 12px; display: none;">
-    <h4 id="sidebar-date">Izberi dan</h4>
-    <div id="sidebar-content"></div>
-  </div>
-
-  <div id="table-sidebar" class="card" style="margin-top: 12px; display: none;">
-    <h4 id="table-sidebar-date">Izberi dan</h4>
-    <div id="table-sidebar-content"></div>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h3>Vsa naročila</h3>
-    <div class="filters">
-      <div class="filter-row">
-        <select id="filter-status">
-          <option value="">Vsi statusi</option>
-          <option value="pending">Čaka</option>
-          <option value="processing">V obdelavi</option>
-          <option value="confirmed">Potrjeno</option>
-          <option value="rejected">Zavrnjeno</option>
-        </select>
-        <select id="filter-type">
-          <option value="">Vsi tipi</option>
-          <option value="table">Pregledi</option>
-        </select>
-        <select id="filter-source">
-          <option value="">Vsi viri</option>
-          <option value="chat">Chatbot</option>
-          <option value="wordpress_table">Spletni obrazec</option>
-        </select>
-        <input type="date" id="filter-date-from" />
-        <input type="date" id="filter-date-to" />
+    <div id="slots-container">
+      <div class="empty-state" id="empty-state">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <p>Izberite dan v koledarju</p>
       </div>
-      <div class="actions">
-        <button class="btn" onclick="loadAll()">Filtriraj</button>
-        <button class="btn secondary" onclick="resetFilters()">Ponastavi</button>
-        <div class="inline-actions" style="gap:6px;">
-          <span style="color:#7a7a7a;">Hitra obdobja:</span>
-          <button class="btn secondary" type="button" onclick="setRangeDays(14)">14 dni</button>
-          <button class="btn secondary" type="button" onclick="setRangeDays(30)">30 dni</button>
-          <button class="btn secondary" type="button" onclick="setRangeDays(90)">90 dni</button>
-        </div>
-        <label style="display:inline-flex; align-items:center; gap:6px; color:#7a7a7a;">
-          <input type="checkbox" id="auto-refresh-toggle" onclick="toggleAutoRefresh(this.checked)" />
-          Auto osveži (30s)
-        </label>
-      </div>
+      <div id="slots-list" style="display:none"></div>
     </div>
-    <div id="reservations-container"></div>
   </div>
+</div>
 
-  <div class="toast-container" id="toast-container"></div>
+<!-- ═══════════════════════════════════════════
+     EDIT MODAL (slide from right)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="edit-modal-overlay" onclick="closeEditModal(event)">
+  <div id="edit-modal-panel">
+    <div class="modal-head">
+      <span class="modal-title" id="edit-modal-title">Uredi naročilo</span>
+      <button class="btn-close" onclick="closeEditModalDirect()">&times;</button>
+    </div>
+    <div class="modal-body" id="edit-modal-body">
 
-  <!-- Email modal -->
-  <div class="modal" id="email-modal">
-    <div class="modal-body">
-      <div class="modal-title">✉ Pošlji sporočilo <span id="email-modal-name"></span></div>
-      <form id="email-form">
-        <input type="hidden" id="email-res-id">
+      <!-- SECTION: Podatki -->
+      <div class="modal-section-label">Podatki o naročilu</div>
+      <div class="form-grid">
         <div class="form-group">
-          <label>Prejemnik</label>
-          <input type="email" id="email-recipient" readonly>
+          <label>Ime in priimek</label>
+          <input type="text" id="ed-name" placeholder="Jana Novak" />
         </div>
         <div class="form-group">
-          <label>Zadeva</label>
-          <input type="text" id="email-subject" value="Povpraševanje - zdravstveni center">
+          <label>Telefon</label>
+          <input type="text" id="ed-phone" placeholder="+386 ..." />
         </div>
+      </div>
+      <div class="form-grid full">
         <div class="form-group">
-          <label>Predloga</label>
-          <select id="email-template">
-            <option value="">-- Izberi predlogo --</option>
-            <option value="info">Prosimo za dodatne informacije</option>
-            <option value="date">Potrditev datuma</option>
-            <option value="full">Žal zasedeno - alternativni termin</option>
-            <option value="custom">Po meri</option>
+          <label>E-pošta</label>
+          <input type="email" id="ed-email" placeholder="jana@example.com" />
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Storitev</label>
+          <select id="ed-service">
+            <option value="">— izberi —</option>
+            <option>Ortopedski pregled</option>
+            <option>Dermatološki pregled</option>
+            <option>Laserski poseg</option>
+            <option>Estetski poseg</option>
+            <option>Fizioterapija</option>
+            <option>Okulistični pregled</option>
+            <option>Predpis očal/leč</option>
+            <option>Kozmetični salon</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Sporočilo</label>
-          <textarea id="email-body" placeholder="Vpišite vaše sporočilo..."></textarea>
+          <label>Status</label>
+          <select id="ed-status">
+            <option value="pending">Čaka (pending)</option>
+            <option value="processing">V obdelavi (processing)</option>
+            <option value="confirmed">Potrjeno (confirmed)</option>
+            <option value="rejected">Zavrnjeno (rejected)</option>
+          </select>
         </div>
-        <div class="modal-actions">
-      <button type="button" class="btn secondary" onclick="closeEmailModal()">Prekliči</button>
-      <button type="submit" class="btn">Pošlji</button>
-    </div>
-  </form>
-    </div>
-  </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="ed-date" />
+        </div>
+        <div class="form-group">
+          <label>Ura</label>
+          <select id="ed-time">
+            <!-- generated by JS -->
+          </select>
+        </div>
+      </div>
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>Opomba pacienta</label>
+          <textarea id="ed-note" placeholder="Pacientova opomba..."></textarea>
+        </div>
+      </div>
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>Admin opombe</label>
+          <textarea id="ed-admin-notes" placeholder="Interne opombe..."></textarea>
+        </div>
+      </div>
 
-  <!-- Modal soba -->
-  <div class="modal" id="edit-room-modal">
-    <div class="modal-body">
-      <div class="modal-title">🛏️ Uredi rezervacijo sobe #<span id="room-edit-id"></span></div>
-      <div class="muted" id="room-edit-flags" style="margin-top:-6px; margin-bottom:10px;"></div>
-      <form id="room-edit-form">
-        <input type="hidden" id="room-edit-hidden-id">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Status</label>
-            <select id="room-edit-status">
-              <option value="pending">Čaka</option>
-              <option value="processing">V obdelavi</option>
-              <option value="confirmed">Potrjeno</option>
-              <option value="rejected">Zavrnjeno</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Datum prihoda</label>
-            <input type="date" id="room-edit-date" required>
-          </div>
-          <div class="form-group">
-            <label>Število nočitev</label>
-            <input type="number" id="room-edit-nights" min="1" required>
-          </div>
-          <div class="form-group">
-            <label>Soba</label>
-            <select id="room-edit-location">
-              <option value="">Nedoločeno (dodeli ob potrditvi)</option>
-              <option value="ALJAZ">ALJAŽ</option>
-              <option value="JULIJA">JULIJA</option>
-              <option value="ANA">ANA</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Število oseb</label>
-            <input type="number" id="room-edit-people" min="1" required>
-          </div>
-          <div class="form-group">
-            <label>Število otrok</label>
-            <input type="number" id="room-edit-kids" min="0">
-          </div>
-          <div class="form-group">
-            <label>Starost otrok</label>
-            <input type="text" id="room-edit-kids-ages" placeholder="npr. 8 in 6 let">
-          </div>
-          <div class="form-group">
-            <label>Ime in priimek</label>
-            <input type="text" id="room-edit-name" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="room-edit-email" required>
-          </div>
-          <div class="form-group">
-            <label>Telefon</label>
-            <input type="tel" id="room-edit-phone">
-          </div>
-        </div>
-        <div class="form-group" style="margin-top: 12px;">
-          <label>Opombe gosta</label>
-          <textarea id="room-edit-note" rows="2"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Admin opombe (interno)</label>
-          <textarea id="room-edit-admin-notes" rows="2"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Timeline</label>
-          <div id="room-edit-timeline" class="message-thread">Ni dogodkov.</div>
-        </div>
-        <div class="form-group">
-          <label>
-            Sporočila (email)
-            <button type="button" class="msg-refresh" onclick="refreshMessages('room')">⟳ Osveži</button>
-          </label>
-          <div id="room-edit-messages" class="message-thread">Ni sporočil.</div>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeRoomEditModal()">Prekliči</button>
-          <button type="submit" class="btn">💾 Shrani</button>
-        </div>
-      </form>
+      <div class="modal-actions">
+        <button class="btn-success" onclick="confirmReservation()">
+          &#10003; Potrdi rezervacijo
+        </button>
+        <button class="btn-danger" onclick="rejectReservation()">
+          &#10007; Zavrni
+        </button>
+        <button class="btn-primary" onclick="saveReservation()">
+          Shrani spremembe
+        </button>
+        <button class="btn-secondary" onclick="deleteReservation()" style="margin-left:auto">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+          </svg>
+          Izbriši
+        </button>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- SECTION: Komunikacija -->
+      <div class="modal-section-label">Komunikacija</div>
+      <div class="message-thread" id="message-thread">
+        <div style="color:var(--muted); font-size:12px; text-align:center; padding: 16px 0">Ni sporočil</div>
+      </div>
+
+      <div class="send-form">
+        <input type="text" id="send-subject" placeholder="Zadeva e-pošte..." />
+        <textarea id="send-body" placeholder="Vsebina sporočila..."></textarea>
+        <button class="btn-primary" onclick="sendMessage()">
+          &#9993; Pošlji email
+        </button>
+      </div>
+
     </div>
   </div>
+</div>
 
-  <!-- Modal pregled -->
-  <div class="modal" id="edit-table-modal">
-    <div class="modal-body">
-      <div class="modal-title">🩺 Uredi naročilo termina #<span id="table-edit-id"></span></div>
-      <div class="muted" id="table-edit-flags" style="margin-top:-6px; margin-bottom:10px;"></div>
-      <form id="table-edit-form">
-        <input type="hidden" id="table-edit-hidden-id">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Status</label>
-            <select id="table-edit-status">
-              <option value="pending">Čaka</option>
-              <option value="processing">V obdelavi</option>
-              <option value="confirmed">Potrjeno</option>
-              <option value="rejected">Zavrnjeno</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Datum</label>
-            <input type="date" id="table-edit-date" required>
-          </div>
-          <div class="form-group">
-            <label>Čas termina</label>
-            <input type="time" id="table-edit-time">
-          </div>
-          <div class="form-group">
-            <label>Časovno okno</label>
-            <select id="table-edit-time-window">
-              <option value="">-</option>
-              <option value="Dopoldne">Dopoldne</option>
-              <option value="Popoldne">Popoldne</option>
-              <option value="Ni pomembno">Ni pomembno</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Vrsta pregleda/posega</label>
-            <select id="table-edit-location">
-              <option value="Ortopedski pregled">Ortopedski pregled</option>
-              <option value="Dermatološki pregled">Dermatološki pregled</option>
-              <option value="Laserski poseg">Laserski poseg</option>
-              <option value="Estetski poseg">Estetski poseg</option>
-              <option value="Fizioterapija">Fizioterapija</option>
-              <option value="Okulistični pregled">Okulistični pregled</option>
-              <option value="Predpis očal/leč">Predpis očal/leč</option>
-              <option value="Kozmetični salon">Kozmetični salon</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Tip obiska</label>
-            <select id="table-edit-event-type">
-              <option value="">-</option>
-              <option value="Prvi pregled">Prvi pregled</option>
-              <option value="Kontrola">Kontrola</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Ime in priimek</label>
-            <input type="text" id="table-edit-name" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="table-edit-email" required>
-          </div>
-          <div class="form-group">
-            <label>Telefon</label>
-            <input type="tel" id="table-edit-phone" required>
-          </div>
-          <div class="form-group">
-            <label>Datum rojstva</label>
-            <input type="text" id="table-edit-birth-date" placeholder="DD.MM.LLLL" required>
-          </div>
+<!-- ═══════════════════════════════════════════
+     ADD MODAL (centered)
+════════════════════════════════════════════ -->
+<div id="add-modal-overlay" onclick="closeAddModal(event)">
+  <div id="add-modal-panel" onclick="event.stopPropagation()">
+    <div class="add-modal-head">
+      <span class="modal-title">Novo naročilo</span>
+      <button class="btn-close" onclick="closeAddModalDirect()">&times;</button>
+    </div>
+    <div class="add-modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Ime in priimek *</label>
+          <input type="text" id="add-name" placeholder="Jana Novak" />
         </div>
         <div class="form-group">
-          <label>Prosti 30-min sloti</label>
-          <div id="table-edit-slots" class="message-thread">Izberi datum in vrsto pregleda za prikaz slotov.</div>
-          <button type="button" class="btn secondary" style="margin-top:6px;" onclick="renderSlotPicker(currentTableReservation)">Osveži slote</button>
+          <label>Telefon *</label>
+          <input type="text" id="add-phone" placeholder="+386 ..." />
         </div>
-        <div class="form-group" style="margin-top: 12px;">
-          <label>Opombe (posebnosti, zdravila, želje)</label>
-          <textarea id="table-edit-special-needs" rows="2"></textarea>
+      </div>
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>E-pošta</label>
+          <input type="email" id="add-email" placeholder="jana@example.com" />
+        </div>
+      </div>
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>Storitev *</label>
+          <select id="add-service">
+            <option value="">— izberi —</option>
+            <option>Ortopedski pregled</option>
+            <option>Dermatološki pregled</option>
+            <option>Laserski poseg</option>
+            <option>Estetski poseg</option>
+            <option>Fizioterapija</option>
+            <option>Okulistični pregled</option>
+            <option>Predpis očal/leč</option>
+            <option>Kozmetični salon</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Datum *</label>
+          <input type="date" id="add-date" />
         </div>
         <div class="form-group">
-          <label>Admin opombe (interno)</label>
-          <textarea id="table-edit-admin-notes" rows="2"></textarea>
+          <label>Ura *</label>
+          <select id="add-time">
+            <!-- generated by JS -->
+          </select>
         </div>
+      </div>
+      <div class="form-grid full">
         <div class="form-group">
-          <label>Timeline</label>
-          <div id="table-edit-timeline" class="message-thread">Ni dogodkov.</div>
+          <label>Admin opombe</label>
+          <textarea id="add-admin-notes" placeholder="Interne opombe..."></textarea>
         </div>
-        <div class="form-group">
-          <label>
-            Sporočila (email)
-            <button type="button" class="msg-refresh" onclick="refreshMessages('table')">⟳ Osveži</button>
-          </label>
-          <div id="table-edit-messages" class="message-thread">Ni sporočil.</div>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeTableEditModal()">Prekliči</button>
-          <button type="submit" class="btn">💾 Shrani</button>
-        </div>
-      </form>
+      </div>
+    </div>
+    <div class="add-modal-footer">
+      <button class="btn-secondary" onclick="closeAddModalDirect()">Prekliči</button>
+      <button class="btn-primary" onclick="submitAdd()">Dodaj naročilo</button>
     </div>
   </div>
+</div>
 
-  <div class="modal" id="confirm-modal">
-    <div class="modal-body">
-      <div class="modal-title" id="confirm-title">Potrdi naročilo</div>
-      <form id="confirm-form">
-        <input type="hidden" id="confirm-id" />
-        <input type="hidden" id="confirm-type" />
-        <div class="form-group">
-          <label id="confirm-label">Izberi sobo</label>
-          <div id="confirm-hint" style="color:#7a7a7a; font-size:13px; margin-bottom:4px;"></div>
-          <select id="confirm-choice"></select>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeConfirmModal()">Prekliči</button>
-          <button type="submit" class="btn">Potrdi in pošlji email</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<!-- ═══════════════════════════════════════════
+     TOAST CONTAINER
+════════════════════════════════════════════ -->
+<div id="toast-container"></div>
 
-  <div class="modal" id="kb-fix-modal">
-    <div class="modal-body">
-      <div class="modal-title">🛠️ Popravi v bazi znanja</div>
-      <form id="kb-fix-form">
-        <div class="form-group">
-          <label>Vprašanje</label>
-          <input type="text" id="kb-fix-question" readonly>
-        </div>
-        <div class="form-group">
-          <label>Predlagan popravek / odgovor</label>
-          <textarea id="kb-fix-suggestion" rows="4" placeholder="Vnesi izboljšan odgovor ali pravilno informacijo..." required></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeKbFixModal()">Prekliči</button>
-          <button type="submit" class="btn">Shrani predlog</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+'use strict';
 
-  <!-- Nova soba -->
-  <div class="modal" id="new-room-modal">
-    <div class="modal-body">
-      <div class="modal-title">+ Nova rezervacija sobe</div>
-      <form id="new-room-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Datum prihoda</label>
-            <input type="date" id="new-room-date" required>
-          </div>
-          <div class="form-group">
-            <label>Nočitve</label>
-            <input type="number" id="new-room-nights" min="1" required>
-          </div>
-          <div class="form-group">
-            <label>Soba</label>
-            <select id="new-room-location">
-              <option value="">Nedoločeno</option>
-              <option value="ALJAZ">ALJAŽ</option>
-              <option value="JULIJA">JULIJA</option>
-              <option value="ANA">ANA</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Osebe</label>
-            <input type="number" id="new-room-people" min="1" required>
-          </div>
-          <div class="form-group">
-            <label>Otroci</label>
-            <input type="number" id="new-room-kids" min="0">
-          </div>
-          <div class="form-group">
-            <label>Starost otrok</label>
-            <input type="text" id="new-room-kids-ages">
-          </div>
-          <div class="form-group">
-            <label>Ime in priimek</label>
-            <input type="text" id="new-room-name" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="new-room-email" required>
-          </div>
-          <div class="form-group">
-            <label>Telefon</label>
-            <input type="tel" id="new-room-phone">
-          </div>
-        </div>
-        <div class="form-group" style="margin-top:12px;">
-          <label>Opombe</label>
-          <textarea id="new-room-note"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeNewRoom()">Prekliči</button>
-          <button type="submit" class="btn">💾 Shrani</button>
-        </div>
-      </form>
-    </div>
-  </div>
+// ── Constants ────────────────────────────────
+const API = '/api/admin';
+const SERVICES = [
+  'Ortopedski pregled',
+  'Dermatološki pregled',
+  'Laserski poseg',
+  'Estetski poseg',
+  'Fizioterapija',
+  'Okulistični pregled',
+  'Predpis očal/leč',
+  'Kozmetični salon'
+];
 
-  <!-- Nov termin -->
-  <div class="modal" id="new-table-modal">
-    <div class="modal-body">
-      <div class="modal-title">+ Novo naročilo termina</div>
-      <form id="new-table-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Datum</label>
-            <input type="date" id="new-table-date" required>
-          </div>
-          <div class="form-group">
-            <label>Čas termina *</label>
-            <input type="time" id="new-table-time" required>
-          </div>
-          <div class="form-group">
-            <label>Časovno okno</label>
-            <select id="new-table-time-window">
-              <option value="">-</option>
-              <option value="Dopoldne">Dopoldne</option>
-              <option value="Popoldne">Popoldne</option>
-              <option value="Ni pomembno">Ni pomembno</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Vrsta pregleda/posega</label>
-            <select id="new-table-location">
-              <option value="Ortopedski pregled">Ortopedski pregled</option>
-              <option value="Dermatološki pregled">Dermatološki pregled</option>
-              <option value="Laserski poseg">Laserski poseg</option>
-              <option value="Estetski poseg">Estetski poseg</option>
-              <option value="Fizioterapija">Fizioterapija</option>
-              <option value="Okulistični pregled">Okulistični pregled</option>
-              <option value="Predpis očal/leč">Predpis očal/leč</option>
-              <option value="Kozmetični salon">Kozmetični salon</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Tip obiska</label>
-            <select id="new-table-event-type">
-              <option value="">-</option>
-              <option value="Prvi pregled">Prvi pregled</option>
-              <option value="Kontrola">Kontrola</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Ime in priimek</label>
-            <input type="text" id="new-table-name" required>
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="new-table-email" required>
-          </div>
-          <div class="form-group">
-            <label>Telefon</label>
-            <input type="tel" id="new-table-phone" required>
-          </div>
-          <div class="form-group">
-            <label>Datum rojstva</label>
-            <input type="text" id="new-table-birth-date" placeholder="DD.MM.LLLL" required>
-          </div>
-        </div>
-        <div class="form-group" style="margin-top:12px;">
-          <label>Opombe (posebnosti, zdravila, želje)</label>
-          <textarea id="new-table-special-needs"></textarea>
-        </div>
-        <div class="form-group" style="margin-top:12px; background:#f8f6f2; padding:12px; border-radius:8px;">
-          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.9rem; line-height:1.5;">
-            <input type="checkbox" id="new-table-gdpr" required style="margin-top:3px; width:18px; height:18px;">
-            <span>Strinjam se z uporabo posredovanih osebnih podatkov za namene naročanja na zdravstvene storitve v skladu z Uredbo GDPR.</span>
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" onclick="closeNewTable()">Prekliči</button>
-          <button type="submit" class="btn">💾 Shrani</button>
-        </div>
-      </form>
-    </div>
-  </div>
+const SL_MONTHS = ['Januar','Februar','Marec','April','Maj','Junij',
+                   'Julij','Avgust','September','Oktober','November','December'];
+const SL_DAYS_LONG = ['Ponedeljek','Torek','Sreda','Četrtek','Petek','Sobota','Nedela'];
+const SL_DAYS_SHORT = ['Pon','Tor','Sre','Čet','Pet','Sob','Ned'];
 
-  </div>
+const STATUS_LABELS = {
+  pending: 'Čaka',
+  processing: 'V obdelavi',
+  confirmed: 'Potrjeno',
+  rejected: 'Zavrnjeno'
+};
 
-  <script>
-    const API_BASE = '/api/admin';
-    const ADMIN_TOKEN_KEY = 'admin_token';
-    const APPOINTMENT_TYPES = [
-      'Ortopedski pregled',
-      'Dermatološki pregled',
-      'Laserski poseg',
-      'Estetski poseg',
-      'Fizioterapija',
-      'Okulistični pregled',
-      'Predpis očal/leč',
-      'Kozmetični salon',
-    ];
-    let currentAppointmentFilter = 'ALL';
-    let tableCalendarData = {};
-    let currentTab = 'table';
-    let calendarYear = new Date().getFullYear();
-    let calendarMonth = new Date().getMonth(); // 0-indexed
-    const TABLE_CAP = 50;
+// ── State ────────────────────────────────────
+let allReservations = [];   // all loaded from API
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let selectedDate = null;   // 'YYYY-MM-DD'
+let editingId = null;
 
-    function setAdminToken() {
-      alert('Ročni vnos tokena ni več potreben. Dostop je samodejen.');
-    }
+// ── Time Slot Generation ─────────────────────
+function generateTimeSlots() {
+  const slots = [];
+  for (let h = 8; h < 18; h++) {
+    slots.push(`${String(h).padStart(2,'0')}:00`);
+    slots.push(`${String(h).padStart(2,'0')}:30`);
+  }
+  return slots; // 08:00 … 17:30 = 20 slots
+}
+const TIME_SLOTS = generateTimeSlots();
 
-    const _rawFetch = window.fetch.bind(window);
-    window.fetch = (input, init = {}) => {
-      const headers = new Headers(init.headers || {});
-      const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-      if (token && !headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      init.headers = headers;
-      return _rawFetch(input, init);
-    };
-
-    function todayISO() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-
-    const qs = id => document.getElementById(id);
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('sl-SI', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric' });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      setViewTab('reservations');
-      setTab('table', true);
-      setInterval(loadStats, 60000);
-      qs('month-select').value = calendarMonth.toString();
-      qs('year-input').value = calendarYear.toString();
-      const refreshQuestionsBtn = qs('refreshQuestionsBtn');
-      if (refreshQuestionsBtn) {
-        refreshQuestionsBtn.addEventListener('click', loadQuestionStats);
-      }
-      const refreshLostBtn = qs('refreshLostBtn');
-      if (refreshLostBtn) {
-        refreshLostBtn.addEventListener('click', loadLostIntents);
-      }
-      const refreshMissedBtn = qs('refreshMissedBtn');
-      if (refreshMissedBtn) {
-        refreshMissedBtn.addEventListener('click', loadMissedQuestions);
-      }
-
-      // Auto-refresh slot picker ko se spremeni datum ali vrsta pregleda
-      const tableEditDate = qs('table-edit-date');
-      const tableEditLocation = qs('table-edit-location');
-      if (tableEditDate) {
-        tableEditDate.addEventListener('change', () => {
-          if (currentTableReservation) {
-            currentTableReservation.date = formatToDDMMYYYY(tableEditDate.value);
-            renderSlotPicker(currentTableReservation);
-          }
-        });
-      }
-      if (tableEditLocation) {
-        tableEditLocation.addEventListener('change', () => {
-          if (currentTableReservation) {
-            currentTableReservation.location = tableEditLocation.value;
-            renderSlotPicker(currentTableReservation);
-          }
-        });
-      }
-
-      loadAll(); // auto load ob prvem prikazu
+function populateTimeSelects() {
+  ['ed-time','add-time'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    TIME_SLOTS.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      sel.appendChild(o);
     });
+  });
+}
 
-    function setTab(tab, silent = false) {
-      currentTab = tab;
-      qs('tab-room').classList.toggle('active', tab === 'room');
-      qs('tab-table').classList.toggle('active', tab === 'table');
-      qs('filter-type').value = tab;
-      qs('room-calendar-block').style.display = tab === 'room' ? '' : 'none';
-      qs('day-sidebar').style.display = tab === 'room' ? 'block' : 'none';
-      qs('table-calendar-block').style.display = tab === 'table' ? '' : 'none';
-      qs('table-sidebar').style.display = tab === 'table' ? 'block' : 'none';
-      if (!silent) {
-        loadAll();
-      }
+// ── Date Helpers ─────────────────────────────
+function toISODate(str) {
+  if (!str) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // DD.MM.YYYY
+  const [d, m, y] = str.split('.');
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+function toDisplayDate(str) {
+  if (!str) return '';
+  const iso = toISODate(str);
+  if (!iso) return str;
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+function todayISO() {
+  return new Date().toISOString().slice(0,10);
+}
+function formatDayTitle(isoDate) {
+  const d = new Date(isoDate + 'T00:00:00');
+  const dow = SL_DAYS_LONG[(d.getDay() + 6) % 7];
+  const day = d.getDate();
+  const mon = SL_MONTHS[d.getMonth()].toLowerCase();
+  const yr  = d.getFullYear();
+  return `${dow}, ${day}. ${mon} ${yr}`;
+}
+
+// ── API Calls ────────────────────────────────
+async function apiFetch(url, opts = {}) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      ...opts
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || res.statusText);
     }
+    return await res.json();
+  } catch (e) {
+    throw e;
+  }
+}
 
-    function setAppointmentFilter(type) {
-      currentAppointmentFilter = type;
-      const tabs = document.querySelectorAll('#appointment-tabs .tab');
-      tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-appt') === type));
-      if (currentTab === 'table') {
-        renderTableCalendar();
-        renderReservations(lastReservations || []);
-      }
+async function loadReservations() {
+  try {
+    const params = new URLSearchParams();
+    const svc = document.getElementById('service-filter').value;
+    if (svc) params.set('location', svc);
+    const data = await apiFetch(`${API}/reservations?${params}`);
+    allReservations = data.reservations || [];
+    // Stats
+    document.getElementById('stat-pending').textContent   = data.stats?.pending   ?? allReservations.filter(r=>r.status==='pending').length;
+    document.getElementById('stat-today').textContent     = data.stats?.today     ?? allReservations.filter(r=>toISODate(r.date)===todayISO()).length;
+    document.getElementById('stat-confirmed').textContent = data.stats?.confirmed ?? allReservations.filter(r=>r.status==='confirmed').length;
+  } catch(e) {
+    toast('Napaka pri nalaganju naročil: ' + e.message, 'error');
+    allReservations = [];
+  }
+}
+
+// ── Calendar ─────────────────────────────────
+function renderCalendar() {
+  const label = document.getElementById('cal-month-label');
+  label.textContent = `${SL_MONTHS[calMonth]} ${calYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Day-of-week headers (Mon=0 … Sun=6)
+  SL_DAYS_SHORT.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  // First day of month (ISO: Mon=1, Sun=0 → shift to Mon=0)
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const offset = (firstDay + 6) % 7; // empty cells before day 1
+
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const today = todayISO();
+
+  // Build a map: isoDate → [statuses]
+  const dayMap = {};
+  allReservations.forEach(r => {
+    const iso = toISODate(r.date);
+    if (!iso) return;
+    const [y,m] = iso.split('-').map(Number);
+    if (y === calYear && m - 1 === calMonth) {
+      if (!dayMap[iso]) dayMap[iso] = [];
+      dayMap[iso].push(r.status);
     }
+  });
 
+  // Empty cells
+  for (let i = 0; i < offset; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
 
-    function toast(message, type = 'info', duration = 4000) {
-      const container = qs('toast-container');
-      if (!container) return;
-      const el = document.createElement('div');
-      el.className = `toast ${type}`;
-      el.textContent = message;
-      container.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 200);
-      }, duration);
-    }
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    if (iso === today) el.classList.add('today');
+    if (iso === selectedDate) el.classList.add('selected');
 
-    function escapeHtml(value) {
-      const str = String(value ?? '');
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    const numEl = document.createElement('span');
+    numEl.textContent = d;
+    el.appendChild(numEl);
 
-    async function loadAll() {
-      const tasks = [
-        loadStats(),
-        loadUsageStats(),
-        loadQuestionStats(),
-        loadLostIntents(),
-        loadFunnelStats(),
-        loadMissedQuestions(),
-        loadReservations(),
-        loadImapStatus(),
-      ];
-      if (currentTab === 'room') {
-        tasks.push(renderCalendar());
-      } else {
-        tasks.push(renderTableCalendar());
-      }
-      await Promise.all(tasks);
-    }
-
-    const unreadBtn = qs('unreadBtn');
-    if (unreadBtn) {
-      unreadBtn.addEventListener('click', () => {
-        const target = qs('pending-container');
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+    // Dots
+    const dotsEl = document.createElement('div');
+    dotsEl.className = 'cal-dots';
+    if (dayMap[iso]) {
+      const statuses = [...new Set(dayMap[iso])].slice(0, 3);
+      statuses.forEach(st => {
+        const dot = document.createElement('span');
+        dot.className = `dot ${st}`;
+        dotsEl.appendChild(dot);
       });
     }
+    el.appendChild(dotsEl);
 
-    function resetFilters() {
-      qs('filter-status').value = '';
-      qs('filter-type').value = currentTab;
-      qs('filter-source').value = '';
-      qs('filter-date-from').value = '';
-      qs('filter-date-to').value = '';
-      loadAll();
-    }
+    el.onclick = () => selectDay(iso);
+    grid.appendChild(el);
+  }
+}
 
-    function setRangeDays(days) {
-      const start = todayISO();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + days);
-      const end = `${endDate.getFullYear()}-${String(endDate.getMonth()+1).padStart(2,'0')}-${String(endDate.getDate()).padStart(2,'0')}`;
-      qs('filter-date-from').value = start;
-      qs('filter-date-to').value = end;
-      loadAll();
-    }
+function selectDay(iso) {
+  selectedDate = iso;
+  renderCalendar();
+  renderDayView();
+}
 
-    function buildQuery() {
-      const status = qs('filter-status').value;
-      const type = qs('filter-type').value || currentTab;
-      const source = qs('filter-source').value;
-      const date_from = qs('filter-date-from').value.replace(/\s+/g, '');
-      const date_to = qs('filter-date-to').value.replace(/\s+/g, '');
-      const params = new URLSearchParams();
-      params.set('limit', '200');
-      if (status) params.set('status', status);
-      if (type) params.set('type', type);
-      if (source) params.set('source', source);
-      if (date_from) params.set('date_from', date_from);
-      if (date_to) params.set('date_to', date_to);
-      return params.toString();
-    }
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
 
-    async function loadStats() {
-      try {
-        const res = await fetch(`${API_BASE}/stats`);
-        const data = await safeJson(res);
-        qs('stat-danes').textContent = data.danes ?? 0;
-        qs('stat-teden').textContent = data.ta_teden ?? 0;
-        qs('stat-mesec').textContent = data.ta_mesec ?? 0;
-        qs('stat-confirmed').textContent = data.po_statusu?.confirmed ?? 0;
-        qs('stat-pending').textContent = data.po_statusu?.pending ?? 0;
-        qs('stat-room').textContent = data.po_tipu?.room ?? 0;
-        qs('stat-table').textContent = data.po_tipu?.table ?? 0;
-      } catch (e) {
-        console.error('Stats error', e);
-      }
-    }
+// ── Day View ─────────────────────────────────
+function renderDayView() {
+  const titleEl   = document.getElementById('day-title');
+  const countEl   = document.getElementById('day-count');
+  const emptyEl   = document.getElementById('empty-state');
+  const slotsEl   = document.getElementById('slots-list');
 
-    async function loadImapStatus() {
-      try {
-        const res = await fetch(`${API_BASE}/imap_status`);
-        if (!res.ok) return;
-        const data = await res.json().catch(() => ({}));
-        const el = qs('imap-indicator');
-        if (!el) return;
-        const last = data.last_poll_at ? `IMAP: ${data.last_poll_at}` : 'IMAP: -';
-        const err = data.last_error ? ` • napaka: ${data.last_error}` : '';
-        el.textContent = `${last}${err}`;
-      } catch (e) {
-        // ignore
-      }
-    }
+  if (!selectedDate) {
+    titleEl.textContent = 'Izberite dan v koledarju';
+    countEl.style.display = 'none';
+    emptyEl.style.display = 'flex';
+    slotsEl.style.display = 'none';
+    return;
+  }
 
-    const imapPreviewBtn = qs('imapPreviewBtn');
-    if (imapPreviewBtn) {
-      imapPreviewBtn.addEventListener('click', async () => {
-        imapPreviewBtn.disabled = true;
-        toast('IMAP preview…', 'info', 1500);
-        try {
-          const res = await fetch(`${API_BASE}/imap_preview?limit=50`, { cache: 'no-store' });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || data.ok === false) {
-            toast(data.error || 'IMAP preview ni uspel.', 'error');
-          } else {
-            const rows = (data.messages || []).map(m => `• [${m.folder || 'INBOX'}] ${m.subject || '-'} — ${m.from || '-'} (${m.date || '-'})`);
-            alert(rows.length ? rows.join('\n') : 'Ni sporočil v inboxu.');
-          }
-        } catch (e) {
-          toast('IMAP preview ni uspel.', 'error');
-        } finally {
-          imapPreviewBtn.disabled = false;
-        }
+  titleEl.textContent = formatDayTitle(selectedDate);
+
+  const svc = document.getElementById('service-filter').value;
+  const dayRes = allReservations.filter(r => {
+    const match = toISODate(r.date) === selectedDate;
+    if (!match) return false;
+    if (svc && r.location !== svc) return false;
+    return true;
+  });
+
+  countEl.textContent = `${dayRes.length} naročil`;
+  countEl.style.display = 'inline-block';
+  emptyEl.style.display = 'none';
+  slotsEl.style.display = 'block';
+
+  // Map reservations by time
+  const resMap = {};
+  dayRes.forEach(r => {
+    const t = (r.time || '').substring(0,5);
+    if (!resMap[t]) resMap[t] = [];
+    resMap[t].push(r);
+  });
+
+  slotsEl.innerHTML = '';
+  TIME_SLOTS.forEach(slot => {
+    const recs = resMap[slot] || [];
+    if (recs.length > 0) {
+      recs.forEach(r => {
+        slotsEl.appendChild(buildSlotRow(slot, r));
       });
+    } else {
+      slotsEl.appendChild(buildEmptySlot(slot));
     }
+  });
+}
 
-    const imapResyncBtn = qs('imapResyncBtn');
-    if (imapResyncBtn) {
-      imapResyncBtn.addEventListener('click', async () => {
-        imapResyncBtn.disabled = true;
-        toast('IMAP resync…', 'info', 1500);
-        try {
-          const res = await fetch(`${API_BASE}/imap_resync?limit=200`, { method: 'POST', cache: 'no-store' });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || data.ok === false) {
-            toast(data.error || 'IMAP resync ni uspel.', 'error');
-          } else {
-            const processed = data.processed || 0;
-            const matched = data.matched || 0;
-            const scanned = data.scanned || 0;
-            toast(`IMAP resync OK (najdeno: ${processed}, ujemanja: ${matched}, pregledano: ${scanned})`, 'success');
-            if (data.sample_subjects && data.sample_subjects.length) {
-              console.log('[IMAP preview subjects]', data.sample_subjects);
-            }
-            loadAll();
-          }
-        } catch (e) {
-          toast('IMAP resync ni uspel.', 'error');
-        } finally {
-          imapResyncBtn.disabled = false;
-        }
-      });
+function buildSlotRow(slotTime, r) {
+  const row = document.createElement('div');
+  row.className = 'slot-row has-appt';
+  row.innerHTML = `
+    <div class="slot-time">${slotTime}</div>
+    <div class="slot-info">
+      <div class="slot-name">${esc(r.name || '—')}</div>
+      <div class="slot-service">${esc(r.location || '')}</div>
+    </div>
+    <div class="slot-actions">
+      <span class="badge ${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
+      <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
+      ${r.status !== 'confirmed' ? `<button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>` : ''}
+      ${r.status !== 'rejected' ? `<button class="btn-icon btn-reject" onclick="quickReject('${r.id}')">Zavrni</button>` : ''}
+      <button class="btn-icon btn-delete" onclick="quickDelete('${r.id}')">&#128465;</button>
+    </div>
+  `;
+  return row;
+}
+
+function buildEmptySlot(slotTime) {
+  const row = document.createElement('div');
+  row.className = 'slot-row';
+  row.innerHTML = `
+    <div class="slot-time">${slotTime}</div>
+    <div class="slot-info">
+      <span class="slot-empty" onclick="openAddModal('${slotTime}')">— prosto —</span>
+    </div>
+    <div></div>
+  `;
+  return row;
+}
+
+// ── Quick Actions ─────────────────────────────
+async function quickConfirm(id) {
+  try {
+    await apiFetch(`${API}/reservations/${id}/confirm`, { method: 'POST' });
+    toast('Rezervacija potrjena. Stranka je obveščena.', 'success');
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
+
+async function quickReject(id) {
+  if (!confirm('Zavrniti to naročilo?')) return;
+  try {
+    await apiFetch(`${API}/reservations/${id}/reject`, { method: 'POST' });
+    toast('Rezervacija zavrnjena.', 'info');
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
+
+async function quickDelete(id) {
+  if (!confirm('Izbrisati naročilo? Tega ni mogoče razveljaviti.')) return;
+  try {
+    await apiFetch(`${API}/reservations/${id}`, { method: 'DELETE' });
+    toast('Naročilo izbrisano.', 'info');
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
+
+// ── Edit Modal ────────────────────────────────
+async function openEditModal(id) {
+  editingId = id;
+  const r = allReservations.find(x => String(x.id) === String(id));
+  if (!r) { toast('Naročilo ni najdeno.', 'error'); return; }
+
+  document.getElementById('edit-modal-title').textContent = `Uredi naročilo #${id}`;
+  document.getElementById('ed-name').value        = r.name || '';
+  document.getElementById('ed-phone').value       = r.phone || '';
+  document.getElementById('ed-email').value       = r.email || '';
+  document.getElementById('ed-service').value     = r.location || '';
+  document.getElementById('ed-status').value      = r.status || 'pending';
+  document.getElementById('ed-date').value        = toISODate(r.date);
+  document.getElementById('ed-note').value        = r.note || '';
+  document.getElementById('ed-admin-notes').value = r.admin_notes || '';
+
+  // Set time
+  const timeVal = (r.time || '08:00').substring(0,5);
+  document.getElementById('ed-time').value = timeVal;
+
+  // Open overlay
+  document.getElementById('edit-modal-overlay').classList.add('open');
+
+  // Load messages
+  loadMessages(id);
+}
+
+async function loadMessages(id) {
+  const thread = document.getElementById('message-thread');
+  thread.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0"><span class="spinner"></span></div>';
+  try {
+    const data = await apiFetch(`${API}/reservations/${id}/messages`);
+    const msgs = data.messages || [];
+    if (msgs.length === 0) {
+      thread.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">Ni sporočil</div>';
+      return;
     }
-
-    async function loadUsageStats() {
-      try {
-        const res = await fetch(`${API_BASE}/usage_stats`);
-        const data = await safeJson(res);
-        qs('stat-ai-today').textContent = data.today ?? 0;
-        qs('stat-ai-month').textContent = data.month ?? 0;
-        qs('stat-ai-year').textContent = data.year ?? 0;
-      } catch (e) {
-        console.error('Usage stats error', e);
-      }
-    }
-
-    async function loadQuestionStats() {
-      try {
-        const res = await fetch(`${API_BASE}/question_stats?limit=10`);
-        const data = await safeJson(res);
-        const list = data.questions || [];
-        const target = qs('top-questions-list');
-        if (!list.length) {
-          target.innerHTML = '<li class="muted">Ni podatkov.</li>';
-          return;
-        }
-        target.innerHTML = list.map(item => `
-          <li>
-            ${escapeHtml(item.user_message || '-')}
-            <span class="count">(${item.count || 0})</span>
-          </li>
-        `).join('');
-      } catch (e) {
-        console.error('Question stats error', e);
-      }
-    }
-
-    async function loadLostIntents() {
-      try {
-        const res = await fetch(`${API_BASE}/lost_intents?limit=10`);
-        const data = await safeJson(res);
-        const list = data.items || [];
-        const target = qs('lost-intents-list');
-        if (!list.length) {
-          target.innerHTML = '<li class="muted">Ni podatkov.</li>';
-          return;
-        }
-        target.innerHTML = list.map(item => `
-          <li>
-            ${escapeHtml(item.user_message || '-')}
-            <span class="count">(${item.count || 0})</span>
-          </li>
-        `).join('');
-      } catch (e) {
-        console.error('Lost intents error', e);
-      }
-    }
-
-    async function loadFunnelStats() {
-      try {
-        const res = await fetch(`${API_BASE}/funnel_stats?days=30`);
-        const data = await safeJson(res);
-        const target = qs('funnel-grid');
-        if (!target) return;
-        const rows = [
-          { label: 'Seje skupaj', value: data.total_sessions ?? 0 },
-          { label: 'Začeta naročila', value: data.reservation_started ?? 0 },
-          { label: 'Dokončana naročila', value: data.reservation_completed ?? 0 },
-          { label: 'Start rate', value: `${data.start_rate_pct ?? 0}%` },
-          { label: 'Completion rate', value: `${data.completion_rate_pct ?? 0}%` },
-        ];
-        target.innerHTML = rows.map(row => `
-          <div class="stat" style="min-height:70px;">
-            <div class="label">${row.label}</div>
-            <div class="value">${row.value}</div>
-          </div>
-        `).join('');
-      } catch (e) {
-        console.error('Funnel stats error', e);
-      }
-    }
-
-    async function loadMissedQuestions() {
-      try {
-        const res = await fetch(`${API_BASE}/missed_questions?limit=5`);
-        const data = await safeJson(res);
-        const list = data.items || [];
-        const target = qs('missed-questions-list');
-        if (!list.length) {
-          target.innerHTML = '<li class="muted">Ni podatkov.</li>';
-          return;
-        }
-        target.innerHTML = list.map(item => `
-          <li style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-            <span>${escapeHtml(item.user_message || '-')} <span class="count">(${item.count || 0})</span></span>
-            <button class="btn-inline" onclick="openKbFixModal('${encodeURIComponent(item.user_message || '')}')">🛠️ Popravi v bazi</button>
-          </li>
-        `).join('');
-      } catch (e) {
-        console.error('Missed questions error', e);
-      }
-    }
-
-    let lastReservations = [];
-    let currentRoomReservation = null;
-    let currentTableReservation = null;
-
-    function isRepeatGuest(r) {
-      if (!r) return false;
-      if (!r.email && !r.phone) return false;
-      return (lastReservations || []).some(o => {
-        if (!o || o.id === r.id) return false;
-        if (o.status !== 'confirmed') return false;
-        const sameEmail = r.email && o.email && String(o.email).toLowerCase() === String(r.email).toLowerCase();
-        const samePhone = r.phone && o.phone && String(o.phone).replace(/\s+/g, '') === String(r.phone).replace(/\s+/g, '');
-        return sameEmail || samePhone;
-      });
-    }
-
-    function isLargeGroup(r) {
-      const people = parseInt(r?.people || 0);
-      return people >= 8;
-    }
-
-    function renderGuestBadges(r) {
-      let badges = '';
-      if (isRepeatGuest(r)) badges += '<span class="vip-badge">VIP</span>';
-      if (isLargeGroup(r)) badges += '<span class="group-badge">Velika skupina</span>';
-      return badges;
-    }
-
-    function renderTimeline(reservation, messages, targetId) {
-      const container = qs(targetId);
-      if (!container) return;
-      const events = [];
-      if (reservation?.created_at) {
-        events.push({ ts: reservation.created_at, label: 'Naročilo ustvarjeno' });
-      }
-      if (reservation?.confirmed_at) {
-        events.push({ ts: reservation.confirmed_at, label: 'Naročilo potrjeno' });
-      }
-      (messages || []).forEach(m => {
-        const direction = (m.direction || '').toLowerCase();
-        const label = direction === 'inbound'
-          ? `Odgovor gosta: ${m.subject || ''}`
-          : `Poslano gostu: ${m.subject || ''}`;
-        events.push({ ts: m.created_at || '', label });
-      });
-      if (!events.length) {
-        container.textContent = 'Ni dogodkov.';
-        return;
-      }
-      const sorted = events.sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-      container.innerHTML = sorted.map(e => `
-        <div class="msg">
-          <div class="meta">${escapeHtml(e.ts || '')}</div>
-          <div>${escapeHtml(e.label || '')}</div>
-        </div>
-      `).join('');
-    }
-
-    async function loadReservations() {
-      const query = buildQuery();
-      try {
-        const res = await fetch(`${API_BASE}/reservations?${query}`);
-        const data = await safeJson(res);
-        lastReservations = data.reservations || [];
-        renderPending(lastReservations);
-        renderReservations(lastReservations);
-        checkUnreadForReservations(lastReservations);
-      } catch (e) {
-        console.error('Load reservations error', e);
-      }
-    }
-
-    let autoRefreshTimer = null;
-    function toggleAutoRefresh(enabled) {
-      if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-      }
-      if (enabled) {
-        autoRefreshTimer = setInterval(loadAll, 30000);
-      }
-    }
-
-    function renderPending(resList) {
-      const container = qs('pending-container');
-      if (!container) return;
-      const pending = (resList || [])
-        .filter(r => r.status === 'pending' || r.status === 'processing')
-        .filter(r => {
-          if (currentTab !== 'table' || currentAppointmentFilter === 'ALL') return true;
-          return r.reservation_type === 'table' && r.location === currentAppointmentFilter;
-        });
-      let html = `<h3 style="margin-bottom:8px;">Čakajoči pregledi</h3>`;
-      if (!pending.length) {
-        container.innerHTML = html + `<div style="padding:10px; border:1px solid #f1e4c7; background:#fffaf0; border-radius:10px;">Ni čakajočih pregledov ✓</div>`;
-        return;
-      }
-      html += `<div class="date-reservations" style="border:1px solid #f1e4c7; background:#fffaf0; border-radius:10px;">`;
-      html += pending.map(r => {
-        const dataStr = encodeURIComponent(JSON.stringify(r));
-        return `
-          <div class="reservation-row" style="grid-template-columns: 120px 150px 120px 100px 1fr 160px;">
-            <span class="res-date">${r.date || '-'}</span>
-            <span class="res-guest">${r.name || 'Gost'} ${renderGuestBadges(r)}</span>
-            <span class="res-room">${r.reservation_type === 'table' ? 'Pregled' : 'Drugo'}</span>
-            <span class="res-people">${r.people || '-'} oseb</span>
-            <span class="res-room">${r.location || '-'} ${r.time || r.time_window ? '(' + (r.time || r.time_window) + ')' : ''}</span>
-            <span class="res-actions">
-              <button class="btn-inline success" onclick="openConfirm('${dataStr}')">✅ Potrdi</button>
-              <button class="btn-inline danger" onclick="rejectReservation(${r.id})">❌</button>
-              <button class="btn-inline" onclick="openEdit('${dataStr}')">✏️</button>
-              ${r.reservation_type === 'table' ? `<button class="btn-inline" onclick="openEdit('${dataStr}')">🕒</button>` : ''}
-              <button class="btn-inline" onclick="openEmailModal('${dataStr}')">✉</button>
-              <span class="msg-badge" data-msg-badge="${r.id}" style="display:none"></span>
-            </span>
-          </div>
-        `;
-      }).join('');
-      html += `</div>`;
-      container.innerHTML = html;
-    }
-
-    function renderReservations(list) {
-      const container = qs('reservations-container');
-      if (!container) return;
-      const monthNames = ['Januar', 'Februar', 'Marec', 'April', 'Maj', 'Junij', 'Julij', 'Avgust', 'September', 'Oktober', 'November', 'December'];
-
-      const expanded = expandReservations(list);
-      const filteredByType = expanded.filter(r => {
-        if (currentTab !== 'table' || currentAppointmentFilter === 'ALL') return true;
-        return r.reservation_type === 'table' && r.location === currentAppointmentFilter;
-      });
-      const pendingList = filteredByType.filter(r => r.isMainDay && (r.status === 'pending' || r.status === 'processing'));
-
-      // filtriraj po izbranem datumu (če sta vnesena), sicer po prikazanem mesecu
-      const dfVal = qs('filter-date-from').value;
-      const dtVal = qs('filter-date-to').value;
-      const dateFrom = dfVal ? new Date(dfVal) : null;
-      const dateTo = dtVal ? new Date(dtVal) : null;
-
-      const filtered = filteredByType.filter(r => {
-        const d = parseDDMMYYYY(r.date);
-        if (!d) return false;
-        if (dateFrom && d < dateFrom) return false;
-        if (dateTo && d > dateTo) return false;
-        // če ni range filtrov, filtriramo na trenutno izbran mesec/let
-        if (!dateFrom && !dateTo) {
-          return d.getMonth() === calendarMonth && d.getFullYear() === calendarYear;
-        }
-        return true;
-      });
-
-      const byDate = {};
-      filtered.forEach(r => {
-        const date = r.date || 'Brez datuma';
-        if (!byDate[date]) byDate[date] = [];
-        byDate[date].push(r);
-      });
-
-      let html = '';
-
-      const datesWithReservations = Object.keys(byDate).sort((a, b) => {
-        const da = parseDDMMYYYY(a);
-        const db = parseDDMMYYYY(b);
-        if (!da || !db) return a.localeCompare(b);
-        return da - db;
-      });
-
-      const monthKeys = Array.from(new Set(datesWithReservations.map(d => {
-        const dd = parseDDMMYYYY(d);
-        return dd ? `${dd.getFullYear()}-${dd.getMonth()}` : 'unknown';
-      })));
-      const title = monthKeys.length === 1 && datesWithReservations.length
-        ? (() => {
-            const dd = parseDDMMYYYY(datesWithReservations[0]);
-            return `${monthNames[dd.getMonth()]} ${dd.getFullYear()}`;
-          })()
-        : 'Naročila (filtrirano)';
-
-      html += `<h3 style="margin:12px 0 8px;">${title}</h3>`;
-
-      let lastMonthKey = null;
-      datesWithReservations.forEach(dateStr => {
-        const dateKey = dateStr.replace(/\./g, '-');
-        const items = byDate[dateStr] || [];
-        const isNear = isDateWithin14Days(dateStr);
-        const sortedItems = [...items].sort((a,b) => (b.isMainDay === true ? 1 : 0) - (a.isMainDay === true ? 1 : 0));
-        const d = parseDDMMYYYY(dateStr);
-        const monthKey = d ? `${d.getFullYear()}-${d.getMonth()}` : 'unknown';
-        if (monthKey !== lastMonthKey && monthKeys.length > 1) {
-          html += `<h4 style="margin:10px 0 6px; color:#4b3a28;">${d ? monthNames[d.getMonth()] + ' ' + d.getFullYear() : 'Brez datuma'}</h4>`;
-          lastMonthKey = monthKey;
-        }
-        html += `
-          <div class="date-group">
-            <div class="date-header" onclick="toggleGroup('${dateKey}')">
-              <span>📅</span>
-              <span>${dateStr}</span>
-              <span class="date-count">(${items.length} naročil)</span>
-              <span class="date-toggle ${isNear ? '' : 'collapsed'}" id="toggle-${dateKey}">${isNear ? '▼' : '▶'}</span>
-            </div>
-            <div class="date-reservations ${isNear ? '' : 'hidden'}" id="group-${dateKey}">
-              ${sortedItems.length ? sortedItems.map(r => renderReservationRow(r, false)).join('') : '<div style="padding:8px 4px;color:#7a7a7a;">Ni naročil.</div>'}
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    function renderStatus(status) {
-      const cls = status ? `status-${status}` : '';
-      const label = status === 'pending' ? 'Čaka' :
-                    status === 'confirmed' ? 'Potrjeno' :
-                    status === 'rejected' ? 'Zavrnjeno' :
-                    status === 'processing' ? 'V obdelavi' : status || '-';
-      return `<span class="badge ${cls}">${label}</span>`;
-    }
-    function renderStatusText(status) {
-      if (status === 'pending') return 'Čaka';
-      if (status === 'confirmed') return 'Potrjeno';
-      if (status === 'rejected') return 'Zavrnjeno';
-      if (status === 'processing') return 'V obdelavi';
-      return status || '-';
-    }
-
-    function parseDDMMYYYY(val) {
-      if (!val) return null;
-      const parts = String(val).split('.');
-      if (parts.length === 3) {
-        const [d, m, y] = parts.map(Number);
-        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
-          return new Date(y, m - 1, d);
-        }
-      }
-      const asDate = new Date(val);
-      return isNaN(asDate.getTime()) ? null : asDate;
-    }
-
-    function setCalendarToDate(dateStr) {
-      const d = parseDDMMYYYY(dateStr);
-      if (!d) return;
-      calendarMonth = d.getMonth();
-      calendarYear = d.getFullYear();
-      qs('month-select').value = calendarMonth.toString();
-      qs('year-input').value = calendarYear.toString();
-    }
-
-    async function refreshAfterSave(dateStr) {
-      setCalendarToDate(dateStr);
-      await loadReservations();
-      if (currentTab === 'room') {
-        await renderCalendar();
-      } else {
-        await renderTableCalendar();
-      }
-    }
-
-    function toggleGroup(dateKey) {
-      const content = qs(`group-${dateKey}`);
-      const toggle = qs(`toggle-${dateKey}`);
-      if (!content || !toggle) return;
-      const isHidden = content.classList.contains('hidden');
-      content.classList.toggle('hidden', !isHidden);
-      toggle.textContent = isHidden ? '▼' : '▶';
-      toggle.classList.toggle('collapsed', !isHidden);
-    }
-
-    function expandReservations(list) {
-      const expanded = [];
-      list.forEach(r => {
-        const start = parseDDMMYYYY(r.date);
-        if (!start) return;
-        if (r.reservation_type === 'room' && r.nights && r.nights > 1) {
-          const total = parseInt(r.nights, 10) || 1;
-          for (let i = 0; i < total; i++) {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            const dateStr = formatDate(d);
-            expanded.push({
-              ...r,
-              date: dateStr,
-              isMainDay: i === 0,
-              dayNumber: i + 1,
-              totalDays: total,
-              mainDate: formatDate(start),
-              endDate: formatDate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + total - 1)),
-            });
-          }
-        } else {
-          expanded.push({
-            ...r,
-            isMainDay: true,
-            dayNumber: 1,
-            totalDays: r.nights || 1,
-            mainDate: formatDate(start),
-            endDate: r.date,
-          });
-        }
-      });
-      return expanded;
-    }
-
-    function isDateWithin14Days(dateStr) {
-      const parts = dateStr.split('.');
-      if (parts.length !== 3) return false;
-      const d = new Date(parts[2], parts[1] - 1, parts[0]);
-      const now = new Date();
-      const diff = (d - now) / (1000 * 60 * 60 * 24);
-      return diff >= -1 && diff <= 14;
-    }
-
-    function formatDate(d) {
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${day}.${month}.${year}`;
-    }
-
-    function renderReservationRow(r, showDate = false) {
-      const kidsInfo = r.kids ? ` (${r.kids} otrok${r.kids_small ? ': ' + r.kids_small : ''})` : '';
-      const timeLabel = r.time ? `ob ${r.time}` : (r.time_window ? `(${r.time_window})` : '');
-      const roomDisplay = r.reservation_type === 'table'
-        ? `${r.location || '-'} ${timeLabel}`.trim()
-        : (r.location && !String(r.location).toLowerCase().includes('dodelimo') ? r.location : '-');
-      const nightsDisplay = r.reservation_type === 'table' ? '-' : (r.nights || '-');
-      const guestName = r.name || 'Gost';
-      const badges = renderGuestBadges(r);
-      const peopleLabel = `${r.people || '-'} oseb${kidsInfo}`;
-      const dateLabel = showDate ? (r.date || '-') : '';
-      if (r.isMainDay) {
-        return `
-          <div class="reservation-row">
-            <span class="res-id">#${r.id}</span>
-            <span class="res-date">${dateLabel}</span>
-            <span class="res-guest">${guestName} ${badges}</span>
-            <span class="res-nights">${r.reservation_type === 'table' ? '-' : `${r.nights || 1} noči${r.totalDays ? ` (${r.date} - ${r.endDate || ''})` : ''}`}</span>
-            <span class="res-people">${peopleLabel}</span>
-            <span class="res-room">${roomDisplay || '-'}</span>
-            <span class="res-note">${r.note ? (r.note.length > 35 ? r.note.slice(0,35)+'…' : r.note) : '-'}</span>
-            <span>${renderStatus(r.status)}</span>
-            <span class="res-actions">
-              <button class="btn-inline success" onclick="openConfirm('${encodeURIComponent(JSON.stringify(r))}')">✅</button>
-              <button class="btn-inline danger" onclick="rejectReservation(${r.id})">❌</button>
-              <button class="btn-inline" onclick="openEdit('${encodeURIComponent(JSON.stringify(r))}')">✏️</button>
-              <button class="btn-inline" onclick="openEmailModal('${encodeURIComponent(JSON.stringify(r))}')">✉</button>
-              <span class="msg-badge" data-msg-badge="${r.id}" style="display:none"></span>
-            </span>
-          </div>
-        `;
-      }
-      const continuationLabel = r.totalDays ? `↳ ${guestName} (noč ${r.dayNumber}/${r.totalDays})` : `↳ ${guestName}`;
-      return `
-        <div class="reservation-row continuation">
-          <span class="res-id" style="opacity:0.4">#${r.id}</span>
-          <span class="res-date">${dateLabel}</span>
-          <span class="res-guest" style="opacity:0.6">${continuationLabel}</span>
-          <span class="res-nights"></span>
-          <span class="res-people"></span>
-          <span class="res-room" style="opacity:0.6">${roomDisplay || '-'}</span>
-          <span class="res-note"></span>
-          <span class="badge status-${r.status}" style="opacity:0.5">${renderStatusText(r.status)}</span>
-          <span class="res-actions">
-            <span style="color:#999; font-size:11px; cursor:pointer;" onclick="scrollToDate('${r.mainDate || r.date}')">→ glej ${r.mainDate || r.date}</span>
-          </span>
+    thread.innerHTML = '';
+    msgs.forEach(m => {
+      const div = document.createElement('div');
+      div.className = `msg-bubble ${m.direction === 'outbound' ? 'outbound' : 'inbound'}`;
+      div.innerHTML = `
+        ${m.subject ? `<div class="msg-subject">${esc(m.subject)}</div>` : ''}
+        <div>${esc(m.body || '')}</div>
+        <div class="msg-meta">
+          <span class="channel-badge">${esc(m.channel || 'email')}</span>
+          ${m.created_at ? formatMsgTime(m.created_at) : ''}
         </div>
       `;
-    }
-
-    function openKbFixModal(question) {
-      qs('kb-fix-question').value = decodeURIComponent(question || '');
-      qs('kb-fix-suggestion').value = '';
-      qs('kb-fix-modal').classList.add('active');
-    }
-
-    function closeKbFixModal() {
-      qs('kb-fix-modal').classList.remove('active');
-    }
-
-    qs('kb-fix-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const question = qs('kb-fix-question').value.trim();
-      const suggestion = qs('kb-fix-suggestion').value.trim();
-      if (!question || !suggestion) {
-        toast('Prosim vnesi predlog.', 'error');
-        return;
-      }
-      const res = await fetch(`${API_BASE}/knowledge_feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, suggestion }),
-      });
-      if (!res.ok) {
-        toast('Predloga ni bilo mogoče shraniti.', 'error');
-        return;
-      }
-      toast('Predlog shranjen.', 'success');
-      closeKbFixModal();
+      thread.appendChild(div);
     });
+    thread.scrollTop = thread.scrollHeight;
+  } catch(e) {
+    thread.innerHTML = '<div style="color:var(--danger);font-size:12px;text-align:center;padding:16px 0">Napaka pri nalaganju sporočil</div>';
+  }
+}
 
-    function isTableReservation(r) {
-      if (!r) return false;
-      const type = (r.reservation_type || '').toLowerCase();
-      if (type === 'table' || type === 'miza') return true;
-      const loc = (r.location || '').toLowerCase();
-      if (APPOINTMENT_TYPES.some(t => loc.includes(t.toLowerCase()))) return true;
-      if (r.time || r.time_window) return true;
-      if (r.event_type) return true;
-      return false;
-    }
+function formatMsgTime(ts) {
+  try {
+    const d = new Date(ts);
+    return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  } catch { return ts; }
+}
 
-    function openConfirm(dataStr) {
-      const r = JSON.parse(decodeURIComponent(dataStr));
-      const isTable = isTableReservation(r);
-      qs('confirm-id').value = r.id;
-      qs('confirm-type').value = isTable ? 'table' : 'room';
-      qs('confirm-title').textContent = `Potrdi naročilo #${r.id} (${r.name || 'gost'})`;
-      const select = qs('confirm-choice');
-      const hint = qs('confirm-hint');
-      select.innerHTML = '';
-      if (isTable) {
-        qs('confirm-label').textContent = 'Izberi vrsto pregleda/posega';
-        hint.textContent = r.location ? `Gost je izbral: ${r.location}` : 'Gost ni izbral vrste pregleda/posega.';
-        APPOINTMENT_TYPES.forEach(opt => {
-          const o = document.createElement('option');
-          o.value = opt;
-          o.textContent = opt;
-          select.appendChild(o);
-        });
-        if (r.location) select.value = r.location;
-      } else {
-        qs('confirm-label').textContent = 'Izberi sobo';
-        hint.textContent = r.location ? `Gost je izbral: ${(r.location || '').toUpperCase()}` : 'Gost ni izbral sobe.';
-        ['', 'ALJAZ', 'JULIJA', 'ANA'].forEach(opt => {
-          const o = document.createElement('option');
-          o.value = opt;
-          o.textContent = opt ? opt : '-- izberi --';
-          select.appendChild(o);
-        });
-        const currentRoom = (r.location || '').toUpperCase();
-        select.value = currentRoom && ['ALJAZ','JULIJA','ANA'].includes(currentRoom) ? currentRoom : '';
-      }
-      qs('confirm-modal').classList.add('active');
-    }
-    function closeConfirmModal() { qs('confirm-modal').classList.remove('active'); }
+function closeEditModal(e) {
+  if (e.target === document.getElementById('edit-modal-overlay')) closeEditModalDirect();
+}
+function closeEditModalDirect() {
+  document.getElementById('edit-modal-overlay').classList.remove('open');
+  editingId = null;
+}
 
-    function clearNewRoomForm() {
-      const ids = [
-        'new-room-date',
-        'new-room-nights',
-        'new-room-people',
-        'new-room-kids',
-        'new-room-kids-ages',
-        'new-room-location',
-        'new-room-name',
-        'new-room-email',
-        'new-room-phone',
-        'new-room-note',
-      ];
-      ids.forEach(id => {
-        const el = qs(id);
-        if (el) el.value = '';
-      });
-    }
-
-    function clearNewTableForm() {
-      qs('new-table-date').value = '';
-      qs('new-table-time').value = '';
-      qs('new-table-time-window').value = '';
-      qs('new-table-location').value = APPOINTMENT_TYPES[0];
-      qs('new-table-event-type').value = '';
-      qs('new-table-name').value = '';
-      qs('new-table-email').value = '';
-      qs('new-table-phone').value = '';
-      qs('new-table-birth-date').value = '';
-      qs('new-table-special-needs').value = '';
-    }
-
-    // Email modal
-    function openEmailModal(dataStr) {
-      const r = typeof dataStr === 'string' ? JSON.parse(decodeURIComponent(dataStr)) : dataStr;
-      qs('email-modal-name').textContent = r?.name ? `(${r.name})` : '';
-      qs('email-res-id').value = r?.id || '';
-      qs('email-recipient').value = r?.email || '';
-      const tag = r?.id ? `Naročilo #${r.id}` : 'Naročilo';
-      qs('email-subject').value = `${tag} - Dodatne informacije`;
-      qs('email-body').value = '';
-      qs('email-template').value = '';
-      qs('email-modal').classList.add('active');
-    }
-    function closeEmailModal() { qs('email-modal').classList.remove('active'); }
-    const emailTpl = qs('email-template');
-    if (emailTpl) {
-      emailTpl.addEventListener('change', (e) => {
-        const tpl = e.target.value;
-        const body = qs('email-body');
-        if (!body) return;
-        if (tpl === 'info') body.value = 'Prosimo vas za dodatne informacije (termin, število oseb, posebnosti), da lahko pripravimo ponudbo.';
-        else if (tpl === 'date') body.value = 'Prosimo potrdite datum/uro, da dokončno potrdimo naročilo.';
-        else if (tpl === 'full') body.value = 'Izbrani termin je zaseden. Lahko ponudimo alternativni termin?';
-        else body.value = '';
-      });
-    }
-    const emailForm = qs('email-form');
-    if (emailForm) {
-      emailForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-          reservation_id: qs('email-res-id').value,
-          email: qs('email-recipient').value,
-          subject: qs('email-subject').value,
-          body: qs('email-body').value,
-          set_processing: false,
-        };
-        try {
-          const res = await fetch(`${API_BASE}/send-message`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            toast(data.detail || 'Napaka pri pošiljanju emaila.', 'error');
-            return;
-          }
-          toast('Email poslan ✓', 'success');
-          closeEmailModal();
-        } catch (err) {
-          toast('Napaka pri pošiljanju emaila.', 'error');
-        }
-      });
-    }
-
-    function openNewRoom() {
-      clearNewRoomForm();
-      qs('new-room-modal').classList.add('active');
-    }
-    function closeNewRoom() { qs('new-room-modal').classList.remove('active'); }
-    function openNewTable() {
-      clearNewTableForm();
-      qs('new-table-modal').classList.add('active');
-    }
-    function closeNewTable() { qs('new-table-modal').classList.remove('active'); }
-
-    function formatToDDMMYYYY(dateStr) {
-      if (!dateStr) return '';
-      const parts = String(dateStr).split('-');
-      if (parts.length === 3) {
-        return `${parts[2].padStart(2,'0')}.${parts[1].padStart(2,'0')}.${parts[0]}`;
-      }
-      return dateStr;
-    }
-
-    async function confirmReservation(id, payload) {
-      const res = await fetch(`${API_BASE}/reservations/${id}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload || {}),
-      });
-      const data = await safeJson(res);
-      if (!res.ok) {
-        toast(data.detail || 'Napaka pri potrditvi.', 'error');
-        return;
-      }
-      if (data.warning) {
-        toast(data.warning, 'warning');
-        return;
-      }
-      toast('Naročilo potrjeno.', 'success');
-      closeConfirmModal();
-      loadAll();
-    }
-
-    qs('confirm-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = qs('confirm-id').value;
-      const type = qs('confirm-type').value;
-      const choice = qs('confirm-choice').value;
-      if (!choice) {
-        toast('Izberi možnost pred potrditvijo.', 'warning');
-        return;
-      }
-      if (type === 'table') {
-        confirmReservation(id, { location: choice });
-      } else {
-        confirmReservation(id, { room: choice });
-      }
+async function saveReservation() {
+  if (!editingId) return;
+  const body = {
+    name:        document.getElementById('ed-name').value.trim(),
+    phone:       document.getElementById('ed-phone').value.trim(),
+    email:       document.getElementById('ed-email').value.trim(),
+    location:    document.getElementById('ed-service').value,
+    status:      document.getElementById('ed-status').value,
+    date:        document.getElementById('ed-date').value,
+    time:        document.getElementById('ed-time').value,
+    note:        document.getElementById('ed-note').value.trim(),
+    admin_notes: document.getElementById('ed-admin-notes').value.trim()
+  };
+  try {
+    await apiFetch(`${API}/reservations/${editingId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body)
     });
+    toast('Spremembe shranjene.', 'success');
+    closeEditModalDirect();
+    await refreshAll();
+  } catch(e) { toast('Napaka pri shranjevanju: ' + e.message, 'error'); }
+}
 
-    async function renderCalendar() {
-      const title = qs('calendar-title');
-      const grid = qs('calendar-grid');
-      if (!title || !grid) return;
-      const monthNames = ['Januar', 'Februar', 'Marec', 'April', 'Maj', 'Junij', 'Julij', 'Avgust', 'September', 'Oktober', 'November', 'December'];
-      title.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+async function confirmReservation() {
+  if (!editingId) return;
+  try {
+    await apiFetch(`${API}/reservations/${editingId}/confirm`, { method: 'POST' });
+    toast('Rezervacija potrjena. Stranka je obveščena.', 'success');
+    closeEditModalDirect();
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
 
-      let calendarData = {};
-      try {
-        const res = await fetch(`${API_BASE}/calendar/rooms?month=${calendarMonth + 1}&year=${calendarYear}`);
-        const payload = await safeJson(res);
-        calendarData = payload.days || payload;
-      } catch (e) {
-        console.error('Calendar load error', e);
-        grid.innerHTML = '<div style="grid-column: span 7; text-align:center; color:#9a8f84;">Napaka pri nalaganju koledarja.</div>';
-        return;
-      }
+async function rejectReservation() {
+  if (!editingId) return;
+  if (!confirm('Zavrniti to naročilo?')) return;
+  try {
+    await apiFetch(`${API}/reservations/${editingId}/reject`, { method: 'POST' });
+    toast('Naročilo zavrnjeno.', 'info');
+    closeEditModalDirect();
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
 
-      grid.innerHTML = '';
-      const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-      const startDay = firstDay === 0 ? 6 : firstDay - 1; // Monday-first
-      const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+async function deleteReservation() {
+  if (!editingId) return;
+  if (!confirm('Izbrisati naročilo? Tega ni mogoče razveljaviti.')) return;
+  try {
+    await apiFetch(`${API}/reservations/${editingId}`, { method: 'DELETE' });
+    toast('Naročilo izbrisano.', 'info');
+    closeEditModalDirect();
+    await refreshAll();
+  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
+}
 
-      for (let i = 0; i < startDay; i++) {
-        const empty = document.createElement('div');
-        empty.style.cssText = 'min-height: 80px;';
-        grid.appendChild(empty);
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayData = calendarData[dateKey] || { confirmed: [], pending: [], reservations: [] };
-        const hasConfirmed = (dayData.confirmed || []).length > 0;
-        const hasPending = (dayData.pending || []).length > 0;
-        let bg = '#fff';
-        if (hasConfirmed && hasPending) bg = '#fdf6e3';
-        else if (hasConfirmed) bg = '#f2fbf4';
-        else if (hasPending) bg = '#fff8e6';
-
-        // stage (check-in / mid / checkout)
-        let hasCheckin = false;
-        let hasMid = false;
-        let hasLast = false;
-        (dayData.reservations || []).forEach(r => {
-          const start = parseDDMMYYYY(r.date);
-          const n = parseInt(r.nights || '1', 10) || 1;
-          if (!start || n <= 0) return;
-          const current = new Date(dateKey);
-          const last = new Date(start);
-          last.setDate(start.getDate() + n - 1);
-          if (current.getTime() === start.getTime()) hasCheckin = true;
-          else if (current.getTime() === last.getTime()) hasLast = true;
-          else if (current > start && current < last) hasMid = true;
-        });
-
-        const cell = document.createElement('div');
-        const isToday = dateKey === todayISO();
-        const outline = isToday ? '2px solid #e74c3c' : (hasLast ? '2px dashed #8e8e8e' : '1px solid #e6e2da');
-        const effectiveBg = hasMid ? '#fef9f2' : bg;
-        cell.style.cssText = `min-height: 80px; border: ${outline}; border-radius: 8px; padding: 6px; cursor: pointer; background: ${effectiveBg};`;
-        cell.onmouseover = () => cell.style.background = '#f9f7f2';
-        cell.onmouseout = () => cell.style.background = effectiveBg;
-        cell.onclick = () => showDayDetails(dateKey, dayData);
-
-        const dayNum = document.createElement('div');
-        dayNum.style.cssText = 'font-weight: 600; margin-bottom: 4px;';
-        dayNum.textContent = day;
-        cell.appendChild(dayNum);
-
-        const rooms = document.createElement('div');
-        rooms.style.cssText = 'font-size: 12px; line-height: 1.4;';
-        const confirmedList = Array.from(new Set(dayData.confirmed || []));
-        const pendingList = Array.from(new Set(dayData.pending || []));
-        if (confirmedList.length) {
-          rooms.innerHTML += `<div style="color:#2e7d32; font-weight:600;">Potrjeno: ${confirmedList.join(', ')}</div>`;
-        }
-        if (pendingList.length) {
-          rooms.innerHTML += `<div style="color:#c27d00; font-weight:600;">Čaka: ${pendingList.join(', ')}</div>`;
-          // quick actions za pending
-          const pendingActions = (dayData.reservations || []).filter(r => r.status === 'pending');
-          if (pendingActions.length) {
-            rooms.innerHTML += pendingActions.map(r => {
-              const dataStr = encodeURIComponent(JSON.stringify(r));
-              return `<div style="margin-top:4px;">
-                <button class="btn-inline success" onclick="openConfirm('${dataStr}')">✅ ${r.name || 'Gost'}</button>
-                <button class="btn-inline danger" onclick="rejectReservation(${r.id})">❌</button>
-              </div>`;
-            }).join('');
-          }
-        }
-        if ((dayData.reservations || []).length) {
-          const tooltip = (dayData.reservations || [])
-            .map(r => {
-              const contact = [r.email, r.phone].filter(Boolean).join(' | ');
-              return `${r.name || 'Gost'} · ${r.people || '-'} oseb${r.kids ? ' (' + r.kids + ')' : ''}${r.location ? ' · ' + r.location : ''}${contact ? ' · ' + contact : ''}`;
-            })
-            .join('\\n');
-          cell.title = tooltip;
-        }
-        cell.appendChild(rooms);
-        grid.appendChild(cell);
-      }
-    }
-
-    async function renderTableCalendar() {
-      const grid = qs('table-calendar-grid');
-      const title = qs('table-calendar-title');
-      if (!grid || !title) return;
-      const monthNames = ['Januar', 'Februar', 'Marec', 'April', 'Maj', 'Junij', 'Julij', 'Avgust', 'September', 'Oktober', 'November', 'December'];
-      title.textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
-      let data = {};
-      try {
-        const locationParam = currentAppointmentFilter !== 'ALL'
-          ? `&location=${encodeURIComponent(currentAppointmentFilter)}`
-          : '';
-        const res = await fetch(`${API_BASE}/calendar/tables?month=${calendarMonth + 1}&year=${calendarYear}${locationParam}`);
-        data = await safeJson(res);
-      } catch (e) {
-        grid.innerHTML = '<div style="grid-column: span 7; text-align:center; color:#9a8f84;">Napaka pri nalaganju koledarja pregledov.</div>';
-        return;
-      }
-      tableCalendarData = data;
-      grid.innerHTML = '';
-      const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-      const startDay = firstDay === 0 ? 6 : firstDay - 1;
-      const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-      for (let i = 0; i < startDay; i++) {
-        const empty = document.createElement('div');
-        empty.style.cssText = 'min-height: 80px;';
-        grid.appendChild(empty);
-      }
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayData = data[dateKey] || { total_people: 0, capacity: TABLE_CAP, reservations: [] };
-        const reservations = dayData.reservations || [];
-        const totalPeople = dayData.total_people || 0;
-        const capacity = dayData.capacity || TABLE_CAP;
-        const percent = capacity ? (totalPeople / capacity) * 100 : 0;
-        let bg = '#e9f7ef'; // green-ish
-        if (percent >= 80) bg = '#fdecea';
-        else if (percent >= 50) bg = '#fff4d6';
-
-        const cell = document.createElement('div');
-        const isToday = dateKey === todayISO();
-        const outline = isToday ? '2px solid #e74c3c' : '1px solid #e6e2da';
-        cell.style.cssText = `min-height: 80px; border: ${outline}; border-radius: 8px; padding: 6px; cursor: pointer; background: ${bg};`;
-        cell.onmouseover = () => cell.style.outline = '1px solid #c9b99f';
-        cell.onmouseout = () => cell.style.outline = 'none';
-        cell.onclick = () => showTableDayDetails(dateKey, dayData);
-
-        const dayNum = document.createElement('div');
-        dayNum.style.cssText = 'font-weight: 600; margin-bottom: 4px;';
-        dayNum.textContent = day;
-        cell.appendChild(dayNum);
-
-        const info = document.createElement('div');
-        info.style.cssText = 'font-size: 12px; color: #4b3a28; display:grid; gap:2px;';
-        info.innerHTML = `
-          <span>Termini: ${reservations.length}</span>
-          <span>Oseb skupaj: ${totalPeople}/${capacity}</span>
-        `;
-        cell.appendChild(info);
-        const pendingActions = reservations.filter(r => r.status === 'pending');
-        if (pendingActions.length) {
-          cell.innerHTML += pendingActions.map(r => {
-            const dataStr = encodeURIComponent(JSON.stringify(r));
-            return `<div style="margin-top:4px;">
-              <button class="btn-inline success" onclick="openConfirm('${dataStr}')">✅ ${r.name || 'Gost'}</button>
-              <button class="btn-inline danger" onclick="rejectReservation(${r.id || ''})">❌</button>
-            </div>`;
-          }).join('');
-        }
-        if (reservations.length) {
-          const tooltip = reservations
-            .map(r => {
-              const contact = [r.email, r.phone].filter(Boolean).join(' | ');
-              const timeLabel = r.time || r.time_window || '-';
-              return `${timeLabel} · ${r.name || 'Gost'} · ${r.people || 0} oseb${r.location ? ' · ' + r.location : ''}${contact ? ' · ' + contact : ''}`;
-            })
-            .join('\\n');
-          cell.title = tooltip;
-        }
-
-        grid.appendChild(cell);
-      }
-    }
-
-    function changeMonth(delta) {
-      calendarMonth += delta;
-      if (calendarMonth < 0) {
-        calendarMonth = 11;
-        calendarYear -= 1;
-      } else if (calendarMonth > 11) {
-        calendarMonth = 0;
-        calendarYear += 1;
-      }
-      renderCalendar();
-      renderTableCalendar();
-      renderReservations(lastReservations || []);
-      qs('month-select').value = calendarMonth.toString();
-      qs('year-input').value = calendarYear.toString();
-    }
-
-    function selectMonth(val) {
-      calendarMonth = parseInt(val, 10) || 0;
-      renderCalendar();
-      renderTableCalendar();
-      renderReservations(lastReservations || []);
-    }
-
-    function applyMonthYear() {
-      const m = parseInt(qs('month-select').value, 10) || 0;
-      const y = parseInt(qs('year-input').value, 10) || calendarYear;
-      calendarMonth = Math.min(11, Math.max(0, m));
-      calendarYear = y;
-      renderCalendar();
-      renderTableCalendar();
-      renderReservations(lastReservations || []);
-    }
-
-    async function showDayDetails(dateKey, dayData) {
-      const sidebar = qs('day-sidebar');
-      const dateTitle = qs('sidebar-date');
-      const content = qs('sidebar-content');
-      if (!sidebar || !dateTitle || !content) return;
-      sidebar.style.display = 'block';
-      dateTitle.textContent = dateKey;
-      try {
-        const res = await fetch(`${API_BASE}/reservations?date_from=${dateKey}&date_to=${dateKey}&type=room&limit=50`);
-        const data = await safeJson(res);
-        const reservations = data.reservations || [];
-        if (!reservations.length) {
-          content.innerHTML = '<p style="color: #7a7a7a;">Ni naročil za ta dan.</p>';
-          return;
-        }
-        const sorted = reservations.sort((a,b) => (a.created_at || '').localeCompare(b.created_at || ''));
-        content.innerHTML = sorted.map(r => `
-          <div style="border: 1px solid #e6e2da; border-radius: 8px; padding: 10px; margin-bottom: 8px;">
-            <div style="font-weight: 600;">${r.name || 'Gost'}</div>
-            <div style="color: #7a7a7a; font-size: 13px;">
-              ${r.people || '-'} oseb ${r.kids ? '(' + r.kids + ' otrok)' : ''}<br>
-              ${r.location || 'Pregled ni dodeljen'}<br>
-              <span class="badge status-${r.status}">${r.status}</span><br>
-              ${[r.email, r.phone].filter(Boolean).join(' | ')}
-            </div>
-            ${r.status === 'pending' ? `
-              <div style="margin-top: 8px;">
-                <button class="btn-inline success" onclick="openConfirm('${encodeURIComponent(JSON.stringify(r))}')">✅ Potrdi</button>
-                <button class="btn-inline danger" onclick="rejectReservation(${r.id})">❌ Zavrni</button>
-              </div>
-            ` : ''}
-          </div>
-        `).join('');
-      } catch (e) {
-        content.innerHTML = '<p style="color: #c0392b;">Napaka pri nalaganju podatkov za ta dan.</p>';
-      }
-    }
-
-    async function showTableDayDetails(dateKey, dayData) {
-      const sidebar = qs('table-sidebar');
-      const dateTitle = qs('table-sidebar-date');
-      const content = qs('table-sidebar-content');
-      if (!sidebar || !dateTitle || !content) return;
-      sidebar.style.display = 'block';
-      dateTitle.textContent = dateKey;
-      const reservations = (dayData.reservations || []).filter(r => {
-        if (currentAppointmentFilter === 'ALL') return true;
-        return r.location === currentAppointmentFilter;
-      });
-      if (!reservations.length) {
-        content.innerHTML = '<p style="color:#7a7a7a;">Ni naročil za ta dan.</p>';
-        return;
-      }
-
-      const byTime = {};
-      reservations.forEach(r => {
-        if (!r.time) return;
-        byTime[r.time] = byTime[r.time] || [];
-        byTime[r.time].push(r);
-      });
-
-      const slots = buildSlots(8, 18);  // Zdravstveni center: 8:00-18:00
-      const slotHtml = slots.map(slot => {
-        const items = byTime[slot] || [];
-        if (!items.length) {
-          return `<div class="slot free">${slot}</div>`;
-        }
-        const names = items.map(i => i.name || 'Gost').join(', ');
-        return `<div class="slot busy" title="${escapeHtml(names)}">${slot}</div>`;
-      }).join('');
-
-      const listHtml = reservations
-        .sort((a,b) => (a.time || a.time_window || '').localeCompare(b.time || b.time_window || ''))
-        .map(r => `
-          <div style="border: 1px solid #e6e2da; border-radius: 8px; padding: 10px; margin-bottom: 8px;">
-            <div style="font-weight: 600;">${r.name || 'Gost'} (${r.people || 0} oseb)</div>
-            <div style="color:#7a7a7a;font-size:13px;">${r.time || r.time_window || '-'} | ${r.location || ''} | ${r.status || ''}</div>
-            <div style="color:#7a7a7a;font-size:13px;">${[r.email, r.phone].filter(Boolean).join(' | ')}</div>
-            ${r.id ? `<div style="margin-top:6px;"><button class="btn-inline" onclick="openEdit('${encodeURIComponent(JSON.stringify(r))}')">🕒 Dodeli uro</button></div>` : ''}
-          </div>
-        `).join('');
-
-      content.innerHTML = `
-        <div class="table-day-layout">
-          <div>
-            ${listHtml}
-          </div>
-          <div>
-            <div style="font-weight:600; margin-bottom:6px;">30-min sloti</div>
-            <div class="slot-grid">${slotHtml}</div>
-            <div class="muted" style="margin-top:6px;">Uro dodeliš pri posameznem naročilu.</div>
-          </div>
-        </div>
-      `;
-    }
-
-    async function rejectReservation(id) {
-      if (!confirm('Ali res želite zavrniti naročilo?')) return;
-      const res = await fetch(`${API_BASE}/reservations/${id}/reject`, { method: 'POST' });
-      if (!res.ok) {
-        toast('Napaka pri zavrnitvi.', 'error');
-        return;
-      }
-      toast('Naročilo zavrnjeno.', 'success');
-      loadAll();
-    }
-
-    function openEdit(dataStr) {
-      const r = JSON.parse(decodeURIComponent(dataStr));
-      if (r.reservation_type === 'table') {
-        openTableEditModal(r);
-      } else {
-        openRoomEditModal(r);
-      }
-    }
-
-    const MSG_SEEN_KEY = 'reservation_msg_seen';
-    function getSeenMap() {
-      try { return JSON.parse(localStorage.getItem(MSG_SEEN_KEY) || '{}'); } catch (e) { return {}; }
-    }
-    function setSeenMap(map) {
-      try { localStorage.setItem(MSG_SEEN_KEY, JSON.stringify(map)); } catch (e) {}
-    }
-    function updateBadge(resId, hasUnread) {
-      document.querySelectorAll(`[data-msg-badge="${resId}"]`).forEach(el => {
-        el.style.display = hasUnread ? 'inline-block' : 'none';
-      });
-    }
-    function markSeen(resId, lastInbound) {
-      if (!lastInbound) return;
-      const map = getSeenMap();
-      map[resId] = lastInbound;
-      setSeenMap(map);
-      updateBadge(resId, false);
-    }
-
-    function errorMessage(data) {
-      if (!data) return 'Napaka pri shranjevanju.';
-      if (typeof data.detail === 'string') return data.detail;
-      if (typeof data.detail === 'object') return JSON.stringify(data.detail);
-      return data.detail || 'Napaka pri shranjevanju.';
-    }
-
-    async function safeJson(res) {
-      try {
-        const text = await res.text();
-        if (!text) return {};
-        return JSON.parse(text);
-      } catch (e) {
-        return { detail: 'Internal Server Error' };
-      }
-    }
-
-    async function loadReservationMessages(resId, targetId, markAsSeen = false, attempt = 1) {
-      const container = qs(targetId);
-      if (!container) return;
-      container.textContent = 'Nalagam sporočila...';
-      try {
-        const res = await fetch(`${API_BASE}/reservations/${resId}/messages`);
-        if (!res.ok) {
-          const errText = await res.text().catch(() => '');
-          const statusMsg = `Napaka pri nalaganju sporočil (${res.status}).`;
-          container.textContent = errText ? `${statusMsg} ${errText.slice(0,120)}` : statusMsg;
-          if (attempt === 1) {
-            setTimeout(() => loadReservationMessages(resId, targetId, markAsSeen, 2), 1500);
-          }
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        const messages = data.messages || [];
-        if (!messages.length) {
-          container.textContent = 'Ni sporočil.';
-          return;
-        }
-        const inbound = messages.filter(m => (m.direction || '').toLowerCase() === 'inbound');
-        const lastInbound = inbound.length ? inbound[inbound.length - 1].created_at : null;
-        container.innerHTML = messages.map(m => `
-          <div class="msg">
-            <div class="meta">
-              ${escapeHtml(m.direction || '')} • ${escapeHtml(m.created_at || '')}
-            </div>
-            <div><strong>${escapeHtml(m.subject || '')}</strong></div>
-            <div>${escapeHtml(m.body || '')}</div>
-          </div>
-        `).join('');
-        if (targetId === 'room-edit-messages') {
-          renderTimeline(currentRoomReservation, messages, 'room-edit-timeline');
-        } else if (targetId === 'table-edit-messages') {
-          renderTimeline(currentTableReservation, messages, 'table-edit-timeline');
-        }
-        if (markAsSeen && lastInbound) {
-          markSeen(resId, lastInbound);
-        }
-      } catch (err) {
-        container.textContent = 'Napaka pri nalaganju sporočil (omrežna napaka).';
-        if (attempt === 1) {
-          setTimeout(() => loadReservationMessages(resId, targetId, markAsSeen, 2), 1500);
-        }
-      }
-    }
-
-    function refreshMessages(type) {
-      const id = type === 'room' ? qs('room-edit-hidden-id').value : qs('table-edit-hidden-id').value;
-      const target = type === 'room' ? 'room-edit-messages' : 'table-edit-messages';
-      if (!id) return;
-      loadReservationMessages(id, target, false);
-    }
-
-    async function checkUnreadForReservations(resList) {
-      const candidates = (resList || []).filter(r => ['pending','processing'].includes(r.status));
-      const seenMap = getSeenMap();
-      let unreadCount = 0;
-      for (const r of candidates) {
-        try {
-          const res = await fetch(`${API_BASE}/reservations/${r.id}/messages`);
-          const data = await res.json().catch(() => ({}));
-          const messages = data.messages || [];
-          const inbound = messages.filter(m => (m.direction || '').toLowerCase() === 'inbound');
-          const lastInbound = inbound.length ? inbound[inbound.length - 1].created_at : null;
-          const lastSeen = seenMap[r.id];
-          if (lastInbound && (!lastSeen || lastInbound > lastSeen)) {
-            updateBadge(r.id, true);
-            unreadCount += 1;
-          } else {
-            updateBadge(r.id, false);
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-      const countEl = qs('unreadCount');
-      if (countEl) {
-        if (unreadCount > 0) {
-          countEl.style.display = 'inline-block';
-          countEl.textContent = String(unreadCount);
-          countEl.style.width = 'auto';
-          countEl.style.height = 'auto';
-          countEl.style.padding = '2px 6px';
-        } else {
-          countEl.style.display = 'none';
-        }
-      }
-    }
-
-    function openRoomEditModal(r) {
-      currentRoomReservation = r;
-      qs('room-edit-id').textContent = r.id;
-      qs('room-edit-hidden-id').value = r.id;
-      qs('room-edit-status').value = r.status || 'pending';
-      qs('room-edit-date').value = parseDate(r.date);
-      qs('room-edit-nights').value = r.nights || 1;
-      qs('room-edit-location').value = normalizeRoom(r.location);
-      qs('room-edit-people').value = r.people || 1;
-      qs('room-edit-kids').value = r.kids || 0;
-      qs('room-edit-kids-ages').value = r.kids_small || '';
-      qs('room-edit-name').value = r.name || '';
-      qs('room-edit-email').value = r.email || '';
-      qs('room-edit-phone').value = r.phone || '';
-      qs('room-edit-note').value = r.note || '';
-      qs('room-edit-admin-notes').value = r.admin_notes || '';
-      qs('room-edit-flags').innerHTML = renderGuestBadges(r) || '';
-      renderTimeline(r, [], 'room-edit-timeline');
-      loadReservationMessages(r.id, 'room-edit-messages', true);
-      qs('edit-room-modal').classList.add('active');
-    }
-    function closeRoomEditModal() { qs('edit-room-modal').classList.remove('active'); }
-
-    function openTableEditModal(r) {
-      currentTableReservation = r;
-      qs('table-edit-id').textContent = r.id;
-      qs('table-edit-hidden-id').value = r.id;
-      qs('table-edit-status').value = r.status || 'pending';
-      qs('table-edit-date').value = parseDate(r.date);
-      qs('table-edit-time').value = r.time || '';
-      qs('table-edit-time-window').value = r.time_window || '';
-      qs('table-edit-location').value = r.location || APPOINTMENT_TYPES[0];
-      qs('table-edit-event-type').value = r.event_type || '';
-      qs('table-edit-name').value = r.name || '';
-      qs('table-edit-email').value = r.email || '';
-      qs('table-edit-phone').value = r.phone || '';
-      qs('table-edit-special-needs').value = r.special_needs || '';
-      qs('table-edit-birth-date').value = r.birth_date || '';
-      qs('table-edit-admin-notes').value = r.admin_notes || '';
-      renderSlotPicker(r);
-      qs('table-edit-flags').innerHTML = renderGuestBadges(r) || '';
-      renderTimeline(r, [], 'table-edit-timeline');
-      loadReservationMessages(r.id, 'table-edit-messages', true);
-      qs('edit-table-modal').classList.add('active');
-    }
-    function closeTableEditModal() { qs('edit-table-modal').classList.remove('active'); }
-
-    function buildSlots(startHour, endHour) {
-      const slots = [];
-      for (let h = startHour; h < endHour; h++) {
-        slots.push(`${String(h).padStart(2,'0')}:00`);
-        slots.push(`${String(h).padStart(2,'0')}:30`);
-      }
-      return slots;
-    }
-
-    function renderSlotPicker(reservation) {
-      const container = qs('table-edit-slots');
-      if (!container || !reservation) return;
-      const dateStr = reservation.date;
-      const location = reservation.location;
-      if (!dateStr || !location) {
-        container.textContent = 'Izberi datum in vrsto pregleda za prikaz slotov.';
-        return;
-      }
-      const dayKey = formatToISO(dateStr);
-      const dayData = tableCalendarData[dayKey] || { reservations: [] };
-      const reserved = (dayData.reservations || [])
-        .filter(r => r.location === location && r.time)
-        .map(r => r.time);
-      const slots = buildSlots(8, 18);  // Zdravstveni center: 8:00-18:00
-      container.innerHTML = slots.map(s => {
-        const occupied = reserved.includes(s);
-        const label = occupied ? `${s} · zasedeno` : s;
-        return `<button type="button" class="btn-inline" style="margin:4px;" ${occupied ? 'disabled' : ''} onclick="selectSlot('${s}')">${label}</button>`;
-      }).join('');
-    }
-
-    function selectSlot(timeVal) {
-      qs('table-edit-time').value = timeVal;
-      qs('table-edit-time-window').value = 'Določena ura';
-      toast(`Izbran termin: ${timeVal}`, 'success');
-    }
-
-    function formatToISO(dateStr) {
-      if (!dateStr) return '';
-      const parts = String(dateStr).split('.');
-      if (parts.length === 3) {
-        return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      }
-      return dateStr;
-    }
-
-    function parseDate(dateStr) {
-      if (!dateStr) return '';
-      const parts = String(dateStr).split('.');
-      if (parts.length === 3) {
-        return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      }
-      return dateStr;
-    }
-    function formatToDDMMYYYY(dateStr) {
-      if (!dateStr) return '';
-      const parts = String(dateStr).split('-');
-      if (parts.length === 3) {
-        return `${parts[2].padStart(2,'0')}.${parts[1].padStart(2,'0')}.${parts[0]}`;
-      }
-      return dateStr;
-    }
-    function normalizeRoom(location) {
-      if (!location) return '';
-      const upper = String(location).toUpperCase();
-      if (upper.includes('ALJAZ') || upper.includes('ALJAŽ')) return 'ALJAZ';
-      if (upper.includes('JULIJA')) return 'JULIJA';
-      if (upper.includes('ANA')) return 'ANA';
-      return '';
-    }
-
-    qs('room-edit-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = qs('room-edit-hidden-id').value;
-      const payload = {
-        status: qs('room-edit-status').value,
-        date: formatToDDMMYYYY(qs('room-edit-date').value),
-        nights: parseInt(qs('room-edit-nights').value || '1'),
-        location: qs('room-edit-location').value,
-        people: parseInt(qs('room-edit-people').value || '1'),
-        kids: qs('room-edit-kids').value,
-        kids_small: qs('room-edit-kids-ages').value,
-        name: qs('room-edit-name').value,
-        email: qs('room-edit-email').value,
-        phone: qs('room-edit-phone').value,
-        note: qs('room-edit-note').value,
-        admin_notes: qs('room-edit-admin-notes').value,
-      };
-      const res = await fetch(`${API_BASE}/reservations/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        toast('Napaka pri shranjevanju sobe.', 'error');
-        return;
-      }
-      toast('Naročilo shranjeno.', 'success');
-      closeRoomEditModal();
-      await refreshAfterSave(payload.date);
+async function sendMessage() {
+  if (!editingId) return;
+  const subject = document.getElementById('send-subject').value.trim();
+  const body    = document.getElementById('send-body').value.trim();
+  const r = allReservations.find(x => String(x.id) === String(editingId));
+  if (!body) { toast('Vsebina sporočila je prazna.', 'error'); return; }
+  try {
+    await apiFetch(`${API}/send-message`, {
+      method: 'POST',
+      body: JSON.stringify({
+        reservation_id: editingId,
+        email: r?.email || '',
+        subject: subject || 'Sporočilo iz Zdravstvenega centra',
+        body: body,
+        set_processing: true
+      })
     });
+    toast('Sporočilo poslano.', 'success');
+    document.getElementById('send-subject').value = '';
+    document.getElementById('send-body').value = '';
+    loadMessages(editingId);
+    await refreshAll();
+  } catch(e) { toast('Napaka pri pošiljanju: ' + e.message, 'error'); }
+}
 
-    qs('table-edit-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = qs('table-edit-hidden-id').value;
-      const payload = {
-        status: qs('table-edit-status').value,
-        date: formatToDDMMYYYY(qs('table-edit-date').value),
-        time: qs('table-edit-time').value,
-        time_window: qs('table-edit-time-window').value,
-        location: qs('table-edit-location').value,
-        people: 1,
-        kids: '',
-        kids_small: '',
-        event_type: qs('table-edit-event-type').value,
-        name: qs('table-edit-name').value,
-        email: qs('table-edit-email').value,
-        phone: qs('table-edit-phone').value,
-        birth_date: qs('table-edit-birth-date').value,
-        special_needs: qs('table-edit-special-needs').value,
-        admin_notes: qs('table-edit-admin-notes').value,
-      };
-      const res = await fetch(`${API_BASE}/reservations/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        toast('Napaka pri shranjevanju termina.', 'error');
-        return;
-      }
-      toast('Naročilo shranjeno.', 'success');
-      closeTableEditModal();
-      await refreshAfterSave(payload.date);
+// ── Add Modal ─────────────────────────────────
+function openAddModal(presetTime) {
+  // Reset form
+  ['add-name','add-phone','add-email','add-admin-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('add-service').value = '';
+
+  // Prefill date from selected calendar day
+  const dateInput = document.getElementById('add-date');
+  dateInput.value = selectedDate || todayISO();
+
+  // Prefill time if provided
+  const timeSelect = document.getElementById('add-time');
+  if (presetTime && TIME_SLOTS.includes(presetTime)) {
+    timeSelect.value = presetTime;
+  } else {
+    timeSelect.value = '08:00';
+  }
+
+  document.getElementById('add-modal-overlay').classList.add('open');
+}
+
+function closeAddModal(e) {
+  if (e.target === document.getElementById('add-modal-overlay')) closeAddModalDirect();
+}
+function closeAddModalDirect() {
+  document.getElementById('add-modal-overlay').classList.remove('open');
+}
+
+async function submitAdd() {
+  const name    = document.getElementById('add-name').value.trim();
+  const phone   = document.getElementById('add-phone').value.trim();
+  const email   = document.getElementById('add-email').value.trim();
+  const service = document.getElementById('add-service').value;
+  const date    = document.getElementById('add-date').value;
+  const time    = document.getElementById('add-time').value;
+  const notes   = document.getElementById('add-admin-notes').value.trim();
+
+  if (!name)    { toast('Ime je obvezno.', 'error'); return; }
+  if (!phone)   { toast('Telefon je obvezen.', 'error'); return; }
+  if (!service) { toast('Izberite storitev.', 'error'); return; }
+  if (!date)    { toast('Datum je obvezen.', 'error'); return; }
+
+  const body = {
+    name, phone, email,
+    location: service,
+    date, time,
+    reservation_type: 'table',
+    people: 1,
+    status: 'confirmed',
+    admin_notes: notes
+  };
+
+  try {
+    await apiFetch(`${API}/reservations`, {
+      method: 'POST',
+      body: JSON.stringify(body)
     });
+    toast('Naročilo dodano.', 'success');
+    closeAddModalDirect();
+    await refreshAll();
+  } catch(e) { toast('Napaka pri dodajanju: ' + e.message, 'error'); }
+}
 
-    qs('new-room-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        date: formatToDDMMYYYY(qs('new-room-date').value),
-        nights: parseInt(qs('new-room-nights').value || '1'),
-        location: qs('new-room-location').value,
-        people: parseInt(qs('new-room-people').value || '1'),
-        kids: qs('new-room-kids').value,
-        kids_small: qs('new-room-kids-ages').value,
-        name: qs('new-room-name').value,
-        email: qs('new-room-email').value,
-        phone: qs('new-room-phone').value,
-        note: qs('new-room-note').value,
-        status: 'confirmed',
-        reservation_type: 'room',
-        source: 'admin',
-      };
-      const res = await fetch(`${API_BASE}/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await safeJson(res);
-      if (!res.ok) {
-        toast(errorMessage(data), 'error');
-        return;
-      }
-      if (data.warning) {
-        toast(data.warning, 'warning');
-      } else {
-        toast('Naročilo dodano.', 'success');
-      }
-      closeNewRoom();
-      await refreshAfterSave(payload.date);
-    });
+// ── Service filter change ─────────────────────
+function onServiceChange() {
+  refreshAll();
+}
 
-    qs('new-table-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        date: formatToDDMMYYYY(qs('new-table-date').value),
-        time: qs('new-table-time').value,
-        time_window: qs('new-table-time-window').value,
-        location: qs('new-table-location').value,
-        people: 1,
-        kids: '',
-        kids_small: '',
-        event_type: qs('new-table-event-type').value,
-        name: qs('new-table-name').value,
-        email: qs('new-table-email').value,
-        phone: qs('new-table-phone').value,
-        birth_date: qs('new-table-birth-date').value,
-        special_needs: qs('new-table-special-needs').value,
-        gdpr_consent: qs('new-table-gdpr').checked,
-        gdpr_consent_date: new Date().toISOString(),
-        status: 'confirmed',
-        reservation_type: 'table',
-        source: 'admin',
-      };
-      const res = await fetch(`${API_BASE}/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await safeJson(res);
-      if (!res.ok) {
-        toast(errorMessage(data), 'error');
-        return;
-      }
-      if (data.warning) {
-        toast(data.warning, 'warning');
-      } else {
-        toast('Naročilo dodano.', 'success');
-      }
-      clearNewTableForm();
-      closeNewTable();
-      await refreshAfterSave(payload.date);
-    });
+// ── Refresh All ───────────────────────────────
+async function refreshAll() {
+  await loadReservations();
+  renderCalendar();
+  renderDayView();
+}
 
-    async function exportCsv() {
-      const query = buildQuery();
-      const res = await fetch(`${API_BASE}/export?${query}`);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'reservations.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    }
-  </script>
+// ── Toast ─────────────────────────────────────
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+  el.innerHTML = `<span>${icon}</span><span>${esc(msg)}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity .3s';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// ── Escape HTML ───────────────────────────────
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────
+(async function init() {
+  populateTimeSelects();
+  await loadReservations();
+  renderCalendar();
+  // Auto-select today
+  const today = todayISO();
+  const todayYear  = new Date().getFullYear();
+  const todayMonth = new Date().getMonth();
+  if (calYear === todayYear && calMonth === todayMonth) {
+    selectDay(today);
+  }
+})();
+</script>
 </body>
 </html>
