@@ -192,6 +192,10 @@ facts:
       - dermatologija
       - kožne težave
       - koža
+      - rdečina
+      - izpuščaj
+      - luskavica
+      - akne
     response: |
       **Dermatologija** — dr. Ana Kos, dr. med.
 

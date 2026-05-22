@@ -824,6 +824,11 @@ def handle_unified_routing(
     if service_info_reply is not None:
         if decision.primary_intent == IntentType.SERVICE_INFO and extract_date_from_message(message) and is_in_flow(session_id):
             return handle_appointment_booking(message, session_id)
+        # Če gre za simptomsko vprašanje, dodaj disclaimer
+        if _looks_like_symptom_report(message) or _looks_like_medical_statement(message):
+            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*"
+            if "zdravniški nasvet" not in service_info_reply and "diagnoza" not in service_info_reply:
+                service_info_reply = service_info_reply.rstrip() + _disclaimer
         return service_info_reply
 
     unsupported_reply = handle_unsupported_symptom_intent(
