@@ -824,8 +824,15 @@ def handle_unified_routing(
     if service_info_reply is not None:
         if decision.primary_intent == IntentType.SERVICE_INFO and extract_date_from_message(message) and is_in_flow(session_id):
             return handle_appointment_booking(message, session_id)
-        # Če gre za simptomsko vprašanje, dodaj disclaimer
-        if _looks_like_symptom_report(message) or _looks_like_medical_statement(message):
+        # Dodaj disclaimer za simptomska/zdravstvena vprašanja (direktni keyword check, ne izključuje vprašanj)
+        _msg_l = message.lower()
+        _symptom_cues_router = [
+            "boli", "boleč", "bolec", "bola", "srbi", "peče", "pece", "krvavi",
+            "otek", "otekl", "rdečin", "rdecin", "madež", "madez", "suha",
+            "lušči", "lusci", "vidim slabo", "slabo vid", "po operacij",
+            "rehabilitacij", "poškodb", "poskodb", "glivic", "izpusc", "izpušč",
+        ]
+        if any(c in _msg_l for c in _symptom_cues_router) or _looks_like_medical_statement(message):
             _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*"
             if "zdravniški nasvet" not in service_info_reply and "diagnoza" not in service_info_reply:
                 service_info_reply = service_info_reply.rstrip() + _disclaimer
