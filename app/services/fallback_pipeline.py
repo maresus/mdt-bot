@@ -88,6 +88,22 @@ def handle_fast_pass(
 
     deps.conversation_tracker.add_message(session_id, message)
     fast_reply = str(fast_pass.get("response", ""))
+
+    # Dodaj disclaimer če gre za simptomsko vprašanje + storitev (kategoria STORITVE_INFO)
+    _category = str(fast_pass.get("category", ""))
+    if _category == "STORITVE_INFO":
+        _msg_lower = message.lower()
+        _symptom_cues = [
+            "boli", "boleč", "bolec", "bola", "srbi", "peče", "pece", "krvavi",
+            "otek", "otekl", "izpusc", "izpušč", "rdečin", "rdecin", "madež",
+            "madez", "suha", "lušči", "lusci", "slabo vidim", "slabo vid",
+            "po operacij", "rehabilitacij", "poškodb", "poskodb", "glivic",
+        ]
+        if any(c in _msg_lower for c in _symptom_cues):
+            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*"
+            if "zdravniški nasvet" not in fast_reply and "diagnoza" not in fast_reply:
+                fast_reply = fast_reply.rstrip() + _disclaimer
+
     if deps.is_in_flow(session_id):
         fast_reply = deps.build_interrupt_response(
             fast_reply,
@@ -101,7 +117,7 @@ def handle_fast_pass(
             "contract_version": "v0.1",
             "router": "unified_only",
             "fast_pass": True,
-            "category": fast_pass.get("category"),
+            "category": _category,
         },
     )
     return ChatResponse(reply=payload["text"], session_id=raw_session_id, metadata=payload["metadata"])
