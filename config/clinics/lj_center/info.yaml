@@ -14,14 +14,14 @@ facts:
       - pridem do vas
     response:
       - |
-        Najdete nas na naslovu [Naslov klinike].
-        Parkiranje je na voljo pred objektom.
+        Najdete nas na naslovu **Cankarjeva ulica 15, 1000 Ljubljana**.
+        Brezplačno parkirišče je urejeno tik pred vhodom.
       - |
-        Smo na naslovu [Naslov klinike].
-        Pred vhodom je na voljo parkiranje.
+        Smo na **Cankarjevi ulici 15 v Ljubljani** (bližina centra).
+        Pred vhodom je na voljo brezplačno parkiranje.
       - |
-        Naša lokacija je [Naslov klinike].
-        Parkiranje je urejeno tik ob objektu.
+        Naša lokacija je **Cankarjeva 15, Ljubljana**.
+        Parkirišče pred objektom je brezplačno za naše paciente.
 
   kontakt:
     priority: fast
@@ -33,19 +33,13 @@ facts:
       - email
       - e-pošta
       - eposta
+      - kako vas kontaktiram
+      - kako pokličem
     response: |
-      Telefon: 01 234 56 78
-      Email: info@zdravstveni-center.si
-
-  contact_short:
-    priority: medium
-    category: KONTAKT_INFO
-    keywords:
-      - kratek kontakt
-    response: |
-       Parking: brezplačen pred objektom
-       Telefon: 01 234 56 78
-       Email: info@zdravstveni-center.si
+      📞 Telefon: **01 432 10 20**
+      📧 Email: **info@zc-novak.si**
+      📍 Naslov: Cankarjeva ulica 15, 1000 Ljubljana
+      🕐 Delovni čas: pon–pet 08:00–18:00 | sob 09:00–13:00
 
   delovni_cas:
     priority: fast
@@ -56,13 +50,29 @@ facts:
       - odprti
       - odprto
       - kdaj ste odprti
+      - kdaj delate
+      - urnik
     response:
       - |
-        Delamo od ponedeljka do petka, 08:00–18:00.
+        Delamo od ponedeljka do petka, **08:00–18:00**.
+        V soboto smo odprti od 09:00 do 13:00 (nujni termini).
+        Nedeljah in praznikih smo zaprti.
       - |
-        Na voljo smo med ponedeljkom in petkom, od 08:00 do 18:00.
-      - |
-        Ordinacija obratuje od ponedeljka do petka: 08:00–18:00.
+        Naš urnik: **pon–pet 08:00–18:00** | **sob 09:00–13:00**
+        Ob nedeljah in praznikih ne delamo.
+
+  parkiranje:
+    priority: medium
+    category: PARKIRANJE_INFO
+    keywords:
+      - parking
+      - parkiranje
+      - parkirišče
+      - parkirisce
+      - kje parkiram
+    response: |
+      Parkiranje je **brezplačno** za vse naše paciente.
+      Parkirišče se nahaja neposredno pred vhodom v center.
 
   postopek_narocanja:
     priority: fast
@@ -79,23 +89,12 @@ facts:
       - |
         Naročanje je enostavno — kliknite gumb **📅 Naroči se** spodaj.
 
-        Izpolnite ime, telefon in vrsto pregleda (dermatolog, ortoped, okulist...).
+        Izpolnite ime, telefon in vrsto pregleda.
         Kontaktirali vas bomo za potrditev termina.
       - |
         Kliknite **📅 Naroči se** v spodnjem delu pogovora.
 
         Potrebujemo vaše ime, telefon in vrsto pregleda — kontaktirali vas bomo za potrditev.
-
-  parkiranje:
-    priority: medium
-    category: PARKIRANJE_INFO
-    keywords:
-      - parking
-      - parkiranje
-      - parkirišče
-      - parkirisce
-    response: |
-      Parkiranje je brezplačno pred objektom.
 
   cene:
     priority: fast
@@ -106,16 +105,23 @@ facts:
       - cenik
       - koliko stane
       - kolk stane
+      - cena pregleda
     response:
       - |
-        Cene pregledov so odvisne od storitve.
-        Povejte, za katero storitev vas zanima cena.
+        Cene pregledov so odvisne od storitve:
+        - Dermatolog: 25–150 €
+        - Ortoped: 40–80 €
+        - Okulist: 30–120 €
+        - Laserski poseg: 50–200 €
+        - Estetski poseg: 100–400 €
+        - Kozmetika: 30–100 €
+
+        Povejte, za katero storitev vas zanima cena — povem vam natančen razpon.
       - |
-        Cenik je vezan na vrsto pregleda.
-        Napišite storitev (npr. ortoped, dermatolog), pa vam takoj povem ceno.
-      - |
-        Cena je odvisna od izbrane storitve.
-        Sporočite, kateri pregled vas zanima, in dobite točen razpon.
+        Cenik po storitvah:
+        🩺 Dermatolog 25–150 € | Ortoped 40–80 € | Okulist 30–120 €
+        ✨ Laserski poseg 50–200 € | Estetski poseg 100–400 €
+        💆 Kozmetika 30–100 €
 
   vodstvo:
     priority: fast
@@ -126,13 +132,57 @@ facts:
       - kdo vodi
       - vodja
       - vodstvo
-    response:
-      - |
-        Trenutno nimam zanesljivega podatka o vodstvu podjetja.
-        Za uradno informacijo preverite kontaktno stran ali pokličite recepcijo.
-      - |
-        Podatka o direktorju trenutno nimam potrjenega.
-        Najbolje je, da za uradne informacije pokličete recepcijo.
+      - lastnik
+      - kdo je lastnik
+      - ustanovitelj
+    response: |
+      **Zdravstveni center Novak** vodi **dr. Matjaž Novak, dr. med.** — specialist ortopedske kirurgije z 20-letnimi izkušnjami.
+
+      Center je bil ustanovljen leta 2010 z vizijo dostopne in kakovostne specialistične zdravstvene oskrbe v Ljubljani.
+
+  ekipa:
+    priority: fast
+    category: PODJETJE_INFO
+    keywords:
+      - ekipa
+      - zdravniki
+      - kdo dela
+      - tim
+      - specialists
+      - kdo je pri vas
+      - kakšna je ekipa
+    response: |
+      Naša strokovna ekipa:
+
+      🩺 **dr. Matjaž Novak** — ortoped, direktor
+      🩺 **dr. Ana Kos** — dermatolog
+      👁️ **dr. Petra Horvat** — okulist
+      💪 **Maja Vidmar** — fizioterapevt
+      ✨ **Tina Štefanič** — specialistka estetske medicine
+
+      Vsi strokovnjaki imajo dolgoletne izkušnje in redno sledijo novostim v stroki.
+
+  o_centru:
+    priority: medium
+    category: PODJETJE_INFO
+    keywords:
+      - o vas
+      - o centru
+      - kaj ste
+      - kdo ste
+      - kaj ponujate
+      - kaj je zdravstveni center
+      - opis
+    response: |
+      **Zdravstveni center Novak** je zasebna specialistična ambulanta v središču Ljubljane.
+
+      Ustanovljeni smo bili leta 2010. Ponujamo:
+      - Specialistične preglede (ortopedija, dermatologija, okulistika)
+      - Fizioterapijo in rehabilitacijo
+      - Laserske in estetske posege
+      - Kozmetične tretmaje
+
+      📍 Cankarjeva 15, Ljubljana | 📞 01 432 10 20
 
   service_dermatolog:
     priority: low
@@ -140,18 +190,19 @@ facts:
     keywords:
       - dermatolog
       - dermatologija
+      - kožne težave
+      - koža
     response: |
-      **Dermatologija** - pregledi kožnih težav
+      **Dermatologija** — dr. Ana Kos, dr. med.
 
       Zdravimo:
-      - Izpuščaje, akne, ekceme
-      - Luskavico, psoriaze
-      - Kožne spremembe, madeže
+      - Izpuščaje, akne, ekceme in luskavico
+      - Kožne spremembe in madeže (benigni tumorji)
       - Glivične okužbe
 
-       **Dermatološki pregled** (30 min, 25-150 €)
+      💰 Dermatološki pregled: 25–150 € (30 min)
 
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
 
   service_ortoped:
     priority: low
@@ -159,18 +210,19 @@ facts:
     keywords:
       - ortoped
       - ortopedija
+      - sklepi
+      - hrbtenica
     response: |
-      **Ortopedija** - pregledi gibalnega sistema
+      **Ortopedija** — dr. Matjaž Novak, dr. med.
 
       Zdravimo:
       - Bolečine v hrbtu, kolenih, ramenih
-      - Športne poškodbe
-      - Težave s sklepi
-      - Poškodbe mišic in vezi
+      - Športne poškodbe in poškodbe mišic/kit
+      - Težave s sklepi in hrbtenico
 
-       **Ortopedski pregled** (30 min, 40-80 €)
+      💰 Ortopedski pregled: 40–80 € (30 min)
 
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
 
   service_okulist:
     priority: low
@@ -179,17 +231,39 @@ facts:
       - okulist
       - oftalmolog
       - očesni
+      - vid
+      - oči
     response: |
-      **Oftalmologija** - pregledi oči
+      **Oftalmologija** — dr. Petra Horvat, dr. med.
 
-      Zdravimo:
-      - Težave z vidom
-      - Očesne bolezni
+      Pregledi:
+      - Težave z vidom in dioptrija
+      - Očesne bolezni in suhe oči
       - Predpis očal in kontaktnih leč
 
-       **Očesni pregled** (30 min, 35-70 €)
+      💰 Očesni pregled: 30–120 € (30 min)
 
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
+
+  service_fizioterapija:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - fizioterapija
+      - fizioterapevt
+      - rehabilitacija
+      - masaža
+    response: |
+      **Fizioterapija** — Maja Vidmar
+
+      Nudimo:
+      - Rehabilitacija po poškodbah in operacijah
+      - Terapevtske masaže vratu, hrbta, ramen
+      - Vaje za krepitev in razgibavanje
+
+      💰 Fizioterapija: 40–80 € (60 min)
+
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
 
   service_estetski_poseg:
     priority: low
@@ -198,17 +272,18 @@ facts:
       - estetski
       - botox
       - filler
+      - estetika
     response: |
-      **Estetski posegi**
+      **Estetski posegi** — Tina Štefanič
 
       Ponujamo:
-      - Botox
-      - Fillerji
-      - Biorevitalizacija kože
+      - Botox (čelo, gubice)
+      - Fillerji (ustnice, lica)
+      - Biorevitalizacija in radiofrekvenca
 
-       **Estetski poseg** (30 min, 80-300 €)
+      💰 Estetski poseg: 100–400 € (30 min)
 
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
 
   service_laserski_poseg:
     priority: low
@@ -216,34 +291,20 @@ facts:
     keywords:
       - laser
       - laserski
+      - žilice
+      - bradavice
+      - glivice
     response: |
       **Laserski posegi**
 
       Ponujamo:
-      - Odstranjevanje žilic
-      - Odstranjevanje bradavic
+      - Odstranjevanje žilic na obrazu in nogah
+      - Odstranjevanje bradavic in kožnih sprememb
       - Zdravljenje glivic nohtov
 
-       **Laserski poseg** (30 min, 50-200 €)
+      💰 Laserski poseg: 50–200 € (30 min)
 
-       Želite termin? Povejte mi datum!
-
-  service_fizioterapija:
-    priority: low
-    category: STORITVE_INFO
-    keywords:
-      - fizioterapija
-    response: |
-      **Fizioterapija**
-
-      Ponujamo:
-      - Rehabilitacija po poškodbah
-      - Masaže
-      - Razgibalne vaje
-
-       **Fizioterapija** (60 min, 40-80 €)
-
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
 
   service_kozmetika:
     priority: low
@@ -251,14 +312,29 @@ facts:
     keywords:
       - kozmetika
       - kozmetični
+      - nega obraza
+      - tretma
     response: |
       **Kozmetični salon**
 
-      Ponujamo:
+      Nudimo:
       - Profesionalna nega obraza
-      - Tretmaji kože
-      - Kozmetični posegi
+      - Globinsko čiščenje in hidratacija
+      - Tretmaji za problematično kožo
 
-       **Kozmetični tretma** (60 min, 40-100 €)
+      💰 Kozmetični tretma: 30–100 € (60 min)
 
-       Želite termin? Povejte mi datum!
+      Želite termin? Kliknite **📅 Naroči se** spodaj.
+
+  zdravstveni_nasvet_splosno:
+    priority: medium
+    category: ZDRAVSTVENI_NASVET
+    keywords:
+      - nasvet
+      - kaj naj naredim
+      - kako si pomagam
+      - splošni nasvet
+    response: |
+      Z veseljem vam dam splošen nasvet — povejte, katere težave imate, in usmerim vas k pravemu specialistu.
+
+      ⚠️ *Napomnik: nasveti, ki jih dajem, niso zdravniški nasvet ali diagnoza. Za natančno oceno vašega stanja vedno obiščite zdravnika.*

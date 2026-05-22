@@ -1,9 +1,12 @@
 clinic_id: "lj_center"
 contact:
-  name: "Zdravstveni center Ljubljana"
-  email: "info@zdravstveni-center.si"
-  phone: "01 234 56 78"
-  address: "Zdraviliška ulica 12, 1000 Ljubljana"
+  name: "Zdravstveni center Novak"
+  email: "info@zc-novak.si"
+  phone: "01 432 10 20"
+  address: "Cankarjeva ulica 15, 1000 Ljubljana"
+  director: "dr. Matjaž Novak, dr. med."
+  parking: "Brezplačno parkirišče pred objektom"
+  hours: "Pon–Pet: 08:00–18:00 | Sob: 09:00–13:00"
 services:
   dermatolog:
     name: "Dermatološki pregled"
@@ -136,11 +139,15 @@ info_responses:
     Z veseljem odgovorim na vprašanja o naših storitvah, cenah in razpoložljivih terminih.
   splosno: "Sem virtualni asistent Zdravstvenega centra. Pomagam pri naročanju in informacijah o storitvah."
   ekipa: |
-    Naš zdravstveni center vodi strokovna ekipa zdravnikov in administracije.
+    Naš zdravstveni center vodi strokovna ekipa zdravnikov specialistov:
 
-    Za natančne informacije o vodstvu ali posameznih zdravnikih nas prosim kontaktirajte:
-    -  01 234 56 78
-    -  info@zdravstveni-center.si
+    🩺 **dr. Matjaž Novak**, dr. med. — direktor, ortoped
+    🩺 **dr. Ana Kos**, dr. med. — dermatolog
+    👁️ **dr. Petra Horvat**, dr. med. — okulist
+    💪 **Maja Vidmar** — fizioterapevt
+    ✨ **Tina Štefanič** — specialistka estetske medicine
+
+    Za termini ali vprašanja: 01 432 10 20 | info@zc-novak.si
   hvala: "Hvala za sporočilo! Če boste še kaj potrebovali, sem tukaj za vas. "
   pozdrav_variants:
     - "Živjo! Kako vam lahko danes pomagam?"
@@ -152,8 +159,8 @@ info_responses:
     - "Cena je odvisna od storitve. Napišite, kateri pregled vas zanima, pa povem razpon."
     - "Za točen znesek potrebujem storitev (npr. dermatolog, ortoped, okulist). Katera vas zanima?"
   delovni_cas_variants:
-    - "Delovni čas: pon–pet 8:00–18:00, sob 9:00–13:00 (nujni primeri), ned/prazniki zaprto."
+    - "Delovni čas: pon–pet 08:00–18:00, sob 09:00–13:00 (nujni termini), ned in prazniki zaprto."
   kontakt_variants:
-    - "Naslov: Zdraviliška 12, Ljubljana. Tel: 01 234 56 78. Email: info@zdravstveni-center.si"
+    - "Naslov: Cankarjeva 15, Ljubljana. Tel: 01 432 10 20. Email: info@zc-novak.si"
   hvala_variants:
     - "Hvala! Če boste še kaj potrebovali, sem tukaj."

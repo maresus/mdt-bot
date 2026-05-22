@@ -13,14 +13,13 @@ def generate_health_advice(symptom_description: str) -> str:
     try:
         llm_client = get_llm_client()
 
-        system_prompt = """Si zdravstveni svetovalec. Daj SPLOŠNE nasvete (počitek, obkladki, razgibavanje) - NIKOLI diagnoz.
+        system_prompt = """Si prijazen pomočnik Zdravstvenega centra Novak v Ljubljani. Daj SPLOŠNE nasvete (počitek, obkladki, razgibavanje) — NIKOLI diagnoz, zdravil ali doziranja.
 
-Format: 1 kratek odstavek + 2 kratki alineji + priporočilo specialista.
-Največ 90 besed.
-Ne uporabljaj oštevilčenja (1/2/3).
+Format: kratek empatičen uvod + 2 konkretni alineji nasveta + disclaimer + priporočilo specialista.
+Največ 100 besed.
+OBVEZNO vključi: "⚠️ To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno obiščite zdravnika."
 Zaključi z: "Želite, da vas naročim na pregled?"
-
-Slovenščina, jedrnato."""
+Slovenščina, vikaš, jedrnato."""
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -28,7 +27,7 @@ Slovenščina, jedrnato."""
         ]
 
         response = llm_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=messages,
             temperature=0.3,
             max_tokens=170,
@@ -37,14 +36,16 @@ Slovenščina, jedrnato."""
 
     except Exception as e:
         print(f"[HEALTH_ADVICE] Error: {e}")
-        return """Razumem, da imate zdravstvene težave in da je to lahko zelo neprijetno.
+        return """Razumem, da imate zdravstvene težave in da je to neprijetno.
 
-Nekaj splošnih nasvetov:
+Splošni nasveti medtem:
 - Počitek in razbremenitev prizadetega dela
-- Zadostna hidracija
+- Zadostna hidracija (vsaj 1,5–2 l vode dnevno)
 - Nežno razgibavanje, če bolečina dopušča
 
-Če težave trajajo več dni ali se stopnjujejo, priporočam pregled pri specialistu (ortoped/dermatolog/okulist, odvisno od težav).
+⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*
+
+Če težave trajajo več dni ali se stopnjujejo, priporočam pregled pri specialistu.
 
 Želite, da vas naročim na pregled?"""
 
@@ -82,11 +83,12 @@ def answer_health_query(message: str, preferred_service: Optional[str] = None) -
 
 def _advice_only_headache() -> str:
     return (
-        "Razumem, da je glavobol neprijeten. Poskusite z mirnim okoljem, dovolj tekocine in kratkimi odmori "
+        "Razumem, da je glavobol neprijeten. Poskusite z mirnim okoljem, dovolj tekočine in kratkimi odmori "
         "od zaslonov. Pogosto pomaga tudi reden spanec in lahek obrok.\n\n"
-        "Ce se glavobol stopnjuje, traja vec dni ali se pojavi z dodatnimi znaki (npr. mocna omotica, "
-        "motnje vida, visoka vrocina), priporocam posvet z osebnim zdravnikom ali nujno obravnavo.\n\n"
-        "Ce zelite, lahko pri nas preverim najhitrejsi prosti termin za zacetni pregled."
+        "Če se glavobol stopnjuje, traja več dni ali se pojavi z dodatnimi znaki (npr. močna omotica, "
+        "motnje vida, visoka vročina), priporočam posvet z osebnim zdravnikom ali nujno obravnavo.\n\n"
+        "⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*\n\n"
+        "Če želite, lahko pri nas preverim najhitrejši prosti termin za začetni pregled."
     )
 
 
@@ -140,20 +142,22 @@ def _advice_only(service: Optional[str]) -> str:
     )
 
 
+DISCLAIMER = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno vašega stanja se posvetujte z zdravnikom.*"
+
 def advice_only(service: Optional[str]) -> str:
     base = _advice_only(service)
     cta_by_service = {
-        "ORTOPED": "Ce zelite, vas lahko zdaj narocim na ortopedski pregled.",
-        "DERMATOLOG": "Ce zelite, vas lahko zdaj narocim na dermatoloski pregled.",
-        "OKULIST": "Ce zelite, vas lahko zdaj narocim na okulisticni pregled.",
-        "ESTETSKI_POSEG": "Ce zelite, lahko skupaj preveriva prost termin za estetski poseg.",
-        "LASERSKI_POSEG": "Ce zelite, lahko takoj preverim prost termin za laserski poseg.",
-        "KOZMETIKA": "Ce zelite, lahko zdaj preverim prost termin za kozmeticni tretma.",
-        "FIZIOTERAPIJA": "Ce zelite, vas lahko zdaj narocim na fizioterapijo.",
+        "ORTOPED": "Če želite, vas lahko zdaj naročim na ortopedski pregled pri dr. Novaku.",
+        "DERMATOLOG": "Če želite, vas lahko zdaj naročim na dermatološki pregled pri dr. Kos.",
+        "OKULIST": "Če želite, vas lahko zdaj naročim na okulistični pregled pri dr. Horvat.",
+        "ESTETSKI_POSEG": "Če želite, lahko skupaj preveriva prost termin za estetski poseg.",
+        "LASERSKI_POSEG": "Če želite, lahko takoj preverim prost termin za laserski poseg.",
+        "KOZMETIKA": "Če želite, lahko zdaj preverim prost termin za kozmetični tretma.",
+        "FIZIOTERAPIJA": "Če želite, vas lahko zdaj naročim na fizioterapijo pri Maji Vidmar.",
     }
     normalized = service.upper() if service else None
-    cta = cta_by_service.get(normalized, "Ce zelite, lahko zdaj preverim najhitrejsi prosti termin.")
-    return f"{base}\n\n{cta}"
+    cta = cta_by_service.get(normalized, "Če želite, lahko zdaj preverim najhitrejši prosti termin.")
+    return f"{base}{DISCLAIMER}\n\n{cta}"
 
 
 def advice_only_headache() -> str:
