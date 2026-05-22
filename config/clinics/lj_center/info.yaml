@@ -35,6 +35,8 @@ facts:
       - eposta
       - kako vas kontaktiram
       - kako pokličem
+      - pokličem
+      - poklicem
     response: |
       📞 Telefon: **01 432 10 20**
       📧 Email: **info@zc-novak.si**
