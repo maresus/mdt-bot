@@ -266,6 +266,7 @@ Kako je vaše ime in priimek?"""
         return "Prosim vnesite veljaven email naslov."
 
     if state.get("step") == "reason" or state.get("reason") is None:
+        print(f"[GDPR_DEBUG] REASON branch hit: step={state.get('step')!r} reason={state.get('reason')!r} msg={message!r}", flush=True)
         deps.set_appointment_field(session_id, state, "reason", message.strip())
         deps.set_step(session_id, state, "gdpr")
 
@@ -276,6 +277,7 @@ Kako je vaše ime in priimek?"""
 Ali se strinjate? (DA / NE)"""
 
     if state.get("step") == "gdpr":
+        print(f"[GDPR_DEBUG] GDPR branch hit: step={state.get('step')!r} affirmative={deps.is_affirmative(message)} msg={message!r}", flush=True)
         if deps.is_affirmative(message):
             from datetime import datetime
             deps.set_appointment_field(session_id, state, "gdpr_consent", datetime.now().isoformat())
