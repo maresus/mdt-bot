@@ -1,5 +1,5 @@
 """
-Zdravstveni center - Razširitve za rezervacije pregledov
+MDT&T - Razširitve za rezervacije pregledov
 
 Storitve:
 - Dermatološki pregledi
@@ -74,14 +74,14 @@ try:
 except Exception:  # pragma: no cover - safe fallback for legacy imports
     get_clinic_config = None
 
-# Delovni čas
+# Delovni čas MDT&T
 WORKING_HOURS = {
     "start": 8,  # 8:00
-    "end": 18,   # 18:00 (zadnji termin ob 17:30)
+    "end": 20,   # 20:00 (zadnji termin ob 19:30)
 }
 
-# Dni v tednu (0=ponedeljek, 6=nedelja)
-WORKING_DAYS = {0, 1, 2, 3, 4}  # Pon-Pet
+# Dni v tednu (0=ponedeljek, 6=nedelja) — MDT&T je odprt vsak dan
+WORKING_DAYS = {0, 1, 2, 3, 4, 5, 6}
 
 
 def get_services(clinic_id: Optional[str] = None) -> Dict[str, Any]:
@@ -252,7 +252,7 @@ def validate_appointment_rules(
     # Check working day
     weekday = appointment_date.weekday()
     if weekday not in WORKING_DAYS:
-        return False, "Zdravstveni center je odprt od ponedeljka do petka. Prosimo izberite drug datum."
+        return False, "MDT&T je odprt vsak dan. Prosimo izberite drug datum."
 
     # Check service type
     services = get_services(clinic_id)
@@ -304,7 +304,7 @@ def format_appointment_summary(
     patient_info = f"\n Pacient: {patient_name}" if patient_name else ""
 
     return f"""
- **Zdravstveni center - Rezervacija termina**
+ **MDT&T - Rezervacija termina**
 
  Datum: {date}
  Čas: {time}
@@ -337,7 +337,7 @@ def format_all_services_summary(clinic_id: Optional[str] = None) -> str:
     """
     Formatira seznam vseh razpoložljivih storitev.
     """
-    lines = [" **Zdravstveni center - Storitve**\n"]
+    lines = [" **MDT&T - Storitve**\n"]
 
     services = get_services(clinic_id)
     for service_type, info in services.items():

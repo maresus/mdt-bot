@@ -3,1755 +3,1149 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zdravstveni center – Admin</title>
+  <title>MDT&T — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand: #1a56db;
-      --brand-light: #dbeafe;
-      --brand-dark: #1e40af;
-      --success: #16a34a;
-      --success-light: #dcfce7;
-      --warning: #f59e0b;
-      --warning-light: #fef3c7;
-      --danger: #dc2626;
-      --danger-light: #fee2e2;
-      --info: #0891b2;
-      --info-light: #cffafe;
-      --border: #e5e7eb;
-      --bg: #f3f4f6;
+      --primary: #438bd1;
+      --primary-dark: #2563eb;
+      --bg: #f0f6fc;
       --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --radius: 8px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+      --text: #1e3a5f;
+      --text-muted: #6b7da4;
+      --border: #bfd4ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 4px 20px rgba(67,139,209,0.1);
+      --radius: 12px;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.5;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
 
-    /* ── HEADER ── */
-    #header {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-shrink: 0;
-      box-shadow: var(--shadow);
-      z-index: 10;
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+      color: white; padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
     }
-    #header .logo {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--brand);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .header h1 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header-actions { display: flex; gap: 8px; }
+
+    .btn {
+      padding: 8px 14px; border: none; border-radius: 8px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-size: 13px;
     }
-    #header .logo svg { width: 22px; height: 22px; }
-    .stat-badges {
-      display: flex;
-      gap: 8px;
-      margin-left: 8px;
+    .btn-white { background: white; color: var(--primary); }
+    .btn-white:hover { background: var(--bg); }
+    .btn-ghost { background: rgba(255,255,255,0.2); color: white; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.3); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-neutral { background: var(--bg); color: var(--text); }
+    .btn-sm { padding: 5px 9px; font-size: 12px; }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+    /* Tabs */
+    .tab-nav { display: flex; gap: 0; background: rgba(0,0,0,0.15); padding: 0 20px; }
+    .tab-btn {
+      padding: 11px 20px; border: none; background: transparent;
+      color: rgba(255,255,255,0.7); font-weight: 600; font-size: 13px;
+      cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s;
     }
+    .tab-btn:hover { color: white; }
+    .tab-btn.active { color: white; border-bottom-color: white; background: rgba(255,255,255,0.1); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Stats */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .stat-badge {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
+      background: var(--card); border-radius: 8px; padding: 10px 14px;
+      box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; font-size: 13px;
     }
-    .stat-badge.pending  { background: var(--warning-light); color: #92400e; cursor: pointer; }
-    .stat-badge.pending:hover { filter: brightness(0.95); }
-    .stat-badge.today    { background: var(--brand-light);   color: var(--brand-dark); }
-    .stat-badge.confirmed { background: var(--success-light); color: #14532d; }
-    .header-spacer { flex: 1; }
-    .btn-refresh {
-      background: var(--brand);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background .15s;
-    }
-    .btn-refresh:hover { background: var(--brand-dark); }
+    .stat-badge .num { font-weight: 700; font-size: 1.2rem; color: var(--primary); }
+    .stat-badge.s-pending { border-left: 3px solid var(--warning); }
+    .stat-badge.s-ok { border-left: 3px solid var(--success); }
 
-    /* ── MAIN LAYOUT ── */
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
+    /* Quick add */
+    .quick-add-card {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 16px; margin-bottom: 14px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
     }
+    .quick-add-card h3 { font-size: 14px; margin-bottom: 2px; }
+    .quick-add-card p { font-size: 12px; color: var(--text-muted); }
 
-    /* ── LEFT PANEL ── */
-    #left-panel {
-      width: 340px;
-      flex-shrink: 0;
-      background: var(--card);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    /* Pending */
+    .pending-section {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 14px; overflow: hidden; border: 2px solid var(--warning);
     }
-    .panel-top {
-      padding: 14px 16px 0;
-      flex-shrink: 0;
+    .pending-header {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: white; padding: 10px 16px; font-weight: 700; font-size: 14px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .filter-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--muted);
-      margin-bottom: 6px;
+    .pending-list { max-height: 230px; overflow-y: auto; }
+    .pending-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap;
     }
-    select.service-filter {
-      width: 100%;
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 13px;
-      background: var(--bg);
-      color: var(--text);
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 30px;
-    }
-    select.service-filter:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+    .pending-item:last-child { border-bottom: none; }
+    .pending-item:hover { background: #fffbeb; }
+    .pending-info { flex: 1; min-width: 180px; }
+    .pending-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .pending-info p { font-size: 12px; color: var(--text-muted); }
+    .pending-actions { display: flex; gap: 6px; }
+    .empty-pending { padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
     /* Calendar */
-    #calendar {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px 16px;
-    }
+    .calendar-section { display: grid; grid-template-columns: 360px 1fr; gap: 14px; margin-bottom: 14px; }
+    .mini-calendar { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .day-schedule { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
     .cal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+      color: white; padding: 11px 14px;
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
     }
-    .cal-month-label {
-      font-size: 15px;
-      font-weight: 700;
+    .cal-title { font-weight: 700; font-size: 14px; }
+    .nav-btn {
+      padding: 4px 9px; border: none; background: rgba(255,255,255,0.2);
+      color: white; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600;
     }
-    .cal-nav {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text);
-      transition: background .1s;
-    }
-    .cal-nav:hover { background: var(--bg); }
-    .cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-    }
-    .cal-dow {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      padding: 4px 0 8px;
-      text-transform: uppercase;
-    }
-    .cal-day {
-      position: relative;
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: background .1s;
-      gap: 2px;
-    }
-    .cal-day:hover:not(.empty) { background: var(--bg); }
-    .cal-day.empty { cursor: default; color: var(--border); }
-    .cal-day.today { color: var(--brand); font-weight: 700; }
-    .cal-day.selected {
-      background: var(--brand) !important;
-      color: #fff !important;
-    }
-    .cal-day.selected .cal-count { background: rgba(255,255,255,0.3) !important; color: #fff !important; }
-    .cal-count {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 999px;
-      line-height: 1.4;
-      min-width: 16px;
-      text-align: center;
-    }
-    .cal-count.has-pending { background: var(--warning-light); color: #92400e; }
-    .cal-count.all-confirmed { background: var(--success-light); color: #14532d; }
+    .nav-btn:hover { background: rgba(255,255,255,0.35); }
 
-    .btn-new {
-      margin: 0 16px 16px;
-      padding: 10px;
-      background: var(--brand);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: background .15s;
-      flex-shrink: 0;
+    .filter-row {
+      display: flex; gap: 4px; padding: 8px 10px;
+      background: var(--bg); border-bottom: 1px solid var(--border); flex-wrap: wrap;
     }
-    .btn-new:hover { background: var(--brand-dark); }
+    .filter-btn {
+      padding: 4px 9px; border: 1px solid var(--border); background: var(--card);
+      color: var(--text); border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--primary); }
+    .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-    /* ── VIEW TOGGLE ── */
-    .view-toggle {
-      display: flex; gap: 6px; align-items: center;
+    .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .month-day-hdr { padding: 6px; text-align: center; font-size: 11px; font-weight: 600; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .month-cell {
+      min-height: 58px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border);
+      padding: 3px; font-size: 10px; cursor: pointer;
     }
-    .btn-view {
-      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
-      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
-      cursor: pointer; transition: all .15s;
-    }
-    .btn-view.active { background: var(--brand); color: #fff; border-color: var(--brand); }
-    .btn-view:hover:not(.active) { background: var(--border); }
-
-    /* ── PENDING LIST ── */
-    .pending-list { display: flex; flex-direction: column; gap: 10px; }
-    .pending-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
-    }
-    .pending-card:hover { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-light); }
-    .pending-card .pc-date {
-      min-width: 80px; text-align: center;
-      background: var(--bg); border-radius: 6px; padding: 6px 8px;
-    }
-    .pending-card .pc-date .pc-day { font-size: 1.4rem; font-weight: 700; line-height: 1; }
-    .pending-card .pc-date .pc-mon { font-size: 10px; color: var(--muted); text-transform: uppercase; }
-    .pending-card .pc-date .pc-time { font-size: 12px; font-weight: 600; color: var(--brand); margin-top: 2px; }
-    .pending-card .pc-info { flex: 1; min-width: 0; }
-    .pending-card .pc-name { font-weight: 600; font-size: 14px; }
-    .pending-card .pc-service { font-size: 12px; color: var(--muted); margin-top: 1px; }
-    .pending-card .pc-note { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .avail-badge {
-      padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
-    }
-    .avail-badge.free { background: var(--success-light); color: #14532d; }
-    .avail-badge.taken { background: var(--danger-light); color: #7f1d1d; }
-    .avail-badge.notime { background: var(--bg); color: var(--muted); }
-    .pc-actions { display: flex; gap: 6px; }
-
-    /* ── RIGHT PANEL ── */
-    #right-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .day-header {
-      padding: 14px 20px;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .day-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-    .day-count {
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--bg);
-      padding: 3px 10px;
-      border-radius: 999px;
-    }
-    #slots-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 20px;
-    }
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--muted);
-      gap: 12px;
-    }
-    .empty-state svg { opacity: .3; }
-    .empty-state p { font-size: 15px; }
-
-    /* Time slots */
-    .slot-row {
-      display: grid;
-      grid-template-columns: 60px 1fr auto;
-      gap: 12px;
-      align-items: center;
-      padding: 8px 12px;
-      border-radius: var(--radius);
-      margin-bottom: 4px;
-      min-height: 52px;
-      transition: background .1s;
-    }
-    .slot-row:hover { background: var(--bg); }
-    .slot-row.has-appt { background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); }
-    .slot-row.has-appt:hover { background: #fafafa; }
-    .slot-time {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .slot-row.has-appt .slot-time { color: var(--text); }
-    .slot-info {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .slot-name {
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .slot-service {
-      font-size: 11px;
-      color: var(--muted);
-    }
-    .slot-empty {
-      font-size: 12px;
-      color: var(--border);
-      cursor: pointer;
-      padding: 2px 0;
-    }
-    .slot-empty:hover { color: var(--brand); }
-
-    /* Grouped slot (vzporedni termini) */
-    .slot-group {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow);
-      margin-bottom: 4px; overflow: hidden;
-    }
-    .slot-group-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 6px 12px 4px;
-      border-bottom: 1px solid var(--bg);
-    }
-    .slot-group-time { font-size: 13px; font-weight: 700; color: var(--text); min-width: 44px; }
-    .slot-group-label { font-size: 11px; color: var(--muted); }
-    .slot-sub {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 12px; border-bottom: 1px solid var(--bg);
-      transition: background .1s;
-    }
-    .slot-sub:last-child { border-bottom: none; }
-    .slot-sub:hover { background: var(--bg); }
-    .slot-sub-info { flex: 1; min-width: 0; }
-    .slot-sub-name { font-weight: 600; font-size: 13px; }
-    .slot-sub-service { font-size: 11px; color: var(--muted); }
-    .slot-sub-actions { display: flex; gap: 4px; align-items: center; }
-
-    .slot-actions {
-      display: flex;
-      gap: 4px;
-      align-items: center;
+    .month-cell:nth-child(7n+1) { border-left: none; }
+    .month-cell:hover { background: rgba(67,139,209,0.05); }
+    .month-cell.today { background: rgba(67,139,209,0.09); }
+    .month-cell.other-month { background: #f8fafe; opacity: 0.5; }
+    .month-cell.selected { border: 2px solid var(--primary) !important; background: rgba(67,139,209,0.08) !important; }
+    .month-cell .day-num { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+    .month-cell.today .day-num {
+      background: var(--primary); color: white; width: 20px; height: 20px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
 
-    /* Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
+    .day-grid { display: grid; grid-template-columns: 68px 1fr; }
+    .time-label {
+      padding: 0 6px; font-size: 10px; color: var(--text-muted); text-align: right;
+      background: #f8fafe; border-bottom: 1px solid var(--border); height: 42px;
+      display: flex; align-items: center; justify-content: flex-end;
     }
-    .badge.pending    { background: var(--warning-light);  color: #92400e; }
-    .badge.processing { background: var(--brand-light);    color: var(--brand-dark); }
-    .badge.confirmed  { background: var(--success-light);  color: #14532d; }
-    .badge.rejected   { background: #f3f4f6; color: var(--muted); }
+    .day-cell {
+      min-height: 42px; border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border); padding: 1px; cursor: pointer;
+    }
+    .day-cell.today { background: rgba(67,139,209,0.05); }
+    .day-cell:hover { background: rgba(67,139,209,0.04); }
 
-    /* Action buttons */
-    .btn-icon {
-      border: none;
-      border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: opacity .15s, background .15s;
-    }
-    .btn-icon:hover { opacity: .85; }
-    .btn-edit    { background: var(--brand-light); color: var(--brand); }
-    .btn-confirm { background: var(--success-light); color: var(--success); }
-    .btn-reject  { background: var(--danger-light); color: var(--danger); }
-    .btn-delete  { background: var(--bg); color: var(--muted); }
+    .appt { padding: 3px 6px; border-radius: 4px; font-size: 10px; margin: 1px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .appt:hover { opacity: 0.85; }
+    .appt.pending { background: #fde68a; color: #78350f; }
+    .appt.confirmed { background: #86efac; color: #14532d; }
+    .appt.processing { background: #93c5fd; color: #1e3a8a; }
+    .appt.rejected { background: #fca5a5; color: #7f1d1d; }
 
-    /* ── MODAL OVERLAY ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 100;
-      display: none;
-      align-items: flex-start;
-      justify-content: flex-end;
-    }
-    .modal-overlay.open { display: flex; }
-
-    /* Edit modal – slide from right */
-    #edit-modal-panel {
-      width: 520px;
-      max-width: 100vw;
-      height: 100vh;
-      background: var(--card);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: -4px 0 24px rgba(0,0,0,0.18);
-      transform: translateX(100%);
-      transition: transform .25s ease;
-    }
-    .modal-overlay.open #edit-modal-panel {
-      transform: translateX(0);
-    }
-    .modal-head {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .modal-title { font-size: 15px; font-weight: 700; }
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: var(--muted);
-      line-height: 1;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .btn-close:hover { background: var(--bg); }
-    .modal-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-    }
-    .modal-section-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--muted);
-      margin-bottom: 12px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* Form fields */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .form-grid.full { grid-template-columns: 1fr; }
+    /* Modal */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--card); border-radius: var(--radius); max-width: 640px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-content.wide { max-width: 1080px; }
+    .modal-hdr { background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1; }
+    .modal-hdr h3 { font-size: 1rem; }
+    .modal-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+    .modal-body { padding: 16px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--text);
-      background: var(--card);
-      transition: border-color .15s;
-    }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
-    }
-    .form-group textarea { resize: vertical; min-height: 70px; }
+    .form-group.full { grid-column: span 2; }
+    .form-group label { font-weight: 600; font-size: 12px; }
+    .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 2px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+    .modal-ftr { padding: 12px 16px; background: var(--bg); display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); position: sticky; bottom: 0; }
 
-    .modal-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-      margin-bottom: 24px;
-    }
-    .btn-primary   { background: var(--brand);   color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-success   { background: var(--success);  color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-danger    { background: var(--danger);   color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-primary:hover  { background: var(--brand-dark); }
-    .btn-success:hover  { background: #15803d; }
-    .btn-danger:hover   { background: #b91c1c; }
-    .btn-secondary:hover { background: #e5e7eb; }
+    /* Split modal */
+    .modal-split { display: grid; grid-template-columns: 1fr 370px; min-height: 570px; }
+    .modal-left { border-right: 1px solid var(--border); }
+    .modal-right { background: #f8fafe; display: flex; flex-direction: column; }
+    .comm-header { padding: 13px 14px; background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; font-weight: 700; font-size: 13px; }
+    .msg-filters { display: flex; gap: 5px; padding: 7px 10px; background: white; border-bottom: 1px solid var(--border); }
+    .message-timeline { flex: 1; overflow-y: auto; padding: 10px; max-height: 360px; }
+    .message-item { margin-bottom: 10px; padding: 8px 10px; border-radius: 8px; font-size: 12px; background: white; border-left: 4px solid var(--border); }
+    .message-item.outbound { background: #ecfdf5; border-left-color: var(--success); }
+    .message-item.inbound { background: #fef3c7; border-left-color: var(--warning); }
+    .message-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 5px; }
+    .message-direction { font-weight: 700; color: var(--primary); }
+    .message-body { line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+    .reply-form { padding: 10px; border-top: 1px solid var(--border); background: white; }
+    .reply-form textarea { width: 100%; padding: 7px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; min-height: 68px; resize: vertical; font-family: inherit; }
 
-    /* Message thread */
-    .message-thread {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 16px;
-      max-height: 280px;
-      overflow-y: auto;
-    }
-    .msg-bubble {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .msg-bubble.outbound {
-      align-self: flex-end;
-      background: var(--brand);
-      color: #fff;
-      border-bottom-right-radius: 4px;
-    }
-    .msg-bubble.inbound {
-      align-self: flex-start;
-      background: var(--bg);
-      color: var(--text);
-      border-bottom-left-radius: 4px;
-    }
-    .msg-meta {
-      font-size: 10px;
-      opacity: .65;
-      margin-top: 4px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    .msg-subject { font-weight: 600; font-size: 11px; margin-bottom: 4px; }
-    .channel-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(255,255,255,.25);
-    }
-    .msg-bubble.inbound .channel-badge { background: rgba(0,0,0,.1); }
+    /* MR questionnaire */
+    .mr-q-box { background: #eff6ff; border: 1px solid var(--border); border-radius: 8px; padding: 11px; margin-top: 10px; }
+    .mr-q-box h4 { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .mr-q-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .mr-q-row:last-child { border-bottom: none; }
+    .mr-q-val { font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .mr-q-val.yes { background: #fef2f2; color: #991b1b; }
+    .mr-q-val.yes-block { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
+    .mr-q-val.no { background: #f0fdf4; color: #166534; }
+    .mr-q-val.unk { background: var(--bg); color: var(--text-muted); }
 
-    .send-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .send-form textarea {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 80px;
-    }
-    .send-form textarea:focus {
-      outline: none;
-      border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
-    }
-    .send-form input {
-      width: 100%;
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-family: inherit;
-    }
-    .send-form input:focus {
-      outline: none;
-      border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
-    }
+    /* Slot picker */
+    .slot-picker { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; max-height: 90px; overflow-y: auto; }
+    .slot-btn { padding: 5px 8px; border: 1px solid var(--border); background: var(--card); border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--primary); }
+    .slot-btn:hover:not(:disabled) { background: var(--primary); color: white; }
+    .slot-btn:disabled { background: #fee2e2; color: #991b1b; cursor: not-allowed; }
+    .slot-btn.selected { background: var(--primary); color: white; }
 
-    /* ── ADD MODAL (centered) ── */
-    #add-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 110;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #add-modal-overlay.open { display: flex; }
-    #add-modal-panel {
-      background: var(--card);
-      border-radius: 12px;
-      width: 480px;
-      max-width: 95vw;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-lg);
-    }
-    .add-modal-head {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .add-modal-body { padding: 20px; }
-    .add-modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
+    /* Widgets */
+    .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
+    .widget { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .widget-hdr { background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; padding: 11px 14px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .widget-body { padding: 13px; }
+    .widget-stat { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .widget-stat:last-child { border-bottom: none; }
+    .widget-stat .label { color: var(--text-muted); }
+    .widget-stat .value { font-weight: 700; color: var(--primary); }
 
-    /* ── TOAST ── */
-    #toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .toast {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: var(--shadow-lg);
-      animation: toastIn .2s ease;
-      max-width: 320px;
-    }
-    .toast.success { background: #fff; border-left: 4px solid var(--success); }
-    .toast.error   { background: #fff; border-left: 4px solid var(--danger); }
-    .toast.info    { background: #fff; border-left: 4px solid var(--brand); }
-    @keyframes toastIn {
-      from { transform: translateX(20px); opacity: 0; }
-      to   { transform: translateX(0);    opacity: 1; }
-    }
+    /* Conversations */
+    .conv-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 10px; cursor: pointer; }
+    .conv-item:hover { background: var(--bg); }
+    .conv-item:last-child { border-bottom: none; }
+    .conv-id { font-weight: 600; font-size: 13px; }
+    .conv-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .conv-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: var(--bg); color: var(--primary); white-space: nowrap; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    /* Chat bubbles */
+    .chat-msg { display: flex; margin-bottom: 10px; }
+    .chat-msg.user { justify-content: flex-end; }
+    .chat-bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+    .chat-msg.user .chat-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .chat-msg.assistant .chat-bubble { background: var(--bg); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+    .chat-time { font-size: 10px; color: var(--text-muted); margin-top: 3px; text-align: right; }
 
-    /* Divider */
-    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    /* IMAP */
+    .imap-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg); border-radius: 8px; margin-bottom: 10px; }
+    .imap-status.ok { border-left: 4px solid var(--success); }
+    .imap-status.err { border-left: 4px solid var(--danger); }
+    .imap-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+    .imap-dot.err { background: var(--danger); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* Loading spinner */
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
+    /* Toast */
+    .toast-container { position: fixed; top: 16px; right: 16px; z-index: 2000; }
+    .toast { background: var(--card); padding: 11px 15px; border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 7px; font-size: 13px; animation: slideIn 0.3s ease; border-left: 4px solid var(--primary); }
+    .toast.ok { border-left-color: var(--success); }
+    .toast.err { border-left-color: var(--danger); }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    @media (max-width: 820px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: span 1; }
+      .calendar-section { grid-template-columns: 1fr; }
+      .modal-split { grid-template-columns: 1fr; }
+      .modal-right { display: none; }
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     HEADER
-════════════════════════════════════════════ -->
-<div id="header">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 2a5 5 0 0 1 5 5v1h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2V7a5 5 0 0 1 5-5zm0 9v2m0 0v2m0-2h2m-2 0h-2"/>
-    </svg>
-    Zdravstveni center Admin
+<header class="header">
+  <h1>🩻 MDT&amp;T — Admin</h1>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="loadData()">🔄 Osveži</button>
+    <button class="btn btn-white" onclick="openNewModal()">+ Novo naročilo</button>
   </div>
-  <div class="stat-badges">
-    <span class="stat-badge pending" onclick="setView('pending')" title="Prikaži čakajoče">
-      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#f59e0b"/></svg>
-      <span id="stat-pending">0</span> čaka
-    </span>
-    <span class="stat-badge today">
-      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#1a56db"/></svg>
-      <span id="stat-today">0</span> danes
-    </span>
-    <span class="stat-badge confirmed">
-      <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.5" fill="#16a34a"/></svg>
-      <span id="stat-confirmed">0</span> potrjenih
-    </span>
-  </div>
-  <div class="header-spacer"></div>
-  <button class="btn-refresh" onclick="refreshAll()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M23 4v6h-6M1 20v-6h6"/>
-      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-    </svg>
-    Osveži
-  </button>
+</header>
+
+<div class="tab-nav" style="background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);">
+  <button class="tab-btn active" onclick="switchTab('narocila')">📅 Naročila</button>
+  <button class="tab-btn" onclick="switchTab('pogovori')">💬 Pogovori</button>
+  <button class="tab-btn" onclick="switchTab('statistika')">📊 Statistika</button>
+  <button class="tab-btn" onclick="switchTab('orodja')">🔧 Orodja</button>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MAIN
-════════════════════════════════════════════ -->
-<div id="main">
+<div class="container">
 
-  <!-- LEFT PANEL -->
-  <div id="left-panel">
-    <div class="panel-top">
-      <div class="filter-label">Filtriranje po storitvi</div>
-      <select class="service-filter" id="service-filter" onchange="onServiceChange()">
-        <option value="">Vse storitve</option>
-        <option>Ortopedski pregled</option>
-        <option>Dermatološki pregled</option>
-        <option>Laserski poseg</option>
-        <option>Estetski poseg</option>
-        <option>Fizioterapija</option>
-        <option>Okulistični pregled</option>
-        <option>Predpis očal/leč</option>
-        <option>Kozmetični salon</option>
-      </select>
-    </div>
+  <!-- ══════ TAB: NAROČILA ══════ -->
+  <div class="tab-content active" id="tab-narocila">
 
-    <div id="calendar">
-      <div class="cal-header">
-        <button class="cal-nav" onclick="calPrev()" title="Prejšnji mesec">&#8592;</button>
-        <span class="cal-month-label" id="cal-month-label"></span>
-        <button class="cal-nav" onclick="calNext()" title="Naslednji mesec">&#8594;</button>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
-    </div>
-
-    <button class="btn-new" onclick="openAddModal(null)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      Novo naročilo
-    </button>
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div id="right-panel">
-    <div class="day-header">
-      <span class="day-title" id="day-title">Izberite dan v koledarju</span>
-      <span class="day-count" id="day-count" style="display:none"></span>
-      <div class="view-toggle" style="margin-left:auto;">
-        <button class="btn-view active" id="btn-view-cal" onclick="setView('calendar')">📅 Koledar</button>
-        <button class="btn-view" id="btn-view-pending" onclick="setView('pending')">⏳ Čakajoči <span id="pending-count-badge"></span></button>
+    <div class="stats-row">
+      <div class="stat-badge s-pending">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
+      <div class="stat-badge s-ok">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
+      <div class="stat-badge">📅 Danes: <span class="num" id="stat-today">0</span></div>
+      <div class="stat-badge">📊 Teden: <span class="num" id="stat-week">0</span></div>
+      <div class="stat-badge" style="flex:1; min-width:160px;">
+        <input type="text" id="search-input" placeholder="🔍 Išči po imenu..."
+               style="border:none; background:transparent; outline:none; width:100%; font-size:13px;"
+               oninput="handleSearch(this.value)" />
       </div>
     </div>
-    <div id="slots-container">
-      <div class="empty-state" id="empty-state">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        <p>Izberite dan v koledarju</p>
+
+    <div class="quick-add-card">
+      <div>
+        <h3>➕ Ročno dodajanje naročila</h3>
+        <p>Za telefonska naročila ali direktni vnos termina.</p>
       </div>
-      <div id="slots-list" style="display:none"></div>
-      <div id="pending-list-view" style="display:none"></div>
+      <button class="btn btn-primary" onclick="openNewModal()">Dodaj naročilo</button>
+    </div>
+
+    <div class="pending-section" id="pending-section" style="display:none;">
+      <div class="pending-header">
+        <span>⏳ Čakajo na potrditev</span>
+        <span id="pending-count">0</span>
+      </div>
+      <div class="pending-list" id="pending-list">
+        <div class="empty-pending">Ni čakajočih naročil 🎉</div>
+      </div>
+    </div>
+
+    <div class="calendar-section">
+      <div class="mini-calendar">
+        <div class="cal-header">
+          <div style="display:flex; gap:4px;">
+            <button class="nav-btn" onclick="navigate(-1)">◀</button>
+            <button class="nav-btn" onclick="goToday()">Danes</button>
+            <button class="nav-btn" onclick="navigate(1)">▶</button>
+          </div>
+          <div class="cal-title" id="calendar-title">Jan 2026</div>
+        </div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter('VSE')">Vsi</button>
+          <button class="filter-btn" onclick="setFilter('MR')">🧲 MR</button>
+          <button class="filter-btn" onclick="setFilter('RTG')">🔬 RTG</button>
+          <button class="filter-btn" onclick="setFilter('UZ')">🔊 UZ</button>
+          <button class="filter-btn" onclick="setFilter('UZ vodeni')">💉 UZ poseg</button>
+          <button class="filter-btn" onclick="setFilter('Ščitnica')">🦋 Ščitnica</button>
+        </div>
+        <div id="mini-calendar-body"></div>
+      </div>
+
+      <div class="day-schedule">
+        <div class="cal-header">
+          <div class="cal-title" id="day-title">Izberi dan v koledarju</div>
+        </div>
+        <div id="day-schedule-body" style="overflow-y:auto; max-height:72vh;"></div>
+      </div>
+    </div>
+
+  </div><!-- /tab-narocila -->
+
+  <!-- ══════ TAB: POGOVORI ══════ -->
+  <div class="tab-content" id="tab-pogovori">
+
+    <div class="stats-row" style="margin-bottom:14px;">
+      <div class="stat-badge">💬 Pogovorov: <span class="num" id="conv-total">-</span></div>
+      <div class="stat-badge">📨 Sporočil: <span class="num" id="conv-messages">-</span></div>
+      <div class="stat-badge s-ok">📋 Konverzija: <span class="num" id="conv-conversion">-</span></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-hdr">
+        💬 Zgodovina pogovorov
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="text" id="conv-search" placeholder="Išči..." oninput="filterConversations(this.value)"
+                 style="padding:4px 8px; border:1px solid rgba(255,255,255,0.4); border-radius:6px; background:rgba(255,255,255,0.15); color:white; font-size:12px; width:130px; outline:none;" />
+          <button class="btn btn-sm btn-ghost" onclick="loadChatSessions()">🔄</button>
+        </div>
+      </div>
+      <div id="conv-list" style="max-height:72vh; overflow-y:auto;">
+        <div style="padding:30px; text-align:center; color:var(--text-muted);">Nalagam pogovore...</div>
+      </div>
+    </div>
+
+  </div><!-- /tab-pogovori -->
+
+  <!-- ══════ TAB: STATISTIKA ══════ -->
+  <div class="tab-content" id="tab-statistika">
+    <div class="analytics-grid">
+      <div class="widget">
+        <div class="widget-hdr">📈 Naročila</div>
+        <div class="widget-body">
+          <div class="widget-stat"><span class="label">Skupaj naročil</span><span class="value" id="an-total">-</span></div>
+          <div class="widget-stat"><span class="label">Potrjenih</span><span class="value" id="an-confirmed">-</span></div>
+          <div class="widget-stat"><span class="label">Zavrnjenih</span><span class="value" id="an-rejected">-</span></div>
+          <div class="widget-stat"><span class="label">Ta teden</span><span class="value" id="an-week">-</span></div>
+        </div>
+      </div>
+      <div class="widget">
+        <div class="widget-hdr">💬 Chat</div>
+        <div class="widget-body">
+          <div class="widget-stat"><span class="label">Pogovorov skupaj</span><span class="value" id="an-sessions">-</span></div>
+          <div class="widget-stat"><span class="label">Sporočil skupaj</span><span class="value" id="an-messages">-</span></div>
+          <div class="widget-stat"><span class="label">Povprečno/pogovor</span><span class="value" id="an-avg">-</span></div>
+          <div class="widget-stat"><span class="label">Konverzija v naročilo</span><span class="value" id="an-conv-rate">-</span></div>
+        </div>
+      </div>
+      <div class="widget">
+        <div class="widget-hdr">🩻 Naročila po storitvi</div>
+        <div class="widget-body" id="an-by-service"><div style="color:var(--text-muted);font-size:13px;">Nalagam...</div></div>
+      </div>
+      <div class="widget">
+        <div class="widget-hdr">📅 Po dnevih v tednu</div>
+        <div class="widget-body" id="an-by-day"><div style="color:var(--text-muted);font-size:13px;">Nalagam...</div></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="loadStatistika()">🔄 Osveži</button>
+  </div><!-- /tab-statistika -->
+
+  <!-- ══════ TAB: ORODJA ══════ -->
+  <div class="tab-content" id="tab-orodja">
+    <div class="analytics-grid">
+      <div class="widget">
+        <div class="widget-hdr">
+          📧 IMAP Status
+          <button class="btn btn-sm btn-ghost" onclick="refreshImapStatus()">🔄</button>
+        </div>
+        <div class="widget-body">
+          <div class="imap-status ok" id="imap-box">
+            <div class="imap-dot" id="imap-dot"></div>
+            <div>
+              <div style="font-weight:600; font-size:13px;" id="imap-text">Preverjam...</div>
+              <div style="font-size:11px; color:var(--text-muted);" id="imap-last">-</div>
+            </div>
+          </div>
+          <div class="widget-stat"><span class="label">Procesiranih sporočil</span><span class="value" id="imap-count">0</span></div>
+        </div>
+      </div>
+      <div class="widget">
+        <div class="widget-hdr">🔍 Test chatbota</div>
+        <div class="widget-body">
+          <div style="display:flex; gap:7px; margin-bottom:9px;">
+            <input type="text" id="test-msg" placeholder="Npr. Koliko stane MR?"
+                   style="flex:1; padding:8px; border:1px solid var(--border); border-radius:7px; font-size:13px; font-family:inherit;"
+                   onkeydown="if(event.key==='Enter') testChat()" />
+            <button class="btn btn-primary" onclick="testChat()">Pošlji</button>
+          </div>
+          <div id="test-result" style="background:var(--bg); border-radius:8px; padding:11px; font-size:13px; white-space:pre-wrap; min-height:60px; color:var(--text-muted);">Odgovor se pojavi tukaj...</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-orodja -->
+
+</div><!-- /container -->
+
+<!-- ══════ MODAL: Edit / New naročilo ══════ -->
+<div class="modal" id="edit-modal">
+  <div class="modal-content wide">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Naročilo</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-split">
+      <!-- Left: Form -->
+      <div class="modal-left">
+        <form id="edit-form" onsubmit="saveAppointment(event)">
+          <div class="modal-body">
+            <input type="hidden" id="edit-id" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Status</label>
+                <select id="edit-status">
+                  <option value="pending">⏳ Čaka na potrditev</option>
+                  <option value="processing">📋 V obdelavi</option>
+                  <option value="confirmed">✅ Potrjeno</option>
+                  <option value="rejected">❌ Zavrnjeno</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Vrsta preiskave</label>
+                <select id="edit-location" onchange="onServiceChange()">
+                  <optgroup label="🧲 MR — magnetnoresonančna tomografija">
+                    <option value="MR glave in vratu">MR glave in vratu</option>
+                    <option value="MR hrbtenice">MR hrbtenice</option>
+                    <option value="MR sklepov in okončin">MR sklepov in okončin</option>
+                    <option value="MR artrografija">MR artrografija</option>
+                    <option value="MR zgornjega abdomna">MR zgornjega abdomna</option>
+                    <option value="MR enterografija">MR enterografija</option>
+                    <option value="MR urografija">MR urografija</option>
+                    <option value="MR male medenice">MR male medenice</option>
+                    <option value="MR prostate">MR prostate</option>
+                    <option value="MR dojk">MR dojk</option>
+                    <option value="MR prsnega koša">MR prsnega koša</option>
+                    <option value="MR angiografija">MR angiografija</option>
+                  </optgroup>
+                  <optgroup label="🔬 RTG — rentgensko slikanje">
+                    <option value="RTG">RTG (rentgensko slikanje)</option>
+                  </optgroup>
+                  <optgroup label="🔊 UZ — ultrazvočna diagnostika">
+                    <option value="UZ">UZ (ultrazvočna diagnostika)</option>
+                    <option value="UZ vodeni poseg – izpiranje kalcifikacij">UZ vodeni – izpiranje kalcifikacij</option>
+                    <option value="UZ vodeni poseg – kortikosteroid">UZ vodeni – kortikosteroid (blokada)</option>
+                    <option value="UZ vodeni poseg – ganglionska cista">UZ vodeni – ganglionska cista</option>
+                  </optgroup>
+                  <optgroup label="🦋 Ščitnica">
+                    <option value="Ščitnica">Ambulanta za bolezni ščitnice</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Datum</label>
+                <input type="date" id="edit-date" required onchange="refreshSlots()" />
+              </div>
+              <div class="form-group">
+                <label>Ura</label>
+                <input type="time" id="edit-time" />
+              </div>
+              <div class="form-group">
+                <label>Ime in priimek</label>
+                <input type="text" id="edit-name" required placeholder="Janez Novak" />
+              </div>
+              <div class="form-group">
+                <label>Telefon</label>
+                <input type="tel" id="edit-phone" placeholder="041 123 456" />
+              </div>
+              <div class="form-group full">
+                <label>Email</label>
+                <input type="email" id="edit-email" placeholder="ime@email.si" />
+              </div>
+              <div class="form-group full">
+                <label>Prosti termini — klikni za izbiro</label>
+                <div class="slot-picker" id="slot-picker">Izberi datum in storitev</div>
+              </div>
+              <div class="form-group full">
+                <label>Opomba / posebne zahteve</label>
+                <textarea id="edit-notes" rows="2" placeholder="Npr. napotnica, koda naročnika, posebne zahteve..."></textarea>
+              </div>
+            </div>
+
+            <!-- MR vprašalnik (prikaže se samo za MR) -->
+            <div id="mr-section" style="display:none;">
+              <div class="mr-q-box">
+                <h4>🩻 MR VARNOSTNI VPRAŠALNIK</h4>
+                <div id="mr-q-display">Ni podatkov.</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-ftr">
+            <button type="button" class="btn btn-danger" id="delete-btn" style="margin-right:auto; display:none;" onclick="deleteAppt()">🗑️ Briši</button>
+            <button type="button" class="btn btn-danger" id="reject-btn" style="display:none;" onclick="rejectApptFromModal()">❌ Zavrni</button>
+            <button type="button" class="btn btn-success" id="confirm-btn" style="display:none;" onclick="confirmApptFromModal()">✅ Potrdi &amp; pošlji email</button>
+            <button type="button" class="btn btn-neutral" onclick="closeModal()">Prekliči</button>
+            <button type="submit" class="btn btn-primary">💾 Shrani</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Communication -->
+      <div class="modal-right">
+        <div class="comm-header">💬 Komunikacija s pacientom</div>
+        <div class="msg-filters">
+          <button type="button" class="btn btn-sm" id="msg-f-all" onclick="setMsgFilter('all')" style="background:rgba(67,139,209,0.1); color:var(--primary);">Vse</button>
+          <button type="button" class="btn btn-sm btn-neutral" id="msg-f-email" onclick="setMsgFilter('email')">Email</button>
+          <button type="button" class="btn btn-sm btn-neutral" id="msg-f-sms" onclick="setMsgFilter('sms')">SMS</button>
+        </div>
+        <div class="message-timeline" id="message-timeline">
+          <div style="text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">Odpri naročilo za prikaz komunikacije.</div>
+        </div>
+        <div class="reply-form">
+          <textarea id="reply-body" placeholder="Napiši sporočilo pacientu..."></textarea>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="sendReply('email')">📧 Email</button>
+            <button type="button" class="btn btn-neutral btn-sm" onclick="sendReply('sms')">📱 SMS</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     EDIT MODAL (slide from right)
-════════════════════════════════════════════ -->
-<div class="modal-overlay" id="edit-modal-overlay" onclick="closeEditModal(event)">
-  <div id="edit-modal-panel">
-    <div class="modal-head">
-      <span class="modal-title" id="edit-modal-title">Uredi naročilo</span>
-      <button class="btn-close" onclick="closeEditModalDirect()">&times;</button>
+<!-- Modal: Chat seja -->
+<div class="modal" id="chat-modal">
+  <div class="modal-content" style="max-width:780px;">
+    <div class="modal-hdr">
+      <h3 id="chat-modal-title">Pogovor</h3>
+      <button class="modal-close" onclick="closeChatModal()">&times;</button>
     </div>
-    <div class="modal-body" id="edit-modal-body">
-
-      <!-- SECTION: Podatki -->
-      <div class="modal-section-label">Podatki o naročilu</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Ime in priimek</label>
-          <input type="text" id="ed-name" placeholder="Jana Novak" />
-        </div>
-        <div class="form-group">
-          <label>Telefon</label>
-          <input type="text" id="ed-phone" placeholder="+386 ..." />
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>E-pošta</label>
-          <input type="email" id="ed-email" placeholder="jana@example.com" />
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Storitev</label>
-          <select id="ed-service">
-            <option value="">— izberi —</option>
-            <option>Ortopedski pregled</option>
-            <option>Dermatološki pregled</option>
-            <option>Laserski poseg</option>
-            <option>Estetski poseg</option>
-            <option>Fizioterapija</option>
-            <option>Okulistični pregled</option>
-            <option>Predpis očal/leč</option>
-            <option>Kozmetični salon</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="ed-status">
-            <option value="pending">Čaka (pending)</option>
-            <option value="processing">V obdelavi (processing)</option>
-            <option value="confirmed">Potrjeno (confirmed)</option>
-            <option value="rejected">Zavrnjeno (rejected)</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Datum</label>
-          <input type="date" id="ed-date" />
-        </div>
-        <div class="form-group">
-          <label>Ura</label>
-          <select id="ed-time">
-            <!-- generated by JS -->
-          </select>
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>Opomba pacienta</label>
-          <textarea id="ed-note" placeholder="Pacientova opomba..."></textarea>
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>Admin opombe</label>
-          <textarea id="ed-admin-notes" placeholder="Interne opombe..."></textarea>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-success" onclick="confirmReservation()">
-          &#10003; Potrdi rezervacijo
-        </button>
-        <button class="btn-danger" onclick="rejectReservation()">
-          &#10007; Zavrni
-        </button>
-        <button class="btn-primary" onclick="saveReservation()">
-          Shrani spremembe
-        </button>
-        <button class="btn-secondary" onclick="deleteReservation()" style="margin-left:auto">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-          </svg>
-          Izbriši
-        </button>
-      </div>
-
-      <hr class="divider" />
-
-      <!-- SECTION: Komunikacija -->
-      <div class="modal-section-label">Komunikacija</div>
-      <div class="message-thread" id="message-thread">
-        <div style="color:var(--muted); font-size:12px; text-align:center; padding: 16px 0">Ni sporočil</div>
-      </div>
-
-      <div class="send-form">
-        <input type="text" id="send-subject" placeholder="Zadeva e-pošte..." />
-        <textarea id="send-body" placeholder="Vsebina sporočila..."></textarea>
-        <button class="btn-primary" onclick="sendMessage()">
-          &#9993; Pošlji email
-        </button>
-      </div>
-
+    <div class="modal-body" id="chat-modal-msgs" style="max-height:65vh; overflow-y:auto; padding:16px;">
+      <div style="text-align:center; color:var(--text-muted);">Nalagam...</div>
+    </div>
+    <div class="modal-ftr">
+      <button type="button" class="btn btn-neutral" onclick="closeChatModal()">Zapri</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     ADD MODAL (centered)
-════════════════════════════════════════════ -->
-<div id="add-modal-overlay" onclick="closeAddModal(event)">
-  <div id="add-modal-panel" onclick="event.stopPropagation()">
-    <div class="add-modal-head">
-      <span class="modal-title">Novo naročilo</span>
-      <button class="btn-close" onclick="closeAddModalDirect()">&times;</button>
-    </div>
-    <div class="add-modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Ime in priimek *</label>
-          <input type="text" id="add-name" placeholder="Jana Novak" />
-        </div>
-        <div class="form-group">
-          <label>Telefon *</label>
-          <input type="text" id="add-phone" placeholder="+386 ..." />
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>E-pošta</label>
-          <input type="email" id="add-email" placeholder="jana@example.com" />
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>Storitev *</label>
-          <select id="add-service">
-            <option value="">— izberi —</option>
-            <option>Ortopedski pregled</option>
-            <option>Dermatološki pregled</option>
-            <option>Laserski poseg</option>
-            <option>Estetski poseg</option>
-            <option>Fizioterapija</option>
-            <option>Okulistični pregled</option>
-            <option>Predpis očal/leč</option>
-            <option>Kozmetični salon</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Datum *</label>
-          <input type="date" id="add-date" />
-        </div>
-        <div class="form-group">
-          <label>Ura *</label>
-          <select id="add-time">
-            <!-- generated by JS -->
-          </select>
-        </div>
-      </div>
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>Admin opombe</label>
-          <textarea id="add-admin-notes" placeholder="Interne opombe..."></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="add-modal-footer">
-      <button class="btn-secondary" onclick="closeAddModalDirect()">Prekliči</button>
-      <button class="btn-primary" onclick="submitAdd()">Dodaj naročilo</button>
-    </div>
-  </div>
-</div>
+<div class="toast-container" id="toast-container"></div>
 
-<!-- ═══════════════════════════════════════════
-     TOAST CONTAINER
-════════════════════════════════════════════ -->
-<div id="toast-container"></div>
-
-<!-- ═══════════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════════════ -->
 <script>
-'use strict';
+  const API = '/api/admin';
+  const ADMIN_TOKEN_KEY = 'admin_token';
 
-// ── Constants ────────────────────────────────
-const API = '/api/admin';
-const SERVICES = [
-  'Ortopedski pregled',
-  'Dermatološki pregled',
-  'Laserski poseg',
-  'Estetski poseg',
-  'Fizioterapija',
-  'Okulistični pregled',
-  'Predpis očal/leč',
-  'Kozmetični salon'
-];
+  let currentDate = new Date();
+  let selectedDate = new Date();
+  let currentFilter = 'VSE';
+  let searchTerm = '';
+  let allReservations = [];
+  let calendarData = {};
+  let currentMsgFilter = 'all';
+  let allSessions = [];
 
-const SL_MONTHS = ['Januar','Februar','Marec','April','Maj','Junij',
-                   'Julij','Avgust','September','Oktober','November','December'];
-const SL_DAYS_LONG = ['Ponedeljek','Torek','Sreda','Četrtek','Petek','Sobota','Nedela'];
-const SL_DAYS_SHORT = ['Pon','Tor','Sre','Čet','Pet','Sob','Ned'];
+  // Attach auth token to every fetch
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = (input, init = {}) => {
+    const headers = new Headers(init.headers || {});
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+    init.headers = headers;
+    return _origFetch(input, init);
+  };
 
-const STATUS_LABELS = {
-  pending: 'Čaka',
-  processing: 'V obdelavi',
-  confirmed: 'Potrjeno',
-  rejected: 'Zavrnjeno'
-};
+  const DAYS = ['Pon','Tor','Sre','Čet','Pet','Sob','Ned'];
+  const MONTHS = ['Januar','Februar','Marec','April','Maj','Junij','Julij','Avgust','September','Oktober','November','December'];
 
-// ── State ────────────────────────────────────
-let allReservations = [];   // all loaded from API
-let calYear  = new Date().getFullYear();
-let calMonth = new Date().getMonth(); // 0-based
-let selectedDate = null;   // 'YYYY-MM-DD'
-let editingId = null;
-
-// ── Time Slot Generation ─────────────────────
-function generateTimeSlots() {
-  const slots = [];
-  for (let h = 8; h < 18; h++) {
-    slots.push(`${String(h).padStart(2,'0')}:00`);
-    slots.push(`${String(h).padStart(2,'0')}:30`);
+  // MDT: vsak dan 08:00–20:00
+  const TIMES = [];
+  for (let h = 8; h < 20; h++) {
+    TIMES.push(`${String(h).padStart(2,'0')}:00`);
+    TIMES.push(`${String(h).padStart(2,'0')}:30`);
   }
-  return slots; // 08:00 … 17:30 = 20 slots
-}
-const TIME_SLOTS = generateTimeSlots();
+  TIMES.push('20:00');
 
-function populateTimeSelects() {
-  ['ed-time','add-time'].forEach(id => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = '';
-    TIME_SLOTS.forEach(t => {
-      const o = document.createElement('option');
-      o.value = t; o.textContent = t;
-      sel.appendChild(o);
+  // ── Tabs ──
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(`tab-${name}`).classList.add('active');
+    if (name === 'pogovori') loadChatSessions();
+    if (name === 'statistika') loadStatistika();
+    if (name === 'orodja') refreshImapStatus();
+  }
+
+  // ── Helpers ──
+  function formatISO(d) { return d.toISOString().split('T')[0]; }
+  function formatSL(d) { return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()}`; }
+  function parseSL(str) {
+    if (!str) return null;
+    const p = str.split('.');
+    if (p.length === 3) return new Date(p[2], p[1]-1, p[0]);
+    return new Date(str);
+  }
+  function toISO(sl) {
+    const p = (sl||'').split('.');
+    return p.length === 3 ? `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : sl;
+  }
+  function isToday(d) { return d.toDateString() === new Date().toDateString(); }
+  function isMR(loc) { return (loc||'').startsWith('MR'); }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function toast(msg, type='') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  }
+
+  // ── Load data ──
+  async function loadData() {
+    try {
+      const [rRes, sRes] = await Promise.all([fetch(`${API}/reservations?limit=500`), fetch(`${API}/stats`)]);
+      const rData = await rRes.json();
+      const stats = await sRes.json();
+      allReservations = rData.reservations || [];
+      document.getElementById('stat-pending').textContent = stats.po_statusu?.pending || 0;
+      document.getElementById('stat-confirmed').textContent = stats.po_statusu?.confirmed || 0;
+      document.getElementById('stat-today').textContent = stats.danes || 0;
+      document.getElementById('stat-week').textContent = stats.ta_teden || 0;
+      buildCalData();
+      renderCal();
+      renderPending();
+    } catch(e) { toast('Napaka pri nalaganju','err'); }
+  }
+
+  // ── Calendar data ──
+  function buildCalData() {
+    calendarData = {};
+    let filtered = currentFilter === 'VSE' ? allReservations : allReservations.filter(r => {
+      const loc = r.location || '';
+      if (currentFilter === 'MR') return isMR(loc);
+      if (currentFilter === 'UZ vodeni') return loc.startsWith('UZ vodeni');
+      return loc === currentFilter || loc.includes(currentFilter);
     });
-  });
-}
-
-// ── Date Helpers ─────────────────────────────
-function toISODate(str) {
-  if (!str) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-  // DD.MM.YYYY
-  const [d, m, y] = str.split('.');
-  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
-}
-function toDisplayDate(str) {
-  if (!str) return '';
-  const iso = toISODate(str);
-  if (!iso) return str;
-  const [y, m, d] = iso.split('-');
-  return `${d}.${m}.${y}`;
-}
-function todayISO() {
-  return new Date().toISOString().slice(0,10);
-}
-function formatDayTitle(isoDate) {
-  const d = new Date(isoDate + 'T00:00:00');
-  const dow = SL_DAYS_LONG[(d.getDay() + 6) % 7];
-  const day = d.getDate();
-  const mon = SL_MONTHS[d.getMonth()].toLowerCase();
-  const yr  = d.getFullYear();
-  return `${dow}, ${day}. ${mon} ${yr}`;
-}
-
-// ── API Calls ────────────────────────────────
-async function apiFetch(url, opts = {}) {
-  try {
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...opts.headers },
-      ...opts
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      filtered = filtered.filter(r => (r.name||'').toLowerCase().includes(t));
+    }
+    filtered.forEach(r => {
+      const d = parseSL(r.date);
+      if (!d) return;
+      const key = formatISO(d);
+      (calendarData[key] = calendarData[key] || []).push(r);
     });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || res.statusText);
-    }
-    return await res.json();
-  } catch (e) {
-    throw e;
-  }
-}
-
-async function loadReservations() {
-  try {
-    const params = new URLSearchParams();
-    const svc = document.getElementById('service-filter').value;
-    if (svc) params.set('location', svc);
-    const data = await apiFetch(`${API}/reservations?${params}`);
-    allReservations = data.reservations || [];
-    // Stats
-    document.getElementById('stat-pending').textContent   = data.stats?.pending   ?? allReservations.filter(r=>r.status==='pending').length;
-    document.getElementById('stat-today').textContent     = data.stats?.today     ?? allReservations.filter(r=>toISODate(r.date)===todayISO()).length;
-    document.getElementById('stat-confirmed').textContent = data.stats?.confirmed ?? allReservations.filter(r=>r.status==='confirmed').length;
-  } catch(e) {
-    toast('Napaka pri nalaganju naročil: ' + e.message, 'error');
-    allReservations = [];
-  }
-}
-
-// ── Calendar ─────────────────────────────────
-function renderCalendar() {
-  const label = document.getElementById('cal-month-label');
-  label.textContent = `${SL_MONTHS[calMonth]} ${calYear}`;
-
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '';
-
-  // Day-of-week headers (Mon=0 … Sun=6)
-  SL_DAYS_SHORT.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'cal-dow';
-    el.textContent = d;
-    grid.appendChild(el);
-  });
-
-  // First day of month (ISO: Mon=1, Sun=0 → shift to Mon=0)
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const offset = (firstDay + 6) % 7; // empty cells before day 1
-
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const today = todayISO();
-
-  // Build a map: isoDate → [statuses]
-  const dayMap = {};
-  allReservations.forEach(r => {
-    const iso = toISODate(r.date);
-    if (!iso) return;
-    const [y,m] = iso.split('-').map(Number);
-    if (y === calYear && m - 1 === calMonth) {
-      if (!dayMap[iso]) dayMap[iso] = [];
-      dayMap[iso].push(r.status);
-    }
-  });
-
-  // Empty cells
-  for (let i = 0; i < offset; i++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day empty';
-    grid.appendChild(el);
   }
 
-  // Day cells
-  for (let d = 1; d <= daysInMonth; d++) {
-    const iso = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const el = document.createElement('div');
-    el.className = 'cal-day';
-    if (iso === today) el.classList.add('today');
-    if (iso === selectedDate) el.classList.add('selected');
-
-    const numEl = document.createElement('span');
-    numEl.textContent = d;
-    el.appendChild(numEl);
-
-    // Count badge instead of dots
-    if (dayMap[iso] && dayMap[iso].length > 0) {
-      const statuses = dayMap[iso];
-      const hasPending = statuses.some(s => s === 'pending');
-      const countEl = document.createElement('span');
-      countEl.className = `cal-count ${hasPending ? 'has-pending' : 'all-confirmed'}`;
-      countEl.textContent = statuses.length;
-      el.appendChild(countEl);
-    }
-
-    el.onclick = () => selectDay(iso);
-    grid.appendChild(el);
-  }
-}
-
-function selectDay(iso) {
-  selectedDate = iso;
-  renderCalendar();
-  renderDayView();
-}
-
-function calPrev() {
-  calMonth--;
-  if (calMonth < 0) { calMonth = 11; calYear--; }
-  renderCalendar();
-}
-function calNext() {
-  calMonth++;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  renderCalendar();
-}
-
-// ── Day View ─────────────────────────────────
-function renderDayView() {
-  const titleEl   = document.getElementById('day-title');
-  const countEl   = document.getElementById('day-count');
-  const emptyEl   = document.getElementById('empty-state');
-  const slotsEl   = document.getElementById('slots-list');
-
-  if (!selectedDate) {
-    titleEl.textContent = 'Izberite dan v koledarju';
-    countEl.style.display = 'none';
-    emptyEl.style.display = 'flex';
-    slotsEl.style.display = 'none';
-    return;
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      const m = b.getAttribute('onclick').match(/'([^']+)'/);
+      b.classList.toggle('active', m && m[1] === f);
+    });
+    buildCalData(); renderCal();
   }
 
-  titleEl.textContent = formatDayTitle(selectedDate);
+  function handleSearch(v) { searchTerm = v; buildCalData(); renderCal(); renderPending(); }
 
-  const svc = document.getElementById('service-filter').value;
-  const dayRes = allReservations.filter(r => {
-    const match = toISODate(r.date) === selectedDate;
-    if (!match) return false;
-    if (svc && r.location !== svc) return false;
-    return true;
-  });
-
-  countEl.textContent = `${dayRes.length} naročil`;
-  countEl.style.display = 'inline-block';
-  emptyEl.style.display = 'none';
-  slotsEl.style.display = 'block';
-  document.getElementById('pending-list-view').style.display = 'none';
-
-  // Map ALL reservations (all services) by time for this day — for conflict detection
-  const allDayRes = allReservations.filter(r => toISODate(r.date) === selectedDate);
-  const allResMap = {};
-  allDayRes.forEach(r => {
-    const t = (r.time || '').substring(0,5);
-    if (!allResMap[t]) allResMap[t] = [];
-    allResMap[t].push(r);
-  });
-
-  // Map filtered reservations by time
-  const resMap = {};
-  dayRes.forEach(r => {
-    const t = (r.time || '').substring(0,5);
-    if (!resMap[t]) resMap[t] = [];
-    resMap[t].push(r);
-  });
-
-  slotsEl.innerHTML = '';
-  TIME_SLOTS.forEach(slot => {
-    const recs = resMap[slot] || [];
-    const allRecs = allResMap[slot] || [];
-    if (recs.length === 0) {
-      // Empty slot — if other services occupy it, note how many
-      const othersCount = svc ? allRecs.length : 0;
-      slotsEl.appendChild(buildEmptySlot(slot, othersCount > 0, othersCount));
-    } else if (recs.length === 1) {
-      slotsEl.appendChild(buildSlotRow(slot, recs[0], false));
-    } else {
-      // Multiple appointments at same time (parallel doctors) — group in one block
-      slotsEl.appendChild(buildGroupedSlot(slot, recs));
-    }
-  });
-}
-
-function buildSlotRow(slotTime, r, hasParallel) {
-  const row = document.createElement('div');
-  row.className = 'slot-row has-appt';
-  const parallelNote = hasParallel ? `<span style="font-size:10px;color:var(--brand);margin-left:6px;">+vzporedno</span>` : '';
-  row.innerHTML = `
-    <div class="slot-time">${slotTime}</div>
-    <div class="slot-info">
-      <div class="slot-name">${esc(r.name || '—')}${parallelNote}</div>
-      <div class="slot-service">${esc(r.location || '')}</div>
-    </div>
-    <div class="slot-actions">
-      <span class="badge ${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
-      <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
-      ${r.status !== 'confirmed' ? `<button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>` : ''}
-      ${r.status !== 'rejected' ? `<button class="btn-icon btn-reject" onclick="quickReject('${r.id}')">Zavrni</button>` : ''}
-      <button class="btn-icon btn-delete" onclick="quickDelete('${r.id}')">&#128465;</button>
-    </div>
-  `;
-  return row;
-}
-
-function buildEmptySlot(slotTime, otherServicesBooked, count) {
-  const row = document.createElement('div');
-  row.className = 'slot-row';
-  const hint = otherServicesBooked
-    ? `<span style="font-size:10px;color:var(--muted);margin-left:8px;">${count} drug${count===1?'a':'ih'} storitev</span>`
-    : '';
-  row.innerHTML = `
-    <div class="slot-time">${slotTime}</div>
-    <div class="slot-info">
-      <span class="slot-empty" onclick="openAddModal('${slotTime}')">— prosto —</span>${hint}
-    </div>
-    <div></div>
-  `;
-  return row;
-}
-
-function buildGroupedSlot(slotTime, recs) {
-  const wrap = document.createElement('div');
-  wrap.className = 'slot-group';
-  const header = document.createElement('div');
-  header.className = 'slot-group-header';
-  header.innerHTML = `
-    <span class="slot-group-time">${slotTime}</span>
-    <span class="slot-group-label">${recs.length} vzporednih terminov</span>`;
-  wrap.appendChild(header);
-  recs.forEach(r => {
-    const sub = document.createElement('div');
-    sub.className = 'slot-sub';
-    sub.innerHTML = `
-      <div class="slot-sub-info">
-        <div class="slot-sub-name">${esc(r.name || '—')}</div>
-        <div class="slot-sub-service">${esc(r.location || '')}</div>
-      </div>
-      <div class="slot-sub-actions">
-        <span class="badge ${r.status}">${STATUS_LABELS[r.status] || r.status}</span>
-        <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
-        ${r.status !== 'confirmed' ? `<button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>` : ''}
-        ${r.status !== 'rejected'  ? `<button class="btn-icon btn-reject"  onclick="quickReject('${r.id}')">Zavrni</button>`  : ''}
-        <button class="btn-icon btn-delete" onclick="quickDelete('${r.id}')">&#128465;</button>
-      </div>`;
-    wrap.appendChild(sub);
-  });
-  return wrap;
-}
-
-// ── Quick Actions ─────────────────────────────
-async function quickConfirm(id) {
-  try {
-    await apiFetch(`${API}/reservations/${id}/confirm`, { method: 'POST' });
-    toast('Rezervacija potrjena. Stranka je obveščena.', 'success');
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-async function quickReject(id) {
-  if (!confirm('Zavrniti to naročilo?')) return;
-  try {
-    await apiFetch(`${API}/reservations/${id}/reject`, { method: 'POST' });
-    toast('Rezervacija zavrnjena.', 'info');
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-async function quickDelete(id) {
-  if (!confirm('Izbrisati naročilo? Tega ni mogoče razveljaviti.')) return;
-  try {
-    await apiFetch(`${API}/reservations/${id}`, { method: 'DELETE' });
-    toast('Naročilo izbrisano.', 'info');
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-// ── Edit Modal ────────────────────────────────
-async function openEditModal(id) {
-  editingId = id;
-  const r = allReservations.find(x => String(x.id) === String(id));
-  if (!r) { toast('Naročilo ni najdeno.', 'error'); return; }
-
-  document.getElementById('edit-modal-title').textContent = `Uredi naročilo #${id}`;
-  document.getElementById('ed-name').value        = r.name || '';
-  document.getElementById('ed-phone').value       = r.phone || '';
-  document.getElementById('ed-email').value       = r.email || '';
-  document.getElementById('ed-service').value     = r.location || '';
-  document.getElementById('ed-status').value      = r.status || 'pending';
-  document.getElementById('ed-date').value        = toISODate(r.date);
-  document.getElementById('ed-note').value        = r.note || '';
-  document.getElementById('ed-admin-notes').value = r.admin_notes || '';
-
-  // Set time
-  const timeVal = (r.time || '08:00').substring(0,5);
-  document.getElementById('ed-time').value = timeVal;
-
-  // Open overlay
-  document.getElementById('edit-modal-overlay').classList.add('open');
-
-  // Load messages
-  loadMessages(id);
-}
-
-async function loadMessages(id) {
-  const thread = document.getElementById('message-thread');
-  thread.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0"><span class="spinner"></span></div>';
-  try {
-    const data = await apiFetch(`${API}/reservations/${id}/messages`);
-    const msgs = data.messages || [];
-    if (msgs.length === 0) {
-      thread.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">Ni sporočil</div>';
-      return;
-    }
-    thread.innerHTML = '';
-    msgs.forEach(m => {
-      const div = document.createElement('div');
-      div.className = `msg-bubble ${m.direction === 'outbound' ? 'outbound' : 'inbound'}`;
-      div.innerHTML = `
-        ${m.subject ? `<div class="msg-subject">${esc(m.subject)}</div>` : ''}
-        <div>${esc(m.body || '')}</div>
-        <div class="msg-meta">
-          <span class="channel-badge">${esc(m.channel || 'email')}</span>
-          ${m.created_at ? formatMsgTime(m.created_at) : ''}
+  // ── Pending ──
+  function renderPending() {
+    let pending = allReservations.filter(r => r.status === 'pending');
+    if (searchTerm) { const t = searchTerm.toLowerCase(); pending = pending.filter(r => (r.name||'').toLowerCase().includes(t)); }
+    document.getElementById('pending-count').textContent = pending.length;
+    const sec = document.getElementById('pending-section');
+    const list = document.getElementById('pending-list');
+    if (!pending.length) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    list.innerHTML = pending.slice(0,10).map(r => `
+      <div class="pending-item">
+        <div class="pending-info">
+          <h4>${esc(r.name||'Neznano')}</h4>
+          <p>${esc(r.location||'Preiskava')} · ${r.date||''} ${r.time?'ob '+r.time:''} · ${r.phone||''}</p>
         </div>
-      `;
-      thread.appendChild(div);
-    });
-    thread.scrollTop = thread.scrollHeight;
-  } catch(e) {
-    thread.innerHTML = '<div style="color:var(--danger);font-size:12px;text-align:center;padding:16px 0">Napaka pri nalaganju sporočil</div>';
-  }
-}
-
-function formatMsgTime(ts) {
-  try {
-    const d = new Date(ts);
-    return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  } catch { return ts; }
-}
-
-function closeEditModal(e) {
-  if (e.target === document.getElementById('edit-modal-overlay')) closeEditModalDirect();
-}
-function closeEditModalDirect() {
-  document.getElementById('edit-modal-overlay').classList.remove('open');
-  editingId = null;
-}
-
-async function saveReservation() {
-  if (!editingId) return;
-  const body = {
-    name:        document.getElementById('ed-name').value.trim(),
-    phone:       document.getElementById('ed-phone').value.trim(),
-    email:       document.getElementById('ed-email').value.trim(),
-    location:    document.getElementById('ed-service').value,
-    status:      document.getElementById('ed-status').value,
-    date:        document.getElementById('ed-date').value,
-    time:        document.getElementById('ed-time').value,
-    note:        document.getElementById('ed-note').value.trim(),
-    admin_notes: document.getElementById('ed-admin-notes').value.trim()
-  };
-  try {
-    await apiFetch(`${API}/reservations/${editingId}`, {
-      method: 'PUT',
-      body: JSON.stringify(body)
-    });
-    toast('Spremembe shranjene.', 'success');
-    closeEditModalDirect();
-    await refreshAll();
-  } catch(e) { toast('Napaka pri shranjevanju: ' + e.message, 'error'); }
-}
-
-async function confirmReservation() {
-  if (!editingId) return;
-  try {
-    await apiFetch(`${API}/reservations/${editingId}/confirm`, { method: 'POST' });
-    toast('Rezervacija potrjena. Stranka je obveščena.', 'success');
-    closeEditModalDirect();
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-async function rejectReservation() {
-  if (!editingId) return;
-  if (!confirm('Zavrniti to naročilo?')) return;
-  try {
-    await apiFetch(`${API}/reservations/${editingId}/reject`, { method: 'POST' });
-    toast('Naročilo zavrnjeno.', 'info');
-    closeEditModalDirect();
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-async function deleteReservation() {
-  if (!editingId) return;
-  if (!confirm('Izbrisati naročilo? Tega ni mogoče razveljaviti.')) return;
-  try {
-    await apiFetch(`${API}/reservations/${editingId}`, { method: 'DELETE' });
-    toast('Naročilo izbrisano.', 'info');
-    closeEditModalDirect();
-    await refreshAll();
-  } catch(e) { toast('Napaka: ' + e.message, 'error'); }
-}
-
-async function sendMessage() {
-  if (!editingId) return;
-  const subject = document.getElementById('send-subject').value.trim();
-  const body    = document.getElementById('send-body').value.trim();
-  const r = allReservations.find(x => String(x.id) === String(editingId));
-  if (!body) { toast('Vsebina sporočila je prazna.', 'error'); return; }
-  try {
-    await apiFetch(`${API}/send-message`, {
-      method: 'POST',
-      body: JSON.stringify({
-        reservation_id: editingId,
-        email: r?.email || '',
-        subject: subject || 'Sporočilo iz Zdravstvenega centra',
-        body: body,
-        set_processing: true
-      })
-    });
-    toast('Sporočilo poslano.', 'success');
-    document.getElementById('send-subject').value = '';
-    document.getElementById('send-body').value = '';
-    loadMessages(editingId);
-    await refreshAll();
-  } catch(e) { toast('Napaka pri pošiljanju: ' + e.message, 'error'); }
-}
-
-// ── Add Modal ─────────────────────────────────
-function openAddModal(presetTime) {
-  // Reset form
-  ['add-name','add-phone','add-email','add-admin-notes'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('add-service').value = '';
-
-  // Prefill date from selected calendar day
-  const dateInput = document.getElementById('add-date');
-  dateInput.value = selectedDate || todayISO();
-
-  // Prefill time if provided
-  const timeSelect = document.getElementById('add-time');
-  if (presetTime && TIME_SLOTS.includes(presetTime)) {
-    timeSelect.value = presetTime;
-  } else {
-    timeSelect.value = '08:00';
+        <div class="pending-actions">
+          <button class="btn btn-success btn-sm" onclick="confirmAppt(${r.id})">✅ Potrdi</button>
+          <button class="btn btn-neutral btn-sm" onclick="openEdit(${r.id})">✏️ Odpri</button>
+        </div>
+      </div>`).join('');
   }
 
-  document.getElementById('add-modal-overlay').classList.add('open');
-}
+  // ── Navigation ──
+  function selectDay(key) { selectedDate = new Date(key); renderDaySched(); }
+  function navigate(d) { currentDate.setMonth(currentDate.getMonth()+d); renderCal(); }
+  function goToday() { currentDate = new Date(); selectedDate = new Date(); renderCal(); }
+  function renderCal() { renderMiniCal(); renderDaySched(); }
 
-function closeAddModal(e) {
-  if (e.target === document.getElementById('add-modal-overlay')) closeAddModalDirect();
-}
-function closeAddModalDirect() {
-  document.getElementById('add-modal-overlay').classList.remove('open');
-}
-
-async function submitAdd() {
-  const name    = document.getElementById('add-name').value.trim();
-  const phone   = document.getElementById('add-phone').value.trim();
-  const email   = document.getElementById('add-email').value.trim();
-  const service = document.getElementById('add-service').value;
-  const date    = document.getElementById('add-date').value;
-  const time    = document.getElementById('add-time').value;
-  const notes   = document.getElementById('add-admin-notes').value.trim();
-
-  if (!name)    { toast('Ime je obvezno.', 'error'); return; }
-  if (!phone)   { toast('Telefon je obvezen.', 'error'); return; }
-  if (!service) { toast('Izberite storitev.', 'error'); return; }
-  if (!date)    { toast('Datum je obvezen.', 'error'); return; }
-
-  const body = {
-    name, phone, email,
-    location: service,
-    date, time,
-    reservation_type: 'table',
-    people: 1,
-    status: 'confirmed',
-    admin_notes: notes
-  };
-
-  try {
-    await apiFetch(`${API}/reservations`, {
-      method: 'POST',
-      body: JSON.stringify(body)
+  // ── Day schedule ──
+  function renderDaySched() {
+    const body = document.getElementById('day-schedule-body');
+    const title = document.getElementById('day-title');
+    const dn = ['Nedelja','Ponedeljek','Torek','Sreda','Četrtek','Petek','Sobota'];
+    title.textContent = `${dn[selectedDate.getDay()]}, ${formatSL(selectedDate)}`;
+    const key = formatISO(selectedDate);
+    const appts = calendarData[key] || [];
+    let html = '<div class="day-grid">';
+    TIMES.forEach(time => {
+      html += `<div class="time-label">${time}</div>`;
+      const ta = appts.filter(a => a.time === time);
+      const ac = ta.map(a =>
+        `<div class="appt ${a.status}" onclick="event.stopPropagation();openEdit(${a.id})" title="${esc(a.name||'')}">
+          <strong>${esc(a.name||'?')}</strong> · ${esc(a.location||'')}
+        </div>`).join('');
+      html += `<div class="day-cell${isToday(selectedDate)?' today':''}" onclick="openNewModalWithTime('${time}')">${ac}</div>`;
     });
-    toast('Naročilo dodano.', 'success');
-    closeAddModalDirect();
-    await refreshAll();
-  } catch(e) { toast('Napaka pri dodajanju: ' + e.message, 'error'); }
-}
-
-// ── Service filter change ─────────────────────
-// ── View Mode ─────────────────────────────────
-let currentView = 'calendar'; // 'calendar' | 'pending'
-
-function setView(view) {
-  currentView = view;
-  document.getElementById('btn-view-cal').classList.toggle('active', view === 'calendar');
-  document.getElementById('btn-view-pending').classList.toggle('active', view === 'pending');
-  if (view === 'calendar') {
-    renderDayView();
-  } else {
-    renderPendingList();
-  }
-}
-
-// ── Pending List ──────────────────────────────
-function isSlotTaken(date, time, service) {
-  if (!time) return null; // unknown
-  const slot = time.substring(0, 5);
-  return allReservations.some(r =>
-    toISODate(r.date) === toISODate(date) &&
-    (r.time || '').substring(0, 5) === slot &&
-    r.location === service &&
-    r.status === 'confirmed' &&
-    String(r.id) !== String(editingId)
-  );
-}
-
-function renderPendingList() {
-  const emptyEl = document.getElementById('empty-state');
-  const slotsEl = document.getElementById('slots-list');
-  const pendingEl = document.getElementById('pending-list-view');
-  const titleEl = document.getElementById('day-title');
-  const countEl = document.getElementById('day-count');
-
-  emptyEl.style.display = 'none';
-  slotsEl.style.display = 'none';
-  pendingEl.style.display = 'block';
-
-  const pending = allReservations
-    .filter(r => r.status === 'pending')
-    .sort((a, b) => (toISODate(a.date) || '').localeCompare(toISODate(b.date) || ''));
-
-  titleEl.textContent = 'Čakajoče rezervacije';
-  countEl.textContent = `${pending.length} odprtih`;
-  countEl.style.display = 'inline-block';
-
-  // Update badge
-  const badge = document.getElementById('pending-count-badge');
-  if (badge) badge.textContent = pending.length > 0 ? `(${pending.length})` : '';
-
-  if (pending.length === 0) {
-    pendingEl.innerHTML = `<div class="empty-state" style="display:flex">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-      </svg>
-      <p>Ni čakajočih naročil. Vse je urejeno!</p>
-    </div>`;
-    return;
+    html += '</div>';
+    body.innerHTML = html;
   }
 
-  const SL_MONTHS_SHORT = ['jan','feb','mar','apr','maj','jun','jul','avg','sep','okt','nov','dec'];
-  pendingEl.innerHTML = '';
-  const list = document.createElement('div');
-  list.className = 'pending-list';
-
-  pending.forEach(r => {
-    const iso = toISODate(r.date);
-    let dayNum = '?', monStr = '';
-    if (iso) {
-      const d = new Date(iso + 'T00:00:00');
-      dayNum = d.getDate();
-      monStr = SL_MONTHS_SHORT[d.getMonth()];
+  // ── Mini calendar ──
+  function renderMiniCal() {
+    const body = document.getElementById('mini-calendar-body');
+    document.getElementById('calendar-title').textContent = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const last = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 0);
+    let startDay = first.getDay()-1; if (startDay<0) startDay=6;
+    let html = '<div class="month-grid">';
+    DAYS.forEach(d => { html += `<div class="month-day-hdr">${d}</div>`; });
+    for (let i=0; i<startDay; i++) html += '<div class="month-cell other-month"></div>';
+    for (let day=1; day<=last.getDate(); day++) {
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const key = formatISO(d);
+      const isSelected = formatISO(selectedDate) === key;
+      const appts = calendarData[key] || [];
+      const pending = appts.filter(a=>a.status==='pending').length;
+      const cls = [isToday(d)?'today':'', isSelected?'selected':''].join(' ');
+      const cnt = appts.length > 0
+        ? `<div style="font-size:10px;color:var(--primary);font-weight:600;">${appts.length}${pending>0?` <span style="color:var(--warning);">(${pending}⏳)</span>`:''}</div>` : '';
+      html += `<div class="month-cell ${cls}" onclick="selectDay('${key}')"><div class="day-num">${day}</div>${cnt}</div>`;
     }
+    html += '</div>';
+    body.innerHTML = html;
+  }
 
-    const taken = iso ? isSlotTaken(iso, r.time, r.location) : null;
-    let availHtml = '';
-    if (taken === null) {
-      availHtml = `<span class="avail-badge notime">brez ure</span>`;
-    } else if (taken) {
-      availHtml = `<span class="avail-badge taken">⚠ zasedeno</span>`;
-    } else {
-      availHtml = `<span class="avail-badge free">✓ prosto</span>`;
+  // ── Modal: New ──
+  function openNewModal() {
+    resetModal();
+    document.getElementById('modal-title').textContent = 'Novo naročilo';
+    document.getElementById('edit-date').value = formatISO(new Date());
+    document.getElementById('edit-status').value = 'confirmed';
+    refreshSlots();
+    document.getElementById('edit-modal').classList.add('active');
+  }
+  function openNewModalWithTime(time) { openNewModal(); document.getElementById('edit-date').value = formatISO(selectedDate); document.getElementById('edit-time').value = time; refreshSlots(); }
+
+  function resetModal() {
+    document.getElementById('edit-id').value = '';
+    document.getElementById('edit-form').reset();
+    document.getElementById('delete-btn').style.display = 'none';
+    document.getElementById('confirm-btn').style.display = 'none';
+    document.getElementById('reject-btn').style.display = 'none';
+    document.getElementById('mr-section').style.display = 'none';
+    document.getElementById('message-timeline').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Ni komunikacije.</div>';
+    document.getElementById('reply-body').value = '';
+  }
+
+  // ── Modal: Edit ──
+  function openEdit(id) {
+    const r = allReservations.find(a=>a.id===id);
+    if (!r) return;
+    resetModal();
+    document.getElementById('modal-title').textContent = `Naročilo #${id}`;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-status').value = r.status||'pending';
+    document.getElementById('edit-location').value = r.location||'MR hrbtenice';
+    document.getElementById('edit-date').value = r.date ? toISO(r.date) : '';
+    document.getElementById('edit-time').value = r.time||'';
+    document.getElementById('edit-name').value = r.name||'';
+    document.getElementById('edit-phone').value = r.phone||'';
+    document.getElementById('edit-email').value = r.email||'';
+    document.getElementById('edit-notes').value = r.special_needs||r.admin_notes||'';
+    document.getElementById('delete-btn').style.display = 'inline-flex';
+    if (r.status==='pending') {
+      document.getElementById('confirm-btn').style.display = 'inline-flex';
+      document.getElementById('reject-btn').style.display = 'inline-flex';
     }
+    showMrQ(r);
+    setMsgFilter('all');
+    loadMessages(id);
+    refreshSlots();
+    document.getElementById('edit-modal').classList.add('active');
+  }
 
-    const card = document.createElement('div');
-    card.className = 'pending-card';
-    card.innerHTML = `
-      <div class="pc-date">
-        <div class="pc-day">${dayNum}</div>
-        <div class="pc-mon">${monStr}</div>
-        <div class="pc-time">${r.time ? r.time.substring(0,5) : '—'}</div>
-      </div>
-      <div class="pc-info">
-        <div class="pc-name">${esc(r.name || '—')}</div>
-        <div class="pc-service">${esc(r.location || '—')}</div>
-        ${r.phone ? `<div class="pc-note">📞 ${esc(r.phone)}</div>` : ''}
-        ${r.note ? `<div class="pc-note">${esc(r.note)}</div>` : ''}
-      </div>
-      ${availHtml}
-      <div class="pc-actions">
-        <button class="btn-icon btn-edit" onclick="openEditModal('${r.id}')">Uredi</button>
-        <button class="btn-icon btn-confirm" onclick="quickConfirm('${r.id}')">Potrdi</button>
-        <button class="btn-icon btn-reject" onclick="quickReject('${r.id}')">Zavrni</button>
+  function onServiceChange() {
+    const loc = document.getElementById('edit-location').value;
+    document.getElementById('mr-section').style.display = isMR(loc) ? '' : 'none';
+  }
+
+  function showMrQ(r) {
+    const sec = document.getElementById('mr-section');
+    const disp = document.getElementById('mr-q-display');
+    if (!isMR(r.location||'')) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    const q = r.mr_questionnaire || {};
+    if (!Object.keys(q).length) { disp.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Vprašalnik ni bil izpolnjen.</div>'; return; }
+    const labels = {
+      spodbujevalnik: 'Srčni spodbujevalnik / defibrilator',
+      alergija_ks: 'Alergija na kontrastno sredstvo',
+      klavstrofobija: 'Klavstrofobija (strah pred zaprtim prostorom)',
+      kovinski_vsadki: 'Kovinski vsadki / endoproteza / vijaki',
+      nosecnost: 'Nosečnost ali možna nosečnost',
+    };
+    disp.innerHTML = Object.entries(labels).map(([k,label]) => {
+      const val = q[k];
+      let cls='unk', txt='—';
+      if (val===true||val==='da'||val==='yes') { txt='DA'; cls = k==='spodbujevalnik' ? 'yes-block' : 'yes'; }
+      else if (val===false||val==='ne'||val==='no') { txt='NE'; cls='no'; }
+      return `<div class="mr-q-row"><span>${esc(label)}</span><span class="mr-q-val ${cls}">${txt}</span></div>`;
+    }).join('');
+  }
+
+  function closeModal() { document.getElementById('edit-modal').classList.remove('active'); }
+
+  // ── Confirm / Reject ──
+  async function confirmAppt(id) {
+    try {
+      const resp = await fetch(`${API}/reservations/${id}/confirm`, {method:'POST'});
+      if (resp.ok) { toast('Termin potrjen — email poslan pacientu ✅','ok'); loadData(); }
+      else { const d=await resp.json(); toast(d.detail||'Napaka pri potrditvi','err'); }
+    } catch { toast('Napaka pri potrditvi','err'); }
+  }
+  async function confirmApptFromModal() {
+    const id = parseInt(document.getElementById('edit-id').value);
+    if (!id) return;
+    await confirmAppt(id); closeModal();
+  }
+  async function rejectApptFromModal() {
+    const id = parseInt(document.getElementById('edit-id').value);
+    if (!id || !confirm('Resnično zavrniti to naročilo?')) return;
+    try {
+      const resp = await fetch(`${API}/reservations/${id}/reject`, {method:'POST'});
+      if (resp.ok) { toast('Naročilo zavrnjeno','ok'); loadData(); closeModal(); }
+      else toast('Napaka pri zavrnitvi','err');
+    } catch { toast('Napaka','err'); }
+  }
+
+  // ── Save / Delete ──
+  async function saveAppointment(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const dv = document.getElementById('edit-date').value;
+    const dp = dv.split('-');
+    const dateSL = dp.length===3 ? `${parseInt(dp[2])}.${parseInt(dp[1])}.${dp[0]}` : dv;
+    const payload = {
+      clinic_id: 'mdt',
+      status: document.getElementById('edit-status').value,
+      location: document.getElementById('edit-location').value,
+      date: dateSL,
+      time: document.getElementById('edit-time').value,
+      name: document.getElementById('edit-name').value,
+      phone: document.getElementById('edit-phone').value,
+      email: document.getElementById('edit-email').value,
+      special_needs: document.getElementById('edit-notes').value,
+      reservation_type: 'table',
+    };
+    try {
+      const url = id ? `${API}/reservations/${id}` : `${API}/reservations`;
+      const resp = await fetch(url, {method: id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      if (resp.ok) { toast(id?'Naročilo posodobljeno':'Naročilo dodano','ok'); loadData(); closeModal(); }
+      else { const d=await resp.json(); toast(d.detail||'Napaka','err'); }
+    } catch { toast('Napaka pri shranjevanju','err'); }
+  }
+
+  async function deleteAppt() {
+    const id = document.getElementById('edit-id').value;
+    if (!id || !confirm('Resnično izbrisati to naročilo?')) return;
+    try {
+      const resp = await fetch(`${API}/reservations/${id}`, {method:'DELETE'});
+      if (resp.ok) { toast('Izbrisano','ok'); loadData(); closeModal(); }
+      else toast('Napaka pri brisanju','err');
+    } catch { toast('Napaka','err'); }
+  }
+
+  // ── Slot picker ──
+  async function refreshSlots() {
+    const dv = document.getElementById('edit-date').value;
+    const svc = document.getElementById('edit-location').value;
+    const picker = document.getElementById('slot-picker');
+    if (!dv||!svc) { picker.innerHTML='Izberi datum in storitev'; return; }
+    picker.innerHTML='Nalagam...';
+    try {
+      const resp = await fetch(`${API}/available-slots?date=${dv}&service_type=${encodeURIComponent(svc)}&clinic_id=mdt`);
+      const data = await resp.json();
+      const slots = data.slots||data.available_slots||[];
+      const cur = document.getElementById('edit-time').value;
+      if (!slots.length) { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Ni prostih terminov</span>'; return; }
+      picker.innerHTML = slots.map(s =>
+        `<button type="button" class="slot-btn${s===cur?' selected':''}" onclick="selectSlot('${s}')">${s}</button>`
+      ).join('');
+    } catch { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Napaka</span>'; }
+  }
+
+  function selectSlot(t) {
+    document.getElementById('edit-time').value = t;
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.toggle('selected', b.textContent===t));
+  }
+
+  // ── Messages ──
+  function setMsgFilter(name) {
+    currentMsgFilter = name;
+    ['all','email','sms'].forEach(n => {
+      const el = document.getElementById(`msg-f-${n}`);
+      if (!el) return;
+      el.style.background = n===name ? 'rgba(67,139,209,0.12)' : 'var(--bg)';
+      el.style.color = n===name ? 'var(--primary)' : 'var(--text-muted)';
+    });
+    const id = parseInt(document.getElementById('edit-id').value||'0',10);
+    if (id) loadMessages(id);
+  }
+
+  async function loadMessages(id) {
+    try {
+      const resp = await fetch(`${API}/reservations/${id}/messages`);
+      const data = await resp.json();
+      const tl = document.getElementById('message-timeline');
+      const msgs = (data.messages||[])
+        .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))
+        .filter(m => currentMsgFilter==='all' || (m.channel||'email')===currentMsgFilter);
+      if (!msgs.length) { tl.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">Ni sporočil</div>'; return; }
+      tl.innerHTML = msgs.map(m => {
+        const dir = m.direction==='inbound'?'inbound':'outbound';
+        const med = (m.channel||'email')==='sms'?'SMS':'Email';
+        const lbl = dir==='inbound'?`📨 Pacient · ${med}`:`📤 Odgovor · ${med}`;
+        const ts = m.created_at ? new Date(m.created_at).toLocaleString('sl-SI') : '-';
+        return `<div class="message-item ${dir}">
+          <div class="message-meta"><span class="message-direction">${lbl}</span><span>${ts}</span></div>
+          <div class="message-body">${esc(m.body||m.subject||'')}</div>
+        </div>`;
+      }).join('');
+    } catch {
+      document.getElementById('message-timeline').innerHTML='<div style="color:var(--danger);padding:20px;font-size:12px;">Napaka</div>';
+    }
+  }
+
+  async function sendReply(channel='email') {
+    const id = parseInt(document.getElementById('edit-id').value);
+    const email = document.getElementById('edit-email').value;
+    const phone = document.getElementById('edit-phone').value;
+    const body = document.getElementById('reply-body').value.trim();
+    if (!body) { toast('Sporočilo ne sme biti prazno','err'); return; }
+    if (channel==='email'&&!email) { toast('Email manjka','err'); return; }
+    if (channel==='sms'&&!phone) { toast('Telefon manjka','err'); return; }
+    try {
+      toast(channel==='sms'?'Pošiljam SMS...':'Pošiljam email...','');
+      const ep = channel==='sms' ? `${API}/send-sms` : `${API}/send-message`;
+      const payload = channel==='sms'
+        ? {reservation_id:id, phone, body, set_processing:false}
+        : {reservation_id:id, email, subject:`Naročilo #${id} — MDT&T`, body, set_processing:false};
+      const resp = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      if (resp.ok) { toast('Poslano ✅','ok'); document.getElementById('reply-body').value=''; if(id) loadMessages(id); }
+      else toast('Napaka pri pošiljanju','err');
+    } catch { toast('Napaka','err'); }
+  }
+
+  // ── Tab: Pogovori ──
+  async function loadChatSessions() {
+    const list = document.getElementById('conv-list');
+    list.innerHTML='<div style="padding:30px;text-align:center;color:var(--text-muted);">Nalagam...</div>';
+    try {
+      const resp = await fetch(`${API}/chat-sessions?limit=200&clinic_id=mdt`);
+      const data = await resp.json();
+      allSessions = data.sessions||data.items||[];
+      document.getElementById('conv-total').textContent = allSessions.length;
+      const totalMsgs = allSessions.reduce((s,ses)=>s+(ses.message_count||0),0);
+      document.getElementById('conv-messages').textContent = totalMsgs;
+      const withRes = allSessions.filter(s=>s.has_reservation||s.reservation_id).length;
+      document.getElementById('conv-conversion').textContent = allSessions.length>0 ? Math.round(withRes/allSessions.length*100)+'%' : '0%';
+      renderSessions(allSessions);
+    } catch {
+      list.innerHTML='<div style="padding:30px;text-align:center;color:var(--danger);">Napaka pri nalaganju pogovorov.</div>';
+    }
+  }
+
+  function renderSessions(sessions) {
+    const list = document.getElementById('conv-list');
+    if (!sessions.length) { list.innerHTML='<div style="padding:30px;text-align:center;color:var(--text-muted);">Ni pogovorov.</div>'; return; }
+    list.innerHTML = sessions.map(s => {
+      const ts = s.last_message_at||s.updated_at||s.created_at;
+      const timeStr = ts ? new Date(ts).toLocaleString('sl-SI') : '-';
+      const msgCount = s.message_count||'?';
+      const hasRes = s.has_reservation||s.reservation_id;
+      return `<div class="conv-item" onclick="openChatSess('${esc(s.session_id||s.id||'')}')">
+        <div>
+          <div class="conv-id">Seja: <strong>${esc(s.session_id||s.id||'-')}</strong></div>
+          <div class="conv-meta">${timeStr} · ${msgCount} sporočil</div>
+        </div>
+        <span class="conv-badge">${hasRes?'📋 Naročilo':'💬 Pogovor'}</span>
       </div>`;
-    list.appendChild(card);
-  });
-  pendingEl.appendChild(list);
-}
-
-function onServiceChange() {
-  refreshAll();
-}
-
-// ── Refresh All ───────────────────────────────
-async function refreshAll() {
-  await loadReservations();
-  renderCalendar();
-  if (currentView === 'pending') {
-    renderPendingList();
-  } else {
-    renderDayView();
+    }).join('');
   }
-  // Update pending count badge
-  const pending = allReservations.filter(r => r.status === 'pending').length;
-  const badge = document.getElementById('pending-count-badge');
-  if (badge) badge.textContent = pending > 0 ? `(${pending})` : '';
-}
 
-// ── Toast ─────────────────────────────────────
-function toast(msg, type = 'info') {
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
-  el.innerHTML = `<span>${icon}</span><span>${esc(msg)}</span>`;
-  container.appendChild(el);
-  setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity .3s';
-    setTimeout(() => el.remove(), 300);
-  }, 3500);
-}
-
-// ── Escape HTML ───────────────────────────────
-function esc(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
-
-// ── Init ──────────────────────────────────────
-(async function init() {
-  populateTimeSelects();
-  await loadReservations();
-  renderCalendar();
-  // Auto-select today
-  const today = todayISO();
-  const todayYear  = new Date().getFullYear();
-  const todayMonth = new Date().getMonth();
-  if (calYear === todayYear && calMonth === todayMonth) {
-    selectDay(today);
+  function filterConversations(term) {
+    if (!term) { renderSessions(allSessions); return; }
+    const t = term.toLowerCase();
+    renderSessions(allSessions.filter(s=>(s.session_id||s.id||'').toString().toLowerCase().includes(t)));
   }
-})();
+
+  async function openChatSess(sessionId) {
+    document.getElementById('chat-modal-title').textContent = `Pogovor: ${sessionId}`;
+    document.getElementById('chat-modal-msgs').innerHTML='<div style="text-align:center;color:var(--text-muted);">Nalagam...</div>';
+    document.getElementById('chat-modal').classList.add('active');
+    try {
+      const resp = await fetch(`${API}/chat-sessions/${sessionId}?clinic_id=mdt`);
+      const data = await resp.json();
+      const msgs = data.messages||data.history||[];
+      if (!msgs.length) { document.getElementById('chat-modal-msgs').innerHTML='<div style="text-align:center;color:var(--text-muted);">Brez sporočil.</div>'; return; }
+      document.getElementById('chat-modal-msgs').innerHTML = msgs.map(m => {
+        const role = m.role||(m.is_user?'user':'assistant');
+        const content = esc(m.content||m.message||'');
+        const ts = m.created_at ? new Date(m.created_at).toLocaleTimeString('sl-SI') : '';
+        return `<div class="chat-msg ${role}">
+          <div><div class="chat-bubble">${content}</div>${ts?`<div class="chat-time">${ts}</div>`:''}</div>
+        </div>`;
+      }).join('');
+    } catch { document.getElementById('chat-modal-msgs').innerHTML='<div style="color:var(--danger);">Napaka.</div>'; }
+  }
+
+  function closeChatModal() { document.getElementById('chat-modal').classList.remove('active'); }
+
+  // ── Tab: Statistika ──
+  async function loadStatistika() {
+    try {
+      const [sRes, cRes] = await Promise.all([
+        fetch(`${API}/stats`),
+        fetch(`${API}/chat-sessions?limit=500&clinic_id=mdt`).catch(()=>({json:async()=>({sessions:[]})}))
+      ]);
+      const stats = await sRes.json();
+      const cData = await cRes.json();
+      const sessions = cData.sessions||[];
+
+      document.getElementById('an-total').textContent = stats.skupaj||allReservations.length||'-';
+      document.getElementById('an-confirmed').textContent = stats.po_statusu?.confirmed||'-';
+      document.getElementById('an-rejected').textContent = stats.po_statusu?.rejected||'-';
+      document.getElementById('an-week').textContent = stats.ta_teden||'-';
+      document.getElementById('an-sessions').textContent = sessions.length||'-';
+      const totalMsgs = sessions.reduce((s,ses)=>s+(ses.message_count||0),0);
+      document.getElementById('an-messages').textContent = totalMsgs||'-';
+      document.getElementById('an-avg').textContent = sessions.length>0 ? (totalMsgs/sessions.length).toFixed(1) : '-';
+      const withRes = sessions.filter(s=>s.has_reservation||s.reservation_id).length;
+      document.getElementById('an-conv-rate').textContent = sessions.length>0 ? Math.round(withRes/sessions.length*100)+'%' : '0%';
+
+      // By service
+      const bySvc = {};
+      allReservations.forEach(r => {
+        const key = isMR(r.location||'') ? 'MR' : (r.location||'Neznano');
+        bySvc[key] = (bySvc[key]||0)+1;
+      });
+      const svcEl = document.getElementById('an-by-service');
+      svcEl.innerHTML = Object.keys(bySvc).length
+        ? Object.entries(bySvc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="widget-stat"><span class="label">${esc(k)}</span><span class="value">${v}</span></div>`).join('')
+        : '<div style="color:var(--text-muted);font-size:13px;">Ni podatkov</div>';
+
+      // By day
+      const byDay = {};
+      allReservations.forEach(r=>{ const d=parseSL(r.date); if(d){const dk=DAYS[d.getDay()===0?6:d.getDay()-1]; byDay[dk]=(byDay[dk]||0)+1;} });
+      const dayEl = document.getElementById('an-by-day');
+      dayEl.innerHTML = DAYS.some(d=>byDay[d])
+        ? DAYS.filter(d=>byDay[d]).map(d=>`<div class="widget-stat"><span class="label">${d}</span><span class="value">${byDay[d]}</span></div>`).join('')
+        : '<div style="color:var(--text-muted);font-size:13px;">Ni podatkov</div>';
+    } catch { toast('Napaka pri statistiki','err'); }
+  }
+
+  // ── Tab: Orodja ──
+  async function refreshImapStatus() {
+    try {
+      const resp = await fetch(`${API}/imap-status`);
+      const data = await resp.json();
+      const box = document.getElementById('imap-box');
+      const dot = document.getElementById('imap-dot');
+      const txt = document.getElementById('imap-text');
+      const last = document.getElementById('imap-last');
+      const cnt = document.getElementById('imap-count');
+      if (data.connected) { box.className='imap-status ok'; dot.className='imap-dot'; txt.textContent='Povezan'; }
+      else { box.className='imap-status err'; dot.className='imap-dot err'; txt.textContent=data.error||'Ni povezave'; }
+      if (data.last_check) last.textContent=`Zadnja preverba: ${new Date(data.last_check).toLocaleString('sl-SI')}`;
+      if (data.processed_count!==undefined) cnt.textContent=data.processed_count;
+    } catch { document.getElementById('imap-text').textContent='Napaka pri preverjanju'; }
+  }
+
+  async function testChat() {
+    const msg = document.getElementById('test-msg').value.trim();
+    if (!msg) return;
+    const res = document.getElementById('test-result');
+    res.textContent='Čakam odgovor...'; res.style.color='var(--text-muted)';
+    try {
+      const resp = await fetch('/chat/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,session_id:'admin-test-'+Date.now(),clinic_id:'mdt'})});
+      const data = await resp.json();
+      res.textContent = data.reply||data.message||JSON.stringify(data);
+      res.style.color='var(--text)';
+    } catch(e) { res.textContent='Napaka: '+e.message; res.style.color='var(--danger)'; }
+  }
+
+  // ── Init ──
+  loadData();
+  document.addEventListener('keydown', e => { if(e.key==='Escape'){closeModal();closeChatModal();} });
 </script>
 </body>
 </html>

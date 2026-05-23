@@ -1,0 +1,189 @@
+clinic_id: "mdt"
+contact:
+  name: "MDT&T d.o.o."
+  full_name: "MDT&T d.o.o. – Medicinska diagnostika in terapija"
+  email_mr: "mr@mdt.si"
+  email_scitnica: "scitnica@mdt.si"
+  phone_mr: "02 23 53 552"
+  phone_mr2: "02 23 53 553"
+  phone_scitnica: "02 23 53 555"
+  address: "Lavričeva ul. 1, 2000 Maribor"
+  hours: "Vsak dan 08:00–20:00"
+  cenik_url: "https://www.mdt.si/wp-content/uploads/2025/11/2026-cenik_MDTT.pdf"
+
+services:
+  mr:
+    name: "Magnetnoresonančna tomografija (MR)"
+    type: "samoplacniski_in_napotnica"
+    duration_minutes: 30
+    description: "MR preiskave glave, hrbtenice, sklepov, trebuha, dojk, prostate in več"
+    requires_questionnaire: true
+    subtypes:
+      - "MR glave in vratu"
+      - "MR hrbtenice"
+      - "MR sklepov in okončin"
+      - "MR artrografija"
+      - "MR zgornjega abdomna"
+      - "MR enterografija"
+      - "MR urografija"
+      - "MR male medenice"
+      - "MR prostate"
+      - "MR dojk"
+      - "MR prsnega koša"
+      - "MR angiografija"
+  rtg:
+    name: "Rentgensko slikanje (RTG)"
+    type: "samoplacniski_in_napotnica"
+    duration_minutes: 15
+    description: "Rentgensko slikanje različnih delov telesa"
+    requires_questionnaire: false
+  uz:
+    name: "Ultrazvočna diagnostika (UZ)"
+    type: "samoplacniski"
+    duration_minutes: 15
+    description: "Diagnostični ultrazvok – izključno samoplačniško"
+    requires_questionnaire: false
+  uz_posegi:
+    name: "UZ vodeni posegi"
+    type: "samoplacniski"
+    duration_minutes: 30
+    description: "Izpiranje kalcifikacij, aplikacija kortikosteroida, izpraznitev ganglionske ciste"
+    requires_questionnaire: false
+    subtypes:
+      - "UZ vodeno izpiranje kalcifikacij"
+      - "UZ vodena aplikacija kortikosteroida (blokada)"
+      - "UZ vodena izpraznitev ganglionske ciste"
+  scitnica:
+    name: "Ambulanta za bolezni ščitnice"
+    type: "napotnica"
+    duration_minutes: 30
+    description: "Pregledi ščitnice, UZ ščitnice"
+    requires_questionnaire: false
+
+service_map:
+  mr:
+    - "mr"
+    - "magnetnoresonančna"
+    - "magnetna resonanca"
+    - "resonanca"
+    - "tomografija"
+    - "mri"
+    - "mr hrbtenice"
+    - "mr glave"
+    - "mr kolena"
+    - "mr sklepa"
+    - "mr dojk"
+    - "mr prostate"
+  rtg:
+    - "rtg"
+    - "rentgen"
+    - "rentgensko"
+    - "rentgenski"
+    - "slikanje"
+    - "x-ray"
+  uz:
+    - "uz"
+    - "ultrazvok"
+    - "ultrazvočna"
+    - "ultrazvočni"
+    - "echografija"
+    - "echo"
+  uz_posegi:
+    - "kalcifikacija"
+    - "kortikosteroid"
+    - "blokada"
+    - "ganglionska cista"
+    - "uz vodeni"
+    - "uz poseg"
+  scitnica:
+    - "ščitnica"
+    - "scitnica"
+    - "thyroid"
+    - "ščitnična"
+    - "ščitnični"
+
+mr_questionnaire:
+  - id: "spodbujevalnik"
+    question: "Ali imate vgrajen srčni spodbujevalnik ali defibrilator?"
+    type: "yes_no"
+    blocking: true
+    block_message: "Žal pri osebah s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav iz varnostnih razlogov ne opravljamo. Prosimo, posvetujte se z vašim zdravnikom glede alternativnih možnosti."
+  - id: "alergija_ks"
+    question: "Ste kdaj imeli alergijsko reakcijo na kontrastno sredstvo?"
+    type: "yes_no"
+    important: true
+    note: "Prosimo, to omenite osebju ob prihodu."
+  - id: "klavstrofobija"
+    question: "Imate strah pred zaprtim prostorom (klavstrofobija)?"
+    type: "yes_no"
+    note: "Obvestite nas — pomagamo vam se ustrezno pripraviti."
+  - id: "kovinski_vsadki"
+    question: "Imate kovinske vsadke, endoprotezo, vijake ali drug vsajen material?"
+    type: "yes_no"
+    note: "Potrebovali boste certifikat o združljivosti z MR."
+  - id: "nosecnost"
+    question: "Ali ste noseči ali je nosečnost možna?"
+    type: "yes_no"
+    note: "Prosimo, obvestite nas pred preiskavo."
+
+napotnica_info:
+  ezdravje_url: "https://www.zzzs.si/zzzs/internet/zzzs.nsf/o/B98BE67CF06E68C1C1257C7E004178CD"
+  types:
+    redna:
+      name: "Redna napotnica"
+      description: "Standardna čakalna doba — trenutno 6 mesecev ali več za MR."
+    hitra:
+      name: "Hitra napotnica"
+      description: "Krajša čakalna doba — pridobi jo vaš lečeči zdravnik, če je klinično upravičena."
+    zelo_hitra:
+      name: "Zelo hitra napotnica"
+      description: "Najkrajša čakalna doba — za urgentne klinične primere."
+
+info_responses:
+  pozdrav: |
+    Pozdravljeni pri MDT&T – medicinski diagnostiki in terapiji!
+
+    Sem vaš digitalni pomočnik. Pomagam vam z informacijami o preiskavah ter naročanjem na samoplačniške storitve.
+
+    Kako vam lahko pomagam?
+  kdo_si: |
+    Sem digitalni pomočnik MDT&T d.o.o.
+
+    Pomagam z informacijami o preiskavah (MR, RTG, UZ, ščitnica) in z naročanjem na samoplačniške storitve.
+  kontakt: |
+    MDT&T d.o.o. – Medicinska diagnostika in terapija
+    Lavričeva ul. 1, 2000 Maribor
+
+    📞 Radiološka ambulanta: 02 23 53 552 / 02 23 53 553
+    ✉️ mr@mdt.si
+
+    📞 Ambulanta za bolezni ščitnice: 02 23 53 555
+    ✉️ scitnica@mdt.si
+
+    🕐 Delovni čas: vsak dan 08:00–20:00
+  delovni_cas: "Odprti smo vsak dan od 08:00 do 20:00."
+  cenik: |
+    Cenik vseh samoplačniških storitev najdete na naši spletni strani.
+
+    Ultrazvočne preiskave izvajamo izključno samoplačniško.
+    Za MR in RTG je možno naročanje na napotnico ali samoplačniško.
+
+    Cenik: https://www.mdt.si/wp-content/uploads/2025/11/2026-cenik_MDTT.pdf
+  napotnica_info: |
+    Naročanje na napotnico poteka izključno prek sistema eZdravje.
+
+    Vrste napotnic:
+    • Redna napotnica — čakalna doba 6 mesecev ali več
+    • Hitra napotnica — krajša čakalna doba (zahteva klinično utemeljitev)
+    • Zelo hitra napotnica — najkrajša čakalna doba (za urgentne primere)
+
+    Napotnico pridobi vaš lečeči zdravnik in jo vnese v sistem eZdravje. Nato vas kontaktiramo sami.
+  samoplacniski_info: |
+    Samoplačniške storitve so na voljo brez čakalne dobe.
+
+    Naročite se lahko:
+    • Prek tega klepeta (gumb Naroči se)
+    • Po telefonu: 02 23 53 552
+    • Po e-pošti: mr@mdt.si
+
+    Ultrazvočne preiskave so izključno samoplačniške.

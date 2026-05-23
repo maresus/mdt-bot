@@ -3,15 +3,14 @@ import json
 from app.core.llm_client import get_llm_client
 
 
-INTENT_CLASSIFIER_PROMPT = """Si Intent Classifier za zdravstveni center. Analiziraj SAMO trenutno sporočilo.
+INTENT_CLASSIFIER_PROMPT = """Si Intent Classifier za MDT&T — medicinsko diagnostičen center v Mariboru. Analiziraj SAMO trenutno sporočilo.
 
 STORITVE:
-- ortoped: hrbet, koleno, rama, noga, stopalo, roka, gleženj, vrat, sklep
-- dermatolog: koža, izpuščaj, akne, mozolj, znamenje, bradavica
-- okulist: oči, vid
-- kozmetika: obraz, nega obraza
-- estetski_poseg: gube, botox, fillerji
-- laserski_poseg: žilice, bradavice, glivice
+- mr: magnetnoresonančna tomografija, MR glave, hrbtenice, kolena, sklepov, dojk, prostate
+- rtg: rentgen, rentgensko slikanje
+- uz: ultrazvok, ultrazvočna diagnostika (izključno samoplačniška)
+- uz_posegi: kalcifikacija, kortikosteroid, blokada, ganglionska cista
+- scitnica: ščitnica, ščitnična ambulanta
 
 VRNI SAMO JSON (brez markdown):
 {"intent": "...", "service": "...", "reason": "..."}
@@ -56,7 +55,7 @@ JSON:"""
     try:
         client = get_llm_client()
         response = client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-5-mini",
             input=[{"role": "user", "content": prompt}],
             max_output_tokens=100,
             temperature=0.1,

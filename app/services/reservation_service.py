@@ -24,10 +24,10 @@ ROOM_NAME_MAP: dict[str, str] = {}
 ROOM_CLOSED_DAYS = {5, 6}  # Sat, Sun
 MAX_NIGHTS = 30
 
-# Delovni dnevi in čas
-WORKING_DAYS = {0, 1, 2, 3, 4}  # Pon-Pet (0=Pon, 6=Ned)
-OPENING_START_HOUR = 8  # 8:00
-OPENING_END_HOUR = 18   # 18:00 (zadnji termin 17:30)
+# MDT&T: vsak dan 08:00–20:00
+WORKING_DAYS = {0, 1, 2, 3, 4, 5, 6}
+OPENING_START_HOUR = 8
+OPENING_END_HOUR = 20
 
 
 class ReservationService:

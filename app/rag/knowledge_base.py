@@ -258,60 +258,6 @@ def _keyword_chunks(question: str, limit: int = 6) -> list[KnowledgeChunk]:
 
 
 def _gather_relevant_chunks(question: str, base_top_k: int = 6) -> list[KnowledgeChunk]:
-    lowered = question.lower()
-    is_bunka = any(word in lowered for word in ["bunka", "bunko", "bunke"])
-    is_salama = any(
-        word in lowered for word in ["salama", "salamo", "salame", "klobasa", "klobase", "klobaso"]
-    )
-    is_marmelada = any(word in lowered for word in ["marmelad", "marmelado", "marmelade", "marmeldo", "džem"])
-    is_jahanje = any(
-        word in lowered for word in ["jahanje", "jahati", "jahamo", "poni", "ponij", "ponija", "ponijem"]
-    )
-
-    # mesnine (bunka / salama)
-    if is_bunka or is_salama:
-        chunks = [
-            chunk
-            for chunk in KNOWLEDGE_CHUNKS
-            if "/izdelek/" in chunk.url.lower()
-            and (
-                "bunka" in chunk.title.lower()
-                or "bunka" in chunk.paragraph.lower()
-                or "salama" in chunk.title.lower()
-                or "salama" in chunk.paragraph.lower()
-                or "mesni izdelki" in chunk.paragraph.lower()
-            )
-        ]
-        return chunks[:4]
-
-    # marmelade
-    if is_marmelada:
-        chunks = [
-            chunk
-            for chunk in KNOWLEDGE_CHUNKS
-            if "/marmelada" in chunk.url.lower()
-            or "marmelad" in chunk.title.lower()
-            or "kategorija: marmelade" in chunk.paragraph.lower()
-        ]
-        return chunks[:4]
-
-    # jahanje / poni – če ni v bazi, dodamo ročni fallback
-    if is_jahanje:
-        chunks = [
-            chunk
-            for chunk in KNOWLEDGE_CHUNKS
-            if "jahanje" in chunk.paragraph.lower() or "ponij" in chunk.paragraph.lower()
-        ]
-        if chunks:
-            return chunks[:4]
-        return [
-            KnowledgeChunk(
-                url="https://kovacnik.com/cenik/",
-                title="Jahanje s ponijem",
-                paragraph="Jahanje s ponijem / 1 krog – 5,00 € (glej cenik Domačija Kovačnik).",
-            )
-        ]
-
     keyword_chunks = _keyword_chunks(question, limit=4)
     base_chunks = search_knowledge(question, top_k=base_top_k)
 
@@ -331,182 +277,64 @@ def _gather_relevant_chunks(question: str, base_top_k: int = 6) -> list[Knowledg
 def _filter_chunks_by_category(question: str, chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
     lowered = question.lower()
 
-    # mesnine: bunka / salama / klobasa
-    if any(word in lowered for word in ["bunka", "bunko", "salama", "klobasa", "mesni"]):
-        filtered = [
-            c
-            for c in chunks
-            if "mesni izdelki" in c.paragraph.lower()
-            or "kategorija: mesni" in c.paragraph.lower()
-            or "bunka" in c.paragraph.lower()
-            or "salama" in c.paragraph.lower()
-        ]
+    # MR preiskave — prioritiziramo MR vsebino
+    if any(word in lowered for word in ["mr ", "mri", "magnetna", "resonanca", "magnetnoresonančna"]):
+        filtered = [c for c in chunks if "mr" in c.url.lower() or "magnetnoresonančna" in c.paragraph.lower()]
         if filtered:
             return filtered[:4]
-        fallback = [
-            c
-            for c in KNOWLEDGE_CHUNKS
-            if "mesni izdelki" in c.paragraph.lower()
-            or "bunka" in c.paragraph.lower()
-            or "salama" in c.paragraph.lower()
-        ]
-        return fallback[:3]
 
-    # marmelade
-    if any(word in lowered for word in ["marmelad", "džem"]):
-        filtered = [c for c in chunks if "/marmelada" in c.url.lower()]
+    # UZ preiskave
+    if any(word in lowered for word in ["ultrazvok", "ultrazvočn", " uz ", "echografija"]):
+        filtered = [c for c in chunks if "ultrazvok" in c.url.lower() or "ultrazvočna" in c.paragraph.lower()]
         if filtered:
-            return filtered
-        for chunk in KNOWLEDGE_CHUNKS:
-            if "/marmelada" in chunk.url.lower():
-                return [chunk]
-        return chunks
+            return filtered[:4]
 
-    # likerji / žganje
-    if any(word in lowered for word in ["liker", "žganj", "žganje"]):
-        filtered = [
-            c
-            for c in chunks
-            if any(token in c.url.lower() for token in ["liker", "žganje", "tepkovec"])
-        ]
+    # ščitnica
+    if any(word in lowered for word in ["ščitnica", "ščitnič", "thyroid"]):
+        filtered = [c for c in chunks if "scitnica" in c.url.lower() or "ščitnic" in c.paragraph.lower()]
         if filtered:
-            return filtered
-        for chunk in KNOWLEDGE_CHUNKS:
-            if any(token in chunk.url.lower() for token in ["liker", "žganje", "tepkovec"]):
-                return [chunk]
-        return chunks
+            return filtered[:4]
+
+    # cenik / cena
+    if any(word in lowered for word in ["cen", "cenik", "koliko", "plačam", "stroški"]):
+        filtered = [c for c in chunks if "cenik" in c.url.lower() or "cen" in c.paragraph.lower()]
+        if filtered:
+            return filtered[:4]
 
     return chunks
 
 
 SYSTEM_PROMPT = """
-Ti si prijazen asistent Zdravstvenega centra Novak v Ljubljani.
-Naslov: Cankarjeva ulica 15, 1000 Ljubljana | Tel: 01 432 10 20 | Email: info@zc-novak.si
-Delovni čas: pon–pet 08:00–18:00 | sob 09:00–13:00
-Ekipa: dr. Matjaž Novak (ortoped, direktor), dr. Ana Kos (dermatolog), dr. Petra Horvat (okulist), Maja Vidmar (fizioterapevt), Tina Štefanič (estetska medicina)
+Ti si digitalni pomočnik MDT&T d.o.o. — medicinska diagnostika in terapija v Mariboru.
+Naslov: Lavričeva ul. 1, 2000 Maribor
+Tel (radiološka amb.): 02 23 53 552 / 02 23 53 553 | Email: mr@mdt.si
+Tel (ambulanta ščitnica): 02 23 53 555 | Email: scitnica@mdt.si
+Delovni čas: vsak dan 08:00–20:00
+Storitve: MR (magnetnoresonančna tomografija), RTG (rentgensko slikanje), UZ (ultrazvočna diagnostika — izključno samoplačniško), UZ vodeni posegi, Ambulanta za bolezni ščitnice
 
 PRAVILA:
 - Vikaš (vi, vam, vaš)
-- Uporabljaj emoji za toplejši občutek (🩺 👁️ 💪 🦵 🤕 ✨)
-- Odgovori formatiraj v kratke odstavke za lažje branje
+- Odgovori so kratki, jasni, profesionalni
+- Formatiraj v kratke odstavke za lažje branje
+- Emoji zmerno (🩻 📋 📞 ✉️ ✅ ⚠️)
 
-⚠️ KRITIČNO - SOURCE VALIDATION:
+⚠️ KRITIČNO — SOURCE VALIDATION:
 - Odgovarjaj SAMO na podlagi podanega "Kontekst iz baze znanja"
-- Če informacije NI v kontekstu: "Te informacije trenutno nimam. Pokličite 01 432 10 20 ali pišite na info@zc-novak.si."
-- NE izmišljaj si cen, terminov ali diagnoz
-- Vedno preusmeri na to, kjer lahko pomagaš: naročanje, specialisti, pregledi, kontakt
+- Če informacije NI v kontekstu: "Te informacije trenutno nimam. Pokličite nas na 02 23 53 552 ali pišite na mr@mdt.si."
+- NE izmišljaj si cen, terminov ali medicinskih informacij
 
-ZDRAVSTVENA VPRAŠANJA — DOVOLJENO:
-✅ Splošni nasveti: raztezanje, hlajenje/toplota, počitek, hidracija
-✅ Preventiva: drža, gibanje, prehrana
-✅ Priporočilo ustreznega specialista
-✅ Empatija in spodbuda k pregledu
+ABSOLUTNA PREPOVED — ZDRAVSTVENI NASVETI:
+❌ Bot NE daje zdravstvenih nasvetov, NE interpretira simptomov, NE postavlja diagnoz
+❌ Bot NE razlaga izvidov ali rezultatov preiskav
+❌ Če nekdo prosi za zdravstveni nasvet ali razlago simptomov, odgovori VEDNO:
+"Za zdravstvene nasvete in razlago simptomov se prosimo obrnite na svojega lečečega zdravnika. Jaz vam lahko pomagam z informacijami o naših diagnostičnih preiskavah in z naročanjem."
 
-ZDRAVSTVENA VPRAŠANJA — PREPOVEDANO:
-❌ Konkretna zdravila (ibuprofen, aspirin, antibiotiki…)
-❌ Diagnoze ali zaključki o stanju
-❌ Doziranje zdravil
-❌ Pri resnih simptomih (prsna bolečina, težko dihanje, izguba zavesti) — TAKOJ k zdravniku ali klic 112
-
-⚠️ OBVEZNI DISCLAIMER:
-Vsakič, ko daš zdravstveni nasvet ali splošno usmeritev, OBVEZNO dodaj:
-"⚠️ To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno vašega stanja se posvetujte z zdravnikom."
-
-STRUKTURA ODGOVORA NA ZDRAVSTVENA VPRAŠANJA:
-1. Kratek empatičen uvod (variraj: "Ojoj", "To je neprijetno", "Slišim vas", "Razumem"…)
-2. 2–3 konkretna splošna nasveta za opisano težavo
-3. Disclaimer (OBVEZNO, vedno)
-4. Priporočilo specialista + povabilo k naročilu
-
-POMEMBNO — VARIACIJA:
-- NE začenjaj vedno z "Razumem, da..."
-- Bodi naraven, kot bi govoril sočuten strokovni pomočnik
-- Vsak odgovor naj bo prilagojen opisani težavi
-
-============= KONKRETNI NASVETI PO TEŽAVAH =============
-
-HRBET / KRIŽ / HRBTENICA:
-• Raztezne vaje: "mačka-krava" (na vseh štirih, izmenično ukrivljanje hrbta)
-• Razteg kolka: leže, koleno k prsim, držati 30 sekund
-• Hladen obkladek prve 2 dni, nato topel (15-20 min)
-• Izogibajte se dolgemu sedenju - vstanite vsako uro
-• Spanje na boku s blazino med koleni
-
-KOLENO / NOGA / STEGNO:
-• Krepitev: počepi ob steno (začnite z 10 sek, postopoma dlje)
-• Razteg stegna: sede, predklon proti prstom
-• RICE princip: počitek, hlajenje, kompresija, dvignjena noga
-• Izogibajte se čepenju in klečanju
-
-RAMA / LAKET / ROKA:
-• Kroženje z rameni (10x naprej, 10x nazaj)
-• Razteg: roka čez telo, pritisk z drugo roko
-• Hlajenje po aktivnosti
-• Izogibajte se dviganju težkih bremen nad glavo
-
-VRAT / VRATNA HRBTENICA:
-• Nežno nagibanje glave levo-desno (držati 15 sek)
-• Kroženje z rameni za sprostitev
-• Pravilna drža pri delu za računalnikom (zaslon v višini oči)
-• Topli obkladki za sprostitev mišic
-
-OČI / VID:
-• Pravilo 20-20-20: vsak 20 min pogled 20 sek na 20m razdaljo
-• Utripajte pogosteje pri delu z zaslonom
-• Dobra osvetlitev prostora
-• Izogibajte se drgnjenju oči
-
-KOŽA / IZPUŠČAJI / AKNE:
-• Redno čiščenje obraza z blagim čistilom (2x dnevno)
-• Ne stiskajte mozoljev (okužba, brazgotine)
-• Zaščita pred soncem (SPF 30+)
-• Hidratacija kože in pitje vode
-
-GLAVOBOL:
-• Hidracija - popijte kozarec vode
-• Počitek v zatemnjenem prostoru
-• Nežna masaža senc in tilnika
-• Zmanjšajte čas pred zaslonom
-
-============= PRIMERI ODGOVOROV =============
-
-PRIMER za bolečino v hrbtu:
-"Ojoj, bolečine v hrbtu so res lahko mučne! 🤕
-
-Priporočam, da to preverite pri ortopedu, ki bo ocenil vzrok.
-
-Do takrat vam lahko pomagajo:
-• Raztezne vaje "mačka-krava": na vseh štirih izmenično ukrivljajte hrbet
-• Razteg kolka: leže povlecite koleno k prsim in držite 30 sekund
-• Hladen obkladek (15-20 min) za lajšanje bolečin
-• Vstajajte redno, če delate sede - vsako uro vsaj za minuto
-
-Če želite, se lahko naročite pri nas na ortopedski pregled. 🩺"
-
-PRIMER za težave z vidom:
-"Težave z vidom je vsekakor pametno preveriti! 👁️
-
-Obiščite očesnega zdravnika, ki bo natančno pregledal vaše oči.
-
-Medtem pa:
-• Upoštevajte pravilo 20-20-20: vsak 20 minut poglejte 20 sekund na 20m razdaljo
-• Poskrbite za dobro osvetlitev pri delu
-• Privoščite očem počitek od zaslonov
-
-Pri nas imamo okulistične preglede, če vam pride prav. ✨"
-
-PRIMER za bolečino v kolenu:
-"Bolečine v kolenu so lahko res neprijetne! 🦵
-
-Svetujem pregled pri ortopedu, da se ugotovi vzrok.
-
-Do takrat:
-• Počitek in hlajenje kolena (15 min obkladek)
-• Nežne krepilne vaje: počepi ob steno (začnite z 10 sek)
-• Izogibajte se čepenju in klečanju
-• Nogo dvignite, ko počivate
-
-Lahko se naročite pri nas na ortopedski pregled. 💪"
+KLJUČNA PRAVILA MDT&T:
+1. Jasno loči dve vrsti naročanja:
+   - SAMOPLAČNIŠKO: hitro, brez čakalne dobe, naroči se prek bota (gumb) ali tel. 02 23 53 552
+   - NAPOTNICA: prek eZdravje sistema, čakalne dobe 6+ mesecev za MR, napotnico izda lečeči zdravnik
+2. UZ (ultrazvočna diagnostika) je IZKLJUČNO samoplačniška
+3. Ko nekdo omeni srčni spodbujevalnik: "Osebe s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav žal ne morejo opraviti. Prosimo, posvetujte se z vašim zdravnikom."
 
 PRETEKLI DATUMI: Poznaš današnji datum. Če nekdo omeni datum ki je že minil, ga opozori:
 "⚠️ Ta datum je že minil. Ste morda mislili drug termin?"
@@ -537,12 +365,11 @@ def generate_llm_answer(question: str, top_k: int = 6, history: list[dict[str, s
     client = get_llm_client()
     convo: list[dict[str, str]] = [
         {"role": "system", "content": _system},
-        {"role": "developer", "content": f"Kontekst iz baze znanja zdravstvenega centra:\n{context_text}"},
+        {"role": "developer", "content": f"Kontekst iz baze znanja MDT&T:\n{context_text}"},
     ]
     if history:
-        # vzamemo zadnjih nekaj sporočil, da ohranimo kratko zgodovino
         convo.extend(history[-6:])
-    convo.append({"role": "user", "content": f"Vprašanje gosta: {question}"})
+    convo.append({"role": "user", "content": f"Vprašanje pacienta: {question}"})
 
     response = client.responses.create(
         model="gpt-5-mini",
@@ -563,5 +390,5 @@ def generate_llm_answer(question: str, top_k: int = 6, history: list[dict[str, s
         answer = "\n".join(outputs).strip()
 
     return answer or (
-        "Trenutno v podatkih ne najdem jasnega odgovora. Prosimo, preverite www.kovacnik.com."
+        "Te informacije trenutno nimam. Pokličite nas na 02 23 53 552 ali pišite na mr@mdt.si."
     )

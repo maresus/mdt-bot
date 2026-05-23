@@ -13,11 +13,11 @@ AKTIVACIJA:
 SMTP NASTAVITVE (.env):
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=info@zdravstveni-center.si
+SMTP_USER=mr@mdt.si
 SMTP_PASSWORD=your_app_password
-SMTP_FROM_EMAIL=info@zdravstveni-center.si
-SMTP_FROM_NAME=Zdravstveni center
-ADMIN_EMAIL=info@zdravstveni-center.si
+SMTP_FROM_EMAIL=mr@mdt.si
+SMTP_FROM_NAME=MDT&T
+ADMIN_EMAIL=mr@mdt.si
 """
 
 import os
@@ -39,18 +39,18 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "info@zdravstveni-center.si")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Zdravstveni center")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "info@zdravstveni-center.si")
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "mr@mdt.si")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "MDT&T")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "mr@mdt.si")
 SMTP_SSL = os.getenv("SMTP_SSL", "").strip().lower() in {"1", "true", "yes"}
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 SUBJECT_PREFIX = os.getenv("SUBJECT_PREFIX", "").strip()
 
-# Brand barve (enake kot WordPress)
-BRAND_COLOR = "#7b5e3b"
-BORDER_COLOR = "#e8e0d8"
-BG_COLOR = "#f7f3ee"
+# Brand barve MDT&T
+BRAND_COLOR = "#438bd1"
+BORDER_COLOR = "#d0e4f5"
+BG_COLOR = "#f0f6fc"
 TEXT_COLOR = "#1b1f1a"
 MUTED_COLOR = "#6a6a6a"
 
@@ -66,13 +66,13 @@ def _email_wrapper(content: str) -> str:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zdravstveni center</title>
+    <title>MDT&T</title>
 </head>
 <body style="margin:0; padding:0; background:#faf9f7; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
     <div style="max-width:620px; margin:0 auto; padding:24px 16px;">
         <!-- Header -->
         <div style="background:{BRAND_COLOR}; color:#fff; padding:18px 24px; border-radius:14px 14px 0 0; font-size:18px; font-weight:700; letter-spacing:.3px;">
-            Zdravstveni center
+            MDT&T
         </div>
         
         <!-- Content -->
@@ -82,7 +82,7 @@ def _email_wrapper(content: str) -> str:
         
         <!-- Footer -->
         <div style="background:{BG_COLOR}; border:1px solid {BORDER_COLOR}; border-top:none; border-radius:0 0 14px 14px; padding:16px 24px; color:{MUTED_COLOR}; font-size:12px;">
-            Zdravstveni center
+            MDT&T
         </div>
     </div>
 </body>
@@ -154,7 +154,7 @@ def _guest_room_confirmation_html(data: Dict[str, Any]) -> str:
     
     <p style="margin-top:18px; color:{MUTED_COLOR};">
         Rezervacijo bomo potrdili po preverjanju razpoložljivosti.<br>
-        Za spremembe ali preklic nas kontaktirajte na 02 601 54 00 ali info@zdravstveni-center.si
+        Za spremembe ali preklic nas kontaktirajte na 02 601 54 00 ali mr@mdt.si
     </p>
     """
     return _email_wrapper(content)
@@ -204,7 +204,7 @@ def _guest_table_confirmation_html(data: Dict[str, Any]) -> str:
 
     <p style="margin-top:18px; color:{MUTED_COLOR};">
         V primeru preprečitve nas prosimo obvestite vsaj 24 ur vnaprej.<br>
-        Kontakt: <strong>02 292 77 20</strong> ali <strong>info@zdravstveni-center.si</strong>
+        Kontakt: <strong>02 292 77 20</strong> ali <strong>mr@mdt.si</strong>
     </p>
     """
     return _email_wrapper(content)
@@ -265,21 +265,63 @@ def _admin_new_reservation_html(data: Dict[str, Any], confirm_url: str = "", rej
     return _email_wrapper(content)
 
 
+def _get_preparation_instructions(service_type: str) -> str:
+    """Vrne MDT-specifična navodila za pripravo glede na vrsto preiskave."""
+    svc = (service_type or '').upper()
+    if 'MR' in svc:
+        return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>15 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>napotnico</strong> (če imate) in <strong>osebni dokument</strong></li>
+            <li>Pred preiskavo <strong>odstranite</strong> nakit, ure, sponke za lase, ključe</li>
+            <li>Če imate <strong>kovinske vsadke, endoprotezo ali vijake</strong> — prinesite certifikat o MR-združljivosti</li>
+            <li>Oblecite se <strong>udobno</strong>, brez kovinskih zaponk ali zadrg</li>
+            <li>Za preiskave trebuha: <strong>4 ure pred preiskavo ne jejte</strong> (pijte samo vodo)</li>
+        </ul>"""
+    if 'RTG' in svc:
+        return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>10 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>napotnico</strong> (če imate) in <strong>osebni dokument</strong></li>
+            <li>Nosite udobno oblačilo, ki ga je mogoče enostavno odstraniti</li>
+            <li>Ženske v rodni dobi: prosimo obvestite nas o morebitni nosečnosti</li>
+        </ul>"""
+    if 'UZ' in svc and 'VODENI' in svc:
+        return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>10 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>osebni dokument</strong> in morebitne prejšnje izvide</li>
+            <li>Po posegu priporočamo <strong>krajši počitek</strong> (cca. 30 minut)</li>
+            <li>Imejte voznika — po nekaterih posegih vožnja ni priporočljiva</li>
+        </ul>"""
+    if 'UZ' in svc:
+        return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>10 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>osebni dokument</strong></li>
+            <li>Za UZ trebuha: <strong>3–4 ure pred preiskavo ne jejte</strong></li>
+            <li>Za UZ mehurja: <strong>popijte 0,5 l vode 1 uro pred preiskavo</strong> (ne urinirati)</li>
+        </ul>"""
+    if 'ŠČITNIC' in svc or 'SCITNIC' in svc:
+        return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>10 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>napotnico</strong>, osebni dokument in morebitne prejšnje izvide ščitnice</li>
+            <li>Prinesite seznam zdravil, ki jih jemljete</li>
+        </ul>"""
+    return """
+        <ul style="margin:0;padding-left:20px;color:#1e3a5f;">
+            <li>Pridite <strong>10 minut pred terminom</strong></li>
+            <li>S seboj prinesite <strong>osebni dokument</strong> in morebitne prejšnje izvide</li>
+        </ul>"""
+
+
 def _guest_confirmed_html(data: Dict[str, Any]) -> str:
     """Email pacientu - termin POTRJEN."""
-    service_type = data.get('location', 'Pregled')
-
-    # Ikone po tipu pregleda
-    icon_map = {
-        'Ortopedski pregled': '🦴',
-        'Dermatološki pregled': '🩺',
-        'Okulistični pregled': '👁️',
-        'Laserski poseg': '✨',
-        'Estetski poseg': '💉',
-        'Kozmetični salon': '💆',
-        'Fizioterapija': '🏃',
-    }
-    icon = icon_map.get(service_type, '🏥')
+    service_type = data.get('location', 'Preiskava')
+    svc_upper = (service_type or '').upper()
+    icon = '🧲' if 'MR' in svc_upper else ('🔬' if 'RTG' in svc_upper else ('🔊' if 'UZ' in svc_upper else ('🦋' if 'ŠČITNIC' in svc_upper else '🩻')))
+    preparation = _get_preparation_instructions(service_type)
 
     content = f"""
     <p>Pozdravljeni <strong>{data.get('name', 'pacient')}</strong>,</p>
@@ -287,29 +329,25 @@ def _guest_confirmed_html(data: Dict[str, Any]) -> str:
     <p>Vaš termin je <strong style="color:#22c55e;">POTRJEN</strong> ✅</p>
 
     {_kv_table({
-        f'{icon} Vrsta pregleda': service_type,
+        f'{icon} Vrsta preiskave': service_type,
         '📅 Datum': data.get('date', ''),
         '🕐 Ura': data.get('time', ''),
-        '📍 Lokacija': 'Zdravstveni center',
+        '📍 Lokacija': 'Lavričeva ul. 1, 2000 Maribor',
     })}
 
-    <div style="background:#f0f9ff;border-left:4px solid #0891b2;padding:12px 16px;margin:20px 0;border-radius:4px;">
-        <p style="margin:0;font-weight:600;color:#0891b2;margin-bottom:8px;">ℹ️ Navodila pred pregledom:</p>
-        <ul style="margin:0;padding-left:20px;color:#134e4a;">
-            <li>Prosimo pridite <strong>10 minut pred terminom</strong></li>
-            <li>S seboj prinesite <strong>zdravstveno kartico</strong></li>
-            <li>Če imate prejšnje izvide, jih prinesite s seboj</li>
-        </ul>
+    <div style="background:#eff6ff;border-left:4px solid {BRAND_COLOR};padding:12px 16px;margin:20px 0;border-radius:6px;">
+        <p style="margin:0;font-weight:700;color:{BRAND_COLOR};margin-bottom:10px;">ℹ️ Navodila za pripravo na preiskavo:</p>
+        {preparation}
     </div>
 
     <p style="margin-top:18px;">
         <strong>Za morebitne spremembe ali preklic:</strong><br>
-        📞 02 601 54 00<br>
-        ✉️ info@zdravstveni-center.si
+        📞 02 23 53 552 / 02 23 53 553<br>
+        ✉️ mr@mdt.si
     </p>
 
     <p style="color:{MUTED_COLOR};font-size:12px;margin-top:24px;">
-        Priložen je tudi .ics koledar - dodajte termin v svoj koledar s klikom na priponko.
+        Priložen je .ics koledar — dodajte termin v svoj koledar s klikom na priponko.
     </p>
     """
     return _email_wrapper(content)
@@ -336,12 +374,12 @@ def _guest_rejected_html(data: Dict[str, Any]) -> str:
 
     <p style="margin-left:16px;">
         📞 <strong>02 601 54 00</strong><br>
-        ✉️ <strong>info@zdravstveni-center.si</strong>
+        ✉️ <strong>mr@mdt.si</strong>
     </p>
 
     <p style="margin-top:24px;">
         Lepo vas pozdravljamo,<br>
-        <strong>Zdravstveni center</strong>
+        <strong>MDT&T</strong>
     </p>
     """
     return _email_wrapper(content)
@@ -376,28 +414,23 @@ def _guest_reminder_html(data: Dict[str, Any]) -> str:
         f'{icon} Vrsta pregleda': service_type,
         '📅 Datum': data.get('date', ''),
         '🕐 Ura': data.get('time', ''),
-        '📍 Lokacija': 'Zdravstveni center',
+        '📍 Lokacija': 'MDT&T',
     })}
 
-    <div style="background:#f0f9ff;border-left:4px solid #0891b2;padding:12px 16px;margin:20px 0;border-radius:4px;">
-        <p style="margin:0;font-weight:600;color:#0891b2;margin-bottom:8px;">ℹ️ Priprava na pregled:</p>
-        <ul style="margin:0;padding-left:20px;color:#134e4a;">
-            <li>Pridite <strong>10 minut pred terminom</strong></li>
-            <li>Prinesite <strong>zdravstveno kartico</strong></li>
-            <li>Če imate prejšnje izvide, jih prinesite s seboj</li>
-        </ul>
+    <div style="background:#eff6ff;border-left:4px solid {BRAND_COLOR};padding:12px 16px;margin:20px 0;border-radius:6px;">
+        <p style="margin:0;font-weight:700;color:{BRAND_COLOR};margin-bottom:10px;">ℹ️ Navodila za pripravo:</p>
+        {_get_preparation_instructions(service_type)}
     </div>
 
     <p style="margin-top:18px;">
-        <strong>V primeru preprečitve:</strong><br>
-        Prosimo, obvestite nas <strong>čim prej</strong>, da lahko termin dodelimo drugemu pacientu.<br>
-        📞 02 601 54 00<br>
-        ✉️ info@zdravstveni-center.si
+        <strong>V primeru preprečitve — prosimo obvestite nas čim prej:</strong><br>
+        📞 02 23 53 552 / 02 23 53 553<br>
+        ✉️ mr@mdt.si
     </p>
 
     <p style="margin-top:24px;">
         Veselimo se vašega obiska!<br>
-        <strong>Zdravstveni center</strong>
+        <strong>MDT&T d.o.o.</strong>
     </p>
     """
     return _email_wrapper(content)
@@ -561,11 +594,11 @@ def _generate_ical(data: Dict[str, Any]) -> str:
     dtstart = dt_start.strftime('%Y%m%dT%H%M%S')
     dtend = dt_end.strftime('%Y%m%dT%H%M%S')
     dtstamp = datetime.now().strftime('%Y%m%dT%H%M%SZ')
-    uid = f"{data.get('id', uuid.uuid4())}@zdravstveni-center.si"
+    uid = f"{data.get('id', uuid.uuid4())}@mdt.si"
 
     ical = f"""BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Zdravstveni center//SI
+PRODID:-//MDT&T//SI
 BEGIN:VEVENT
 UID:{uid}
 DTSTAMP:{dtstamp}
@@ -573,7 +606,7 @@ DTSTART:{dtstart}
 DTEND:{dtend}
 SUMMARY:{service_type}
 DESCRIPTION:Termin pri zdravstvenem centru\\n\\nPacient: {data.get('name', '')}\\nVrsta: {service_type}
-LOCATION:Zdravstveni center
+LOCATION:MDT&T
 STATUS:CONFIRMED
 SEQUENCE:0
 BEGIN:VALARM

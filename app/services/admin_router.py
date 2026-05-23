@@ -706,7 +706,7 @@ def confirm_reservation(
         reservation_id,
         status="confirmed",
         confirmed_at=datetime.now().isoformat(),
-        confirmed_by=os.getenv("ADMIN_EMAIL", "info@kovacnik.com"),
+        confirmed_by=os.getenv("ADMIN_EMAIL", "mr@mdt.si"),
         location=requested_room or requested_location,
         time=res.get("time"),
     )
@@ -734,7 +734,7 @@ def confirm_reservation(
         direction="outbound",
         subject=subject,
         body="Rezervacija potrjena.",
-        from_email=os.getenv("ADMIN_EMAIL", "info@kovacnik.com"),
+        from_email=os.getenv("ADMIN_EMAIL", "mr@mdt.si"),
         to_email=res.get("email") or "",
         message_id=None,
     )
@@ -785,7 +785,7 @@ def reject_reservation(
         direction="outbound",
         subject=subject,
         body="Rezervacija zavrnjena.",
-        from_email=os.getenv("ADMIN_EMAIL", "info@kovacnik.com"),
+        from_email=os.getenv("ADMIN_EMAIL", "mr@mdt.si"),
         to_email=res.get("email") or "",
         message_id=None,
     )
@@ -818,7 +818,7 @@ def send_message(
             channel="email",
             subject=subject,
             body=data.body,
-            from_email=os.getenv("ADMIN_EMAIL", "info@kovacnik.com"),
+            from_email=os.getenv("ADMIN_EMAIL", "mr@mdt.si"),
             to_email=data.email,
             message_id=None,
         )

@@ -195,7 +195,7 @@ def resolve_clinic_id(
     fallback: str | None = None,
     strict: bool = False,
 ) -> str:
-    resolved = clinic_id or get_current_clinic_id() or fallback or os.getenv("CLINIC_ID", "lj_center")
+    resolved = clinic_id or get_current_clinic_id() or fallback or os.getenv("CLINIC_ID", "mdt")
     if strict and not _provider.has_clinic(resolved):
         raise ValueError(f"Unknown clinic_id: {resolved}")
     return resolved

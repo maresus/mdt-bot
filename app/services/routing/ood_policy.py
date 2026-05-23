@@ -153,7 +153,7 @@ IN_DOMAIN_KEYWORDS = frozenset({
 # ─────────────────────────────────────────────────────────────────────────────
 
 OOD_HARD_RESPONSES = [
-    "O tem nimam informacij — sem specializiran za Zdravstveni center.\n"
+    "O tem nimam informacij — sem specializiran za MDT&T.\n"
     "Lahko vam pomagam z naročanjem na pregled, informacijami o storitvah ali cenah.\n"
     "Kako vam lahko pomagam?",
 
@@ -167,20 +167,20 @@ OOD_HARD_RESPONSES = [
 
 OOD_MEDICAL_OUTSIDE_RESPONSES = [
     "To področje ni v naši ponudbi — priporočam posvet s splošnim zdravnikom ali ustreznim specialistom.\n"
-    "Pri nas pa lahko pomagam z dermatologijo, estetskimi posegi in laserskimi tretmaji.\n"
+    "Pri nas pa lahko pomagam z diagnostičnimi preiskavami (MR, RTG, UZ).\n"
     "Vas zanima kaj od tega?",
 
     "Za to vrsto zdravstvene težave se prosim obrnite na ustreznega specialista.\n"
-    "Naš center se ukvarja z dermatologijo in estetsko medicino.\n"
+    "Naš center se ukvarja z diagnostičnimi preiskavami MR, RTG in UZ.\n"
     "Vam lahko pomagam z naročanjem na enega od naših pregledov?",
 
     "To presega naše specializacije — za takšna vprašanja obiščite svojega zdravnika.\n"
-    "Z veseljem pa pomagam z informacijami o naših dermatoloških in estetskih storitvah!",
+    "Z veseljem pa pomagam z informacijami o naših diagnostičnih preiskavah (MR, RTG, UZ)!",
 ]
 
 OOD_SOFT_RESPONSES = [
     "Nisem povsem prepričan, da razumem vaše vprašanje.\n"
-    "Sem specializiran za Zdravstveni center — naročanje, storitve, cene.\n"
+    "Sem specializiran za MDT&T — naročanje, storitve, cene.\n"
     "Mi lahko pojasnite, kaj vas zanima?",
 
     "To vprašanje je morda izven mojega znanja.\n"

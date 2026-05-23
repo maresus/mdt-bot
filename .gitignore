@@ -1,12 +1,42 @@
-venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
 .env
+*.env.local
+
+# Database (lokalni razvoj)
 *.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Stray app bundles
+*.app/
+
+# Mac
 .DS_Store
 ._*
-data/chroma_db/
-data/*.json
-*.app/
-Visual Studio Code.app/
-.vscode/
+
+# Logs
+*.log
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Large files
+*.zip
+*.tar.gz
