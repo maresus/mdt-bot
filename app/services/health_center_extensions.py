@@ -31,41 +31,35 @@ SERVICE_NAME_MAP = {
 
 # Tipi storitev in njihova trajanja (v minutah)
 SERVICES = {
-    "dermatolog": {
-        "name": "Dermatološki pregled",
-        "duration_minutes": 30,
-        "price_range": "25-150 €",
-        "description": "Pregledi kožnih bolezni, laserski in estetski posegi"
+    "mr": {
+        "name": "MR preiskava",
+        "duration_minutes": 45,
+        "price_range": "od 200 €",
+        "description": "Magnetnoresonančna tomografija vseh delov telesa"
     },
-    "ortoped": {
-        "name": "Ortopedski pregled",
-        "duration_minutes": 30,
-        "price_range": "40-80 €",
-        "description": "Pregledi sklepov, hrbtenice, športne poškodbe"
+    "rtg": {
+        "name": "Rentgensko slikanje",
+        "duration_minutes": 20,
+        "price_range": "od 30 €",
+        "description": "RTG diagnostika kosti in organov"
     },
-    "okulist": {
-        "name": "Okulistični pregled",
+    "uz": {
+        "name": "Ultrazvočna diagnostika",
         "duration_minutes": 30,
-        "price_range": "30-120 €",
-        "description": "Očesni pregledi, predpis očal in leč"
+        "price_range": "od 60 €",
+        "description": "UZ preiskave (izključno samoplačniško)"
     },
-    "laserski_poseg": {
-        "name": "Laserski poseg",
+    "uz_posegi": {
+        "name": "UZ vodeni posegi",
         "duration_minutes": 30,
-        "price_range": "50-200 €",
-        "description": "Lasersko odstranjevanje žilic, bradavic, zdravljenje glivic"
+        "price_range": "po dogovoru",
+        "description": "Minimalno invazivni posegi pod UZ kontrolo"
     },
-    "estetski_poseg": {
-        "name": "Estetski poseg",
-        "duration_minutes": 30,
-        "price_range": "100-400 €",
-        "description": "Botox, fillerji, biorevitalizacija, radiofrekvenca"
-    },
-    "kozmetika": {
-        "name": "Kozmetični salon",
-        "duration_minutes": 60,
-        "price_range": "30-100 €",
-        "description": "Nega obraza, tretmaji kože"
+    "scitnica": {
+        "name": "Ambulanta za ščitnico",
+        "duration_minutes": 45,
+        "price_range": "po dogovoru",
+        "description": "Pregled in zdravljenje bolezni ščitnice"
     },
 }
 

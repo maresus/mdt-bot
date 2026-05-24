@@ -78,7 +78,15 @@ def handle_service_info_intent(
 
     # Spodbujevalnik / pacemaker — absolutna blokada za MR
     _lowered_msg = message.lower()
-    if any(w in _lowered_msg for w in ["spodbujevalnik", "spodbujevalnika", "defibrilator", "pacemaker"]):
+    _pacer_kw = [
+        "spodbujevalnik", "spodbujevalnika", "defibrilator", "defibrilatorj",
+        "pacemaker", "pacemejker", "pacemajker", "pacemeker",
+        "icd implant", "srčni icd", "icd naprava",
+        "srčni stimulator", "stimulator srca", "srčna naprava",
+        "utrjevalnik", "srčni utrjevalnik",
+        "implantiran srčni", "srčni vsadek",
+    ]
+    if any(w in _lowered_msg for w in _pacer_kw):
         return (
             "Osebe s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav žal ne morejo opraviti. "
             "Prosimo, posvetujte se z vašim zdravnikom ali nas pokličite na ☎️ 02 23 53 552."
