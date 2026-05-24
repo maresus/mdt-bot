@@ -1,0 +1,58 @@
+version: 1
+flow:
+  service:
+    prompt: |
+      Na katero preiskavo se želite naročiti?
+      - MR (magnetna rezonanca)
+      - RTG (rentgensko slikanje)
+      - UZ (ultrazvočna diagnostika)
+      - UZ vodeni poseg
+      - Ščitnica
+
+  date:
+    prompt: |
+      Kateri datum vam ustreza?
+      Prosimo v formatu DD.MM.YYYY (npr. 12.06.2026)
+
+  time:
+    prompt: |
+      Katera ura vam ustreza? (npr. 10:30)
+      Delamo vsak dan od 08:00 do 20:00.
+
+  name:
+    prompt: |
+      Kako je vaše ime in priimek?
+
+  phone:
+    prompt: |
+      Kakšna je vaša telefonska številka?
+
+  email:
+    prompt: |
+      Kakšen je vaš email naslov? (za potrditev termina)
+
+  reason:
+    prompt: |
+      Kateri del telesa / vrsto preiskave si želite? (npr. MR glave, MR kolena, RTG prsnega koša...)
+
+  confirm:
+    prompt: |
+      Ali so podatki pravilni? (DA / NE)
+
+messages:
+  start_with_date:
+    text: "Odlično! Naročilo za **{service_type}**. Kateri datum vam ustreza? (npr. 15.6.2026)\nDelamo vsak dan 08:00–20:00."
+
+  start_with_service:
+    text: "Na katero preiskavo se želite naročiti?\n\n🧲 MR (magnetna rezonanca)\n🩻 RTG (rentgensko slikanje)\n🔊 UZ (ultrazvočna diagnostika)\n🔬 UZ vodeni poseg\n🦋 Ščitnica"
+
+  service_switch_confirmed:
+    text: |
+      Super, preklopim na **{service_name}**.
+      Kateri datum vas zanima? (npr. 15.6.2026)
+
+  service_switch_confirmed_noinfo:
+    text: "Super, preklopim storitev. Kateri datum vas zanima? (npr. 15.6.2026)"
+
+  resume_prompt:
+    text: "V redu, nadaljujemo z naročilom."

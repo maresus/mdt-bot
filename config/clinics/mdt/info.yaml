@@ -1,0 +1,279 @@
+version: 1
+facts:
+  lokacija:
+    priority: fast
+    category: LOKACIJA_INFO
+    keywords:
+      - kje
+      - kje ste
+      - naslov
+      - lokacija
+      - nahajate
+      - pridem
+      - parkiranje
+      - parkirišče
+    response:
+      - |
+        Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**.
+
+        Parkirate lahko na javnih parkiriščih na Lavričevi in Koroški cesti.
+        Če prihajate iz ljubljanske smeri: izhod Maribor jug, sledite smeri Dravograd čez Koroški most.
+      - |
+        Smo na **Lavričevi ulici 1 v Mariboru**.
+        Parkiranje: javna parkirišča na Lavričevi in Koroški cesti.
+
+  kontakt:
+    priority: fast
+    category: KONTAKT_INFO
+    keywords:
+      - kontakt
+      - telefon
+      - telefonska
+      - email
+      - e-pošta
+      - kako vas kontaktiram
+      - pokličem
+      - poklicem
+    response: |
+      📞 MR, RTG, UZ: **02 23 53 552** ali **02 23 53 553**
+      📞 Ščitnica: **02 23 53 555**
+      📧 MR/RTG/UZ: **mr@mdt.si**
+      📧 Ščitnica: **scitnica@mdt.si**
+      📍 Lavričeva ul. 1, 2000 Maribor
+      🕐 Vsak dan 08:00–20:00
+
+  delovni_cas:
+    priority: fast
+    category: DELOVNI_CAS_INFO
+    keywords:
+      - delovni čas
+      - delovni cas
+      - odprti
+      - odprto
+      - kdaj ste odprti
+      - kdaj delate
+      - urnik
+      - vikend
+      - sobota
+      - nedelja
+    response:
+      - |
+        Delamo **vsak dan od 08:00 do 20:00**, vključno s sobotami in nedeljami.
+      - |
+        Odprti smo **vsak dan: 08:00–20:00** (pon–ned, tudi prazniki).
+
+  cene:
+    priority: fast
+    category: CENE_INFO
+    keywords:
+      - cena
+      - cene
+      - cenik
+      - koliko stane
+      - kolk stane
+      - cena pregleda
+      - koliko znaša
+      - koliko znasa
+    response:
+      - |
+        Okvirne cene samoplačniških preiskav pri MDT&T:
+
+        🧲 **MR preiskave**: od 200 € naprej (odvisno od vrste)
+        🩻 **RTG**: od 30 €
+        🔊 **UZ diagnostika**: od 60 €
+        🔬 **UZ vodeni posegi**: po dogovoru
+        🦋 **Ščitnica (UZ + pregled)**: po dogovoru
+
+        Za točno ceno pokličite **02 23 53 552** ali pišite na **mr@mdt.si**.
+      - |
+        Cene so odvisne od vrste preiskave:
+        🧲 MR od 200 € | 🩻 RTG od 30 € | 🔊 UZ od 60 €
+
+        Točno ceno dobite na ☎️ 02 23 53 552 ali ✉️ mr@mdt.si.
+
+  napotnica:
+    priority: fast
+    category: NAROCANJE_INFO
+    keywords:
+      - napotnica
+      - napotnico
+      - napotnic
+      - napotnco
+      - z napotnico
+      - zavarovalnica
+      - zzzs
+      - zavarovan
+      - čakalna doba
+      - cakalna doba
+    response: |
+      **Naročanje z napotnico (prek ZZZS):**
+
+      Napotnico izda vaš lečeči zdravnik. Čakalne dobe so odvisne od vrste napotnice in so skladne s pravilniki NIJZ.
+
+      Koristni povezave:
+      • Preverite čakalne dobe: https://cakalnedobe.ezdrav.si/
+      • Naročanje z napotnico (ZVEM): https://zvem.ezdrav.si/
+
+      Za informacije o čakalnih dobah pri MDT&T pokličite **02 23 53 552**.
+
+  postopek_narocanja:
+    priority: fast
+    category: NAROCANJE_INFO
+    keywords:
+      - kako poteka naročanje
+      - kako se naročim
+      - kako naročim
+      - postopek naročanja
+      - kako rezerviram
+      - postopek
+      - samoplačniško
+      - samoplačnik
+    response:
+      - |
+        **Samoplačniško naročanje** (hitro, brez čakanja):
+        Kliknite gumb **📅 Naroči se** spodaj ali pokličite **02 23 53 552**.
+
+        **Z napotnico (ZZZS):**
+        Napotnico izda vaš zdravnik. Čakalne dobe preverite na:
+        • https://cakalnedobe.ezdrav.si/
+        • https://zvem.ezdrav.si/
+
+  service_mr:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - mr preiskava
+      - magnetna rezonanca
+      - mri
+      - mr glave
+      - mr hrbtenice
+      - mr kolena
+      - mr trebuha
+    response: |
+      **Magnetnoresonančna tomografija (MR)**
+
+      Izvajamo MR preiskave vseh delov telesa:
+      Glava, hrbtenica, koleno, rama, trebuh, dojke, prostata in drugo.
+
+      🧲 Samoplačniško: od 200 € naprej
+      ⏱️ Trajanje: 30–60 min (odvisno od preiskave)
+
+      **Pred preiskavo** izpolnite MR vprašalnik (dobite ga na recepciji ali pri naročanju).
+
+      ⚠️ Osebe s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav ne morejo opraviti.
+
+      Za naročilo kliknite **📅 Naroči se** ali pokličite **02 23 53 552**.
+
+  service_rtg:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - rtg
+      - rentgen
+      - rentgensko
+      - rentgenski
+      - slikanje
+    response: |
+      **Rentgensko slikanje (RTG)**
+
+      Temeljna radiološka preiskava za odkrivanje bolezni ali poškodb kosti.
+
+      🩻 Samoplačniško: od 30 €
+      ⏱️ Trajanje: 15–30 min
+
+      Za naročilo kliknite **📅 Naroči se** ali pokličite **02 23 53 552**.
+
+  service_uz:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - ultrazvok
+      - ultrazvočna
+      - uz preiskava
+      - uz trebuha
+      - uz srca
+      - uz ščitnice
+    response: |
+      **Ultrazvočna diagnostika (UZ)**
+
+      UZ preiskave so pri MDT&T **izključno samoplačniške**.
+
+      🔊 Cena: od 60 € naprej
+      ⏱️ Trajanje: 20–40 min
+
+      Za naročilo kliknite **📅 Naroči se** ali pokličite **02 23 53 552**.
+
+  service_uz_posegi:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - uz vodeni
+      - ultrazvočno vodeni
+      - punkcija
+      - biopsija
+      - infiltracija
+    response: |
+      **UZ vodeni posegi**
+
+      Minimalno invazivni posegi pod ultrazvočno kontrolo:
+      Punkcija sklepa, kalcifikacije, biopsija, infiltracija.
+
+      Cena po dogovoru — pokličite **02 23 53 552** ali pišite na **mr@mdt.si**.
+
+  service_scitnica:
+    priority: low
+    category: STORITVE_INFO
+    keywords:
+      - ščitnica
+      - scitnica
+      - ščitnična
+      - golša
+      - tiroidea
+      - tireolog
+    response: |
+      **Ambulanta za bolezni ščitnice**
+
+      Zdravimo morfološke in funkcionalne spremembe ščitnice:
+      Golša, hipertiroza, hipotiroza, vozliči, biopsija.
+
+      📞 Naročanje: **02 23 53 555**
+      📧 Email: **scitnica@mdt.si**
+
+      Pred prvim pregledom izpolnite vprašalnik (dobite ga pri naročanju).
+
+  o_centru:
+    priority: medium
+    category: PODJETJE_INFO
+    keywords:
+      - o vas
+      - o centru
+      - kaj ste
+      - kdo ste
+      - kaj ponujate
+      - opis
+      - kaj je mdt
+    response: |
+      **MDT&T d.o.o.** je sodobni diagnostični center v Mariboru z več kot 20-letnimi izkušnjami.
+
+      Ponujamo:
+      🧲 Magnetnoresonančna tomografija (MR)
+      🩻 Rentgensko slikanje (RTG)
+      🔊 Ultrazvočna diagnostika (UZ)
+      🔬 UZ vodeni posegi
+      🦋 Ambulanta za bolezni ščitnice
+
+      📍 Lavričeva ul. 1, 2000 Maribor | ☎️ 02 23 53 552
+
+  zdravstveni_nasvet_splosno:
+    priority: medium
+    category: ZDRAVSTVENI_NASVET
+    keywords:
+      - nasvet
+      - kaj naj naredim
+      - kako si pomagam
+      - simptomi
+    response: |
+      Za zdravstvene nasvete in razlago simptomov se prosimo obrnite na svojega lečečega zdravnika.
+
+      Jaz vam lahko pomagam z informacijami o naših diagnostičnih preiskavah (MR, RTG, UZ) in z naročanjem.
+      ☎️ 02 23 53 552 | ✉️ mr@mdt.si

@@ -1,0 +1,68 @@
+version: 1
+messages:
+  greeting:
+    variants:
+      - "Pozdravljeni! Sem digitalni asistent MDT&T. Pomagam z informacijami o preiskavah (MR, RTG, UZ) in z naročanjem."
+      - "Dober dan. Sem asistent MDT&T diagnostičnega centra. Kako vam lahko pomagam?"
+      - "Živjo! Tukaj sem za informacije o MR, RTG, UZ preiskavah in za naročanje."
+
+  goodbye:
+    text: "Hvala za zaupanje. Lep dan!"
+
+  fallback:
+    text: "Oprostite, tega nisem razumel. Lahko vprašanje preoblikujete? Pomagam z informacijami o preiskavah in naročanjem."
+
+  help_prompt:
+    variants:
+      - "Kako vam lahko pomagam?"
+      - "Kaj vas zanima — MR, RTG, UZ ali naročanje?"
+      - "Povejte, s čim vam lahko pomagam."
+
+  more_info_label:
+    text: "Več informacij:"
+
+  empty_message:
+    text: "Prosim napišite sporočilo, da vam lahko pomagam."
+
+  anti_loop:
+    warning: "Opazil sem ponavljanje. Prosim povejte konkretno: vrsto preiskave in datum."
+    apology: "Mislim, da je prišlo do nesporazuma. Začniva znova. Kako vam lahko pomagam?"
+
+  booking_cancelled:
+    text: "V redu, naročilo preklicano. Kako vam lahko drugače pomagam?"
+
+  urgency:
+    text: |
+      **Če gre za nujni primer, pokličite:**
+      - Urgenca: 112
+      - MDT&T: ☎️ 02 23 53 552
+
+  unsupported_symptom_default:
+    text: "Za zdravstvene nasvete in razlago simptomov se prosimo obrnite na svojega lečečega zdravnika. Jaz vam lahko pomagam z informacijami o diagnostičnih preiskavah in naročanjem."
+
+  fallback_short:
+    variants:
+      - "Pomagam z informacijami o MR, RTG, UZ preiskavah in naročanjem."
+      - "Na voljo sem za preiskave, cene, termine in kontakt."
+      - "Povejte kaj vas zanima — naročanje, cene ali informacije o preiskavah."
+
+  service_price:
+    text: "{label} – {name}: {price_range} · {duration_minutes} min"
+
+  voice_unavailable:
+    text: "Glasovni servis ni na voljo. Prosimo pišite sporočilo."
+
+  voice_transcription_error:
+    text: "Napaka pri transkripciji"
+
+  voice_processing_error:
+    text: "Napaka pri obdelavi: {error}"
+
+  uncertain_marker:
+    text: "Nisem prepričan"
+
+  quick_replies_default:
+    - label: "Da, prosim"
+      value: "DA"
+    - label: "Ne, hvala"
+      value: "NE"
