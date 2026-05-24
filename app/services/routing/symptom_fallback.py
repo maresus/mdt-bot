@@ -89,17 +89,12 @@ def looks_like_medical_statement(message: str) -> bool:
 
 def looks_like_previsit_question(message: str) -> bool:
     lowered = message.lower()
+    # Only explicit "what do I bring / what do I need before the appointment" questions.
+    # Do NOT include "mr", "rtg", "napotnic*" — those go to the LLM.
     previsit_keywords = [
         "izvid",
         "izvide",
         "izvidi",
-        "napotnic",
-        "napotnica",
-        "napotnico",
-        "napotnco",
-        "rtg",
-        "mr",
-        "magnetna",
         "pred pregledom",
         "s sabo",
         "moram prinesti",
