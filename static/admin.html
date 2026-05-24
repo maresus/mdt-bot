@@ -910,7 +910,7 @@
       const url = id ? `${API}/reservations/${id}` : `${API}/reservations`;
       const resp = await fetch(url, {method: id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
       if (resp.ok) { toast(id?'Naročilo posodobljeno':'Naročilo dodano','ok'); loadData(); closeModal(); }
-      else { const d=await resp.json(); toast(d.detail||'Napaka','err'); }
+      else { const d=await resp.json(); const msg=Array.isArray(d.detail)?d.detail.map(e=>e.msg||e).join(', '):(d.detail||'Napaka pri shranjevanju'); toast(msg,'err'); }
     } catch { toast('Napaka pri shranjevanju','err'); }
   }
 
@@ -924,23 +924,29 @@
     } catch { toast('Napaka','err'); }
   }
 
-  // ── Slot picker ──
+  // ── Slot picker — generiraj ure 08:00-20:00, označi zasedene ──
   async function refreshSlots() {
     const dv = document.getElementById('edit-date').value;
-    const svc = document.getElementById('edit-location').value;
     const picker = document.getElementById('slot-picker');
-    if (!dv||!svc) { picker.innerHTML='Izberi datum in storitev'; return; }
-    picker.innerHTML='Nalagam...';
+    if (!dv) { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Izberi datum</span>'; return; }
+    picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Nalagam...</span>';
+    const editId = parseInt(document.getElementById('edit-id').value)||0;
     try {
-      const resp = await fetch(`${API}/available-slots?date=${dv}&service_type=${encodeURIComponent(svc)}&clinic_id=mdt`);
-      const data = await resp.json();
-      const slots = data.slots||data.available_slots||[];
+      const resp = await fetch(`${API}/reservations/all?clinic_id=mdt`);
+      const all = resp.ok ? (await resp.json()) : [];
+      // Poišči zasedene ure za ta datum (izključi trenutno naročilo)
+      const dp = dv.split('-');
+      const dateSL = dp.length===3 ? `${parseInt(dp[2])}.${parseInt(dp[1])}.${dp[0]}` : dv;
+      const booked = new Set((Array.isArray(all)?all:[]).filter(r=>r.date===dateSL && r.id!==editId && r.status!=='rejected').map(r=>r.time).filter(Boolean));
       const cur = document.getElementById('edit-time').value;
-      if (!slots.length) { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Ni prostih terminov</span>'; return; }
-      picker.innerHTML = slots.map(s =>
-        `<button type="button" class="slot-btn${s===cur?' selected':''}" onclick="selectSlot('${s}')">${s}</button>`
-      ).join('');
-    } catch { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Napaka</span>'; }
+      picker.innerHTML = TIMES.map(t => {
+        const busy = booked.has(t);
+        const cls = `slot-btn${t===cur?' selected':''}${busy?' busy':''}`;
+        const style = busy ? 'opacity:.4;cursor:not-allowed;text-decoration:line-through;' : '';
+        const click = busy ? '' : `onclick="selectSlot('${t}')"`;
+        return `<button type="button" class="${cls}" ${click} style="${style}" ${busy?'disabled':''}>${t}</button>`;
+      }).join('');
+    } catch { picker.innerHTML='<span style="color:var(--text-muted);font-size:12px;">Napaka pri nalaganju</span>'; }
   }
 
   function selectSlot(t) {
