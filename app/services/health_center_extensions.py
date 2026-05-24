@@ -1,13 +1,12 @@
 """
-MDT&T - Razširitve za rezervacije pregledov
+MDT&T - Razširitve za rezervacije diagnostičnih preiskav
 
 Storitve:
-- Dermatološki pregledi
-- Ortopedski pregledi
-- Okulistični pregledi
-- Laserski posegi
-- Estetski posegi
-- Kozmetični salon
+- MR (magnetnoresonančna tomografija)
+- RTG (rentgensko slikanje)
+- UZ (ultrazvočna diagnostika)
+- UZ vodeni posegi
+- Ščitnica (ambulanta za bolezni ščitnice)
 """
 from datetime import datetime, timedelta
 import os
@@ -15,18 +14,37 @@ from typing import Optional, Tuple, List, Set, Dict, Any
 
 # Variacije imen storitev za prepoznavo v besedilu.
 SERVICE_NAME_MAP = {
-    "dermatolog": [
-        "dermatolog", "dermatološki", "koža", "kozni", "kožne",
-        "dermatovenerolog", "dermatovenerološki",
-        "dermatalog", "dermatalogu", "dermatlog",
-        "znamenje", "znamnje",
-        "skin", "rash", "mole", "acne",
+    "mr": [
+        "mr", "mri", "magnetna rezonanca", "magnetnoresonančna", "magnetnoresonancna",
+        "magnetni", "magnetna", "mr glav", "mr hrbtenic", "mr kolen", "mr ram",
+        "mr trebuh", "mr dojk", "mr prostat", "mr možgan", "mr mozgan",
+        "mr vrat", "mr ledven", "mr prsn", "mr angiograf",
+        "mr kontrastom", "mr brez kontrast",
+        "mrt", "nmr", "nuclear magnetic",
     ],
-    "ortoped": ["ortoped", "ortopedski", "ortopedija", "koleno", "hrbtenica", "knee", "back", "shoulder", "joint"],
-    "okulist": ["okulist", "okulistični", "oči", "očesni", "ocena vida", "oftalmolog", "eye", "eyes", "vision", "eye check", "eye exam"],
-    "laserski_poseg": ["laser", "laserski", "žile", "žilice", "bradavice", "glivice", "mozolj", "mozolji"],
-    "estetski_poseg": ["estetski", "botox", "botulinum", "filer", "filerji", "polnila", "radiofrekvenca", "prx"],
-    "kozmetika": ["kozmetika", "kozmetični", "nega obraza", "dermavita", "pedikura", "facial", "cosmetic"],
+    "rtg": [
+        "rtg", "rentgen", "rentgenski", "rentgensko", "rentgenska",
+        "x-ray", "xray", "radiograf", "radiološki",
+        "slikanje kosti", "rentgensko slikanje",
+    ],
+    "uz": [
+        "uz", "ultrazvok", "ultrazvočna", "ultrazvočni", "ultrazvočno",
+        "ultrasound", "sonograf", "echograf",
+        "uz trebuh", "uz srce", "uz ledvic", "uz jeter", "uz dojk",
+        "uz ščitnic", "uz sklepa", "uz mečic", "uz dimeljsk",
+        "doppler",
+    ],
+    "uz_posegi": [
+        "uz vodeni", "ultrazvočno vodeni", "uz poseg",
+        "punkcija", "biopsija", "infiltracija sklepa",
+        "aspiracija", "igla pod uz",
+    ],
+    "scitnica": [
+        "ščitnica", "scitnica", "ščitnična", "scitnicna",
+        "tiroidea", "tireolog", "golša", "golsa",
+        "hipertiroza", "hipotiroza", "noduli ščitnice",
+        "ščitnični", "scitnicni", "ščitnico",
+    ],
 }
 
 # Tipi storitev in njihova trajanja (v minutah)
