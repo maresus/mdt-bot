@@ -14,7 +14,7 @@ from app.rag.rag_engine import rag_engine
 _SYSTEM_PROMPT_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "clinics" / "mdt" / "system_prompt.txt"
 )
-_DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1").strip()
+_DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 
 
 def _load_system_prompt() -> str:
