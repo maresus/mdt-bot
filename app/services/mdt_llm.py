@@ -102,7 +102,7 @@ def chat(
         reply = (response.choices[0].message.content or "").strip()
     except Exception as e:
         print(f"[MDT_LLM] OpenAI error: {e}")
-        reply = f"[DEBUG_ERROR: {type(e).__name__}: {str(e)[:200]}]"
+        reply = ""
 
     if not reply:
         reply = "Oprostite, prišlo je do napake. Za pomoč pokličite **02 23 53 552** ali pišite na **mr@mdt.si**."

@@ -92,7 +92,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         reply = result.get("reply", "")
     except Exception as e:
         print(f"[CHAT_ROUTER] llm_chat error: {type(e).__name__}: {e}")
-        reply = f"[ROUTER_ERROR: {type(e).__name__}: {str(e)[:200]}]"
+        reply = ""
 
     if not reply:
         reply = "Oprostite, prišlo je do napake. Pokličite nas: 02 23 53 552."
