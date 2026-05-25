@@ -496,6 +496,63 @@ def handle_unified_routing(
     unified_state = state_mgr.get_state()
     context = state_mgr.ensure_context()
 
+    # ====== GLOBAL EARLY CHECKS (run before any intent routing) ======
+    _g_lowered = message.lower()
+
+    # 1. eZdravje mentions → always return napotnica info with eZdravje links
+    if any(kw in _g_lowered for kw in ["ezdravje", "ezdrav", "zvem.ezdrav", "cakalnedobe"]):
+        return _get_info_response("napotnica", clinic_id=clinic_id)
+
+    # 2. Pacemaker/ICD → absolute MR block (any intent path)
+    _PACEMAKER_GLOBAL_KW = [
+        "spodbujevalnik", "pacemaker", "pacemejker", "pacemajker", "pacemeker",
+        "defibrilator", " icd", "srčni icd", "srčni stimulator", "stimulator srca",
+        "srčna naprava", "srčno napravo", "srčni aparat", "utrjevalnik",
+        "srčni utrjevalnik", "cardiac pacemaker", "cardiac device",
+        "implantiran srčni", "srčni vsadek",
+    ]
+    if any(w in _g_lowered for w in _PACEMAKER_GLOBAL_KW):
+        return (
+            "Žal, z vgrajenim srčnim spodbujevalnikom ali defibrilatorjem MR preiskave ne morete opraviti. "
+            "Prosimo, posvetujte se z vašim zdravnikom ali nas pokličite na ☎️ 02 23 53 552."
+        )
+
+    # 3. Health advice questions → always redirect to doctor (not an MDT service)
+    _HEALTH_ADVICE_GLOBAL_KW = [
+        "diagnoza", "diagnoziraj", "diagnozir",
+        "vrednosti normalne", "normalne vrednosti",
+        "krvni tlak", "krvni sladkor", "sladkorna bolezni", "sladkorna bo",
+        "tsh vrednosti", " tsh ", "tsh ",
+        "holesterol",
+        "anksioznost", "vročina", "vrocina",
+        "poškodba",
+        "depresij",
+        "parkinson", "artritis", "revmatizem",
+        "fibromijalgij", "osteoporoz", "epilepsij",
+        "multipla skleroz", "demenc",
+        "rakavo", "maligno",
+        "hipotiroz",
+        "hernij",
+        "infarkt",
+        "možganska kap", "mozganska kap",
+        "zastrupitv",
+        "alergijska reakcija", "alergija zdravljenj",
+        "moram vzeti", "kaj vzeti",
+        "vzrok",
+        "operacij", "okrevanj",
+        "noduli",
+        "zlom roke", "zlom noge", "odrgnin",
+        "ugriz insekta", "bruhanje drisk",
+    ]
+    _svc_guard_kw = [
+        "mr ", " mr", "mri", " rtg", "rtg ", " uz ", "uz ", "naroč", "termin",
+        "rezerv", "ščitnic", "napotnic", "kontrastno", "preiskav", "slikanj",
+        "diagnostik", "samoplačn",
+    ]
+    if any(kw in _g_lowered for kw in _HEALTH_ADVICE_GLOBAL_KW) and not any(s in _g_lowered for s in _svc_guard_kw):
+        return advice_only(None)
+    # ====== END GLOBAL EARLY CHECKS ======
+
     # Always redirect booking intent to widget form — no step-by-step flow
     _quick_booking_check = unified_route(message, state_mgr.get_state())
     if _quick_booking_check.primary_intent == IntentType.BOOKING_APPOINTMENT:

@@ -4,9 +4,8 @@ from typing import Any
 
 from app.services.clinic_config import get_clinic_config
 from app.services.health_center_extensions import get_service_info, get_services
-from app.services.routing.advice import advice_only_headache
+from app.services.routing.advice import advice_only, advice_only_headache
 from app.services.routing.locale_sl import QUESTION_MARKERS, SYMPTOM_MARKERS
-from app.services.triage_service import get_triage_service
 
 
 def looks_like_symptom_report(message: str) -> bool:
@@ -127,7 +126,7 @@ def previsit_guidance_response(service_key: str | None, clinic_id: str | None = 
             service_name = info.get("name")
     service_label = service_name or "pregled"
     return (
-        f"Za {service_label.lower()} običajno priporočamo, da prinesete obstoječe izvide, "
+        f"Za {service_label.lower()} prosimo prinesite obstoječe izvide, "
         "seznam zdravil in osebni dokument. Če imate napotnico, jo prinesite s seboj.\n\n"
         "Če nimate vse dokumentacije, lahko vseeno pridete na pregled.\n\n"
         "Če želite, lahko takoj preverim prost termin."
@@ -177,29 +176,5 @@ def quick_triage_fallback(message: str, clinic_id: str | None = None) -> str | N
             symptom_booking_nudge(None, clinic_id=clinic_id),
         )
 
-    try:
-        triage = get_triage_service().quick_triage(message)
-    except Exception:
-        return None
-
-    recommendation = str(triage.get("recommendation") or "").strip()
-    disclaimer = str(triage.get("disclaimer") or "").strip()
-    specialist = str(triage.get("specialist") or "").strip().lower()
-
-    if not recommendation:
-        return None
-
-    parts: list[str] = [recommendation]
-    if disclaimer:
-        parts.append(disclaimer)
-
-    if specialist:
-        parts.append(symptom_booking_nudge(specialist, clinic_id=clinic_id))
-    else:
-        parts.append(
-            "Če želite, lahko težavo opišete bolj natančno (npr. koža, sklepi, vid), "
-            "da vas usmerim k ustreznemu specialistu."
-        )
-
-    return "\n\n".join(parts)
+    return advice_only(None)
 

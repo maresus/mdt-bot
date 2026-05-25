@@ -91,7 +91,7 @@ def handle_service_info_intent(
     ]
     if any(w in _lowered_msg for w in _pacer_kw):
         return (
-            "Osebe s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav žal ne morejo opraviti. "
+            "Žal, z vgrajenim srčnim spodbujevalnikom ali defibrilatorjem MR preiskave ne morete opraviti. "
             "Prosimo, posvetujte se z vašim zdravnikom ali nas pokličite na ☎️ 02 23 53 552."
         )
 
