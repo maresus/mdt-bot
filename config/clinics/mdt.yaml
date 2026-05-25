@@ -15,7 +15,8 @@ services:
   mr:
     name: "Magnetnoresonančna tomografija (MR)"
     type: "samoplacniski_in_napotnica"
-    duration_minutes: 30
+    duration_minutes: 45
+    price_range: "od 200 €"
     description: "MR preiskave glave, hrbtenice, sklepov, trebuha, dojk, prostate in več"
     requires_questionnaire: true
     subtypes:
@@ -34,19 +35,22 @@ services:
   rtg:
     name: "Rentgensko slikanje (RTG)"
     type: "samoplacniski_in_napotnica"
-    duration_minutes: 15
+    duration_minutes: 20
+    price_range: "od 30 €"
     description: "Rentgensko slikanje različnih delov telesa"
     requires_questionnaire: false
   uz:
     name: "Ultrazvočna diagnostika (UZ)"
     type: "samoplacniski"
-    duration_minutes: 15
+    duration_minutes: 30
+    price_range: "od 60 €"
     description: "Diagnostični ultrazvok – izključno samoplačniško"
     requires_questionnaire: false
   uz_posegi:
     name: "UZ vodeni posegi"
     type: "samoplacniski"
     duration_minutes: 30
+    price_range: "po dogovoru"
     description: "Izpiranje kalcifikacij, aplikacija kortikosteroida, izpraznitev ganglionske ciste"
     requires_questionnaire: false
     subtypes:
@@ -56,7 +60,8 @@ services:
   scitnica:
     name: "Ambulanta za bolezni ščitnice"
     type: "napotnica"
-    duration_minutes: 30
+    duration_minutes: 45
+    price_range: "po dogovoru"
     description: "Pregledi ščitnice, UZ ščitnice"
     requires_questionnaire: false
 

@@ -369,9 +369,9 @@ def _service_price_info(service_type: Optional[str], clinic_id: str | None = Non
         "general.service_price",
         clinic_id=clinic_id,
         label=label.capitalize(),
-        name=info["name"],
-        price_range=info["price_range"],
-        duration_minutes=info["duration_minutes"],
+        name=info.get("name", label),
+        price_range=info.get("price_range", "po dogovoru"),
+        duration_minutes=info.get("duration_minutes", 30),
     )
 
 
