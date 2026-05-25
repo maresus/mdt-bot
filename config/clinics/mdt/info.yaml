@@ -12,15 +12,11 @@ facts:
       - pridem
       - parkiranje
       - parkirišče
-    response:
-      - |
-        Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**.
+    response: |
+      Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**.
 
-        Parkirate lahko na javnih parkiriščih na Lavričevi in Koroški cesti.
-        Če prihajate iz ljubljanske smeri: izhod Maribor jug, sledite smeri Dravograd čez Koroški most.
-      - |
-        Smo na **Lavričevi ulici 1 v Mariboru**.
-        Parkiranje: javna parkirišča na Lavričevi in Koroški cesti.
+      Parkirate lahko na javnih parkiriščih na Lavričevi in Koroški cesti.
+      Če prihajate iz ljubljanske smeri: izhod Maribor jug, sledite smeri Dravograd čez Koroški most.
 
   kontakt:
     priority: fast
@@ -56,11 +52,15 @@ facts:
       - vikend
       - sobota
       - nedelja
-    response:
-      - |
-        Delamo **vsak dan od 08:00 do 20:00**, vključno s sobotami in nedeljami.
-      - |
-        Odprti smo **vsak dan: 08:00–20:00** (pon–ned, tudi prazniki).
+      - jutranji
+      - zadnji termin
+      - prvi termin
+      - kdaj odprete
+      - kdaj zaprete
+    response: |
+      Delamo **vsak dan od 08:00 do 20:00**, vključno s soboto in nedeljo.
+
+      Jutranji termini so od **08:00 do 09:00**, zadnji termin sprejmemo ob **19:00–19:30**.
 
   cene:
     priority: fast
@@ -74,6 +74,15 @@ facts:
       - cena pregleda
       - koliko znaša
       - koliko znasa
+      - drago
+      - plačati
+      - placati
+      - vzamete za
+      - kolk pride
+      - koliko pride
+      - koliko ultrazvok
+      - koliko mr
+      - koliko rtg
     response:
       - |
         Okvirne cene samoplačniških preiskav pri MDT&T:
