@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from openai import OpenAI
 
+from app.core.llm_client import get_llm_client
 from app.rag.rag_engine import rag_engine
 
 
@@ -76,7 +77,10 @@ def chat(
     if model is None:
         model = _DEFAULT_MODEL
     if client is None:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        try:
+            client = get_llm_client()
+        except RuntimeError:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     system_prompt = _load_system_prompt()
 
