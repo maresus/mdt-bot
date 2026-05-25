@@ -128,6 +128,10 @@ facts:
       - razliko
       - primerjava
       - razlika med
+      - nimam napotnice
+      - brez napotnice
+      - ali brez napotnice
+      - brez napotnic
     response: |
       **Samoplačniško** — hitro, brez čakanja, plačate sami:
       Naročite se prek gumba 📅 ali pokličite **02 23 53 552**.
