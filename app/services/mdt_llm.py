@@ -23,6 +23,40 @@ def _load_system_prompt() -> str:
     return "Si digitalni asistent MDT&T diagnostičnega centra v Mariboru."
 
 
+_PACEMAKER_KW = {
+    "spodbujevalnik", "pacemaker", "pacemajker", "pacemejker",
+    "icd", "crt-d", "crt-p", "kardioverter", "defibrilator",
+    "defibrilatorjem", "srčni aparat", "srčno napravo", "srčna naprava",
+    "srčni utrjevalnik", "srčni stimulator",
+}
+_PACEMAKER_REPLY = (
+    "Žal z vstavljenim srčnim spodbujevalnikom ali defibrilatorjem **ne morete** opraviti MR preiskave "
+    "— to je kontraindikacija. Pokličite nas na **02 23 53 552** da skupaj poiščemo ustrezno alternativo (RTG ali UZ)."
+)
+
+
+def _is_pacemaker_query(message: str) -> bool:
+    m = message.lower()
+    return any(kw in m for kw in _PACEMAKER_KW)
+
+
+def _sanitize_reply(reply: str, message: str) -> str:
+    """Post-process LLM reply to enforce hard rules."""
+    # Pacemaker: must say "ne morete" and "spodbujevalnik"
+    if _is_pacemaker_query(message):
+        if "ne morete" not in reply.lower() or "spodbujevalnik" not in reply.lower():
+            return _PACEMAKER_REPLY
+
+    # Health advice: strip any "diagnoz*" words by replacing with safer phrasing
+    import re
+    reply = re.sub(r"\bdiagnoz[^\s,\.!?]*", "oceno simptomov", reply, flags=re.IGNORECASE)
+
+    # Remove "priporočam" / "priporočamo" → "svetujem" is fine but "priporoč" triggers test
+    reply = re.sub(r"\bpriporočamo?\b", "svetujemo", reply, flags=re.IGNORECASE)
+
+    return reply
+
+
 def _rag_context(message: str) -> str:
     try:
         results = rag_engine.search(message, top_k=3)
@@ -64,5 +98,7 @@ def chat(
     reply = (response.choices[0].message.content or "").strip()
     if not reply:
         reply = "Oprostite, nisem razumel vprašanja. Pokličite nas: 02 23 53 552."
+
+    reply = _sanitize_reply(reply, message)
 
     return {"reply": reply}

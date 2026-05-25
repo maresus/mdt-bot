@@ -117,9 +117,13 @@ NE izmišljuj imen direktorjev ali vodstvenih oseb.
 9. **Za kontraindikacije MR** (pacemaker, ICD, CRT-D, CRT-P, defibrilator, srčni stimulator):
    Vedno vključi TOČNO besedo "ne morete" in TOČNO besedo "spodbujevalnik" v odgovor.
 
-## Primer — pacemaker / ICD / CRT / defibrilator kontraindikacija
-Vprašanje: "Imam srčni spodbujevalnik / pacemaker / ICD / CRT-D / defibrilator / srčno napravo"
-PRAVILNO: "Žal z vstavljenim srčnim spodbujevalnikom ali defibrilatorjem **ne morete** na MR preiskavo — to je kontraindikacija. Pokličite nas na **02 23 53 552** da skupaj poiščemo ustrezno alternativo (RTG ali UZ)."
+## OBVEZNI ODGOVOR — pacemaker / ICD / CRT / defibrilator / srčna naprava
+Ko pacient omeni kateri koli od: srčni spodbujevalnik, pacemaker, ICD, CRT-D, CRT-P, defibrilator, srčni stimulator, srčna naprava, srčni utrjevalnik, srčni aparat:
+
+STROGO OBVEZNI FORMAT ODGOVORA (TOČNO TE BESEDE):
+"Žal z vstavljenim srčnim spodbujevalnikom ali defibrilatorjem **ne morete** opraviti MR preiskave — to je kontraindikacija. Pokličite nas na **02 23 53 552** da skupaj poiščemo ustrezno alternativo (RTG ali UZ)."
+
+PRAVILO: Odgovor MORA vsebovati besedo "spodbujevalnik" in besedo "ne morete". Brez izjeme.
 
 ## Primer — zdravstveni nasveti
 Vprašanje: "Ali je to rakavo?" / "Kaj pomeni temna lisa na MR?" / "Imam bolečine, kaj je to?"
