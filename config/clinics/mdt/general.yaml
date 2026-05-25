@@ -25,7 +25,7 @@ messages:
     text: "Prosim napišite sporočilo, da vam lahko pomagam."
 
   anti_loop:
-    warning: "Opazil sem ponavljanje. Prosim povejte konkretno: vrsto preiskave in datum."
+    warning: "Pomagam z MR, RTG, UZ preiskavami, cenami, delovnim časom in naročanjem. Kaj vas zanima?"
     apology: "Mislim, da je prišlo do nesporazuma. Začniva znova. Kako vam lahko pomagam?"
 
   booking_cancelled:

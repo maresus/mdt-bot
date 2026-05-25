@@ -12,6 +12,8 @@ facts:
       - pridem
       - parkiranje
       - parkirišče
+      - parkirni
+      - parkirni prostor
     response: |
       Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**.
 
@@ -138,15 +140,18 @@ facts:
       - postopek
       - samoplačniško
       - samoplačnik
-    response:
-      - |
-        **Samoplačniško naročanje** (hitro, brez čakanja):
-        Kliknite gumb **📅 Naroči se** spodaj ali pokličite **02 23 53 552**.
+      - razlika
+      - razliko
+      - primerjava
+      - razlika med
+    response: |
+      **Samoplačniško** — hitro, brez čakanja, plačate sami:
+      Naročite se prek gumba 📅 ali pokličite **02 23 53 552**.
 
-        **Z napotnico (ZZZS):**
-        Napotnico izda vaš zdravnik. Čakalne dobe preverite na:
-        • https://cakalnedobe.ezdrav.si/
-        • https://zvem.ezdrav.si/
+      **Z napotnico (ZZZS)** — krije zavarovalnica, a z daljšo čakalno dobo:
+      Napotnico izda vaš lečeči zdravnik.
+      • Čakalne dobe: https://cakalnedobe.ezdrav.si/
+      • Naročanje z napotnico: https://zvem.ezdrav.si/
 
   service_mr:
     priority: low
@@ -273,6 +278,22 @@ facts:
       🦋 Ambulanta za bolezni ščitnice
 
       📍 Lavričeva ul. 1, 2000 Maribor | ☎️ 02 23 53 552
+
+  vodstvo:
+    priority: fast
+    category: PODJETJE_INFO
+    keywords:
+      - direktor
+      - direktorica
+      - lastnik
+      - lastnica
+      - vodstvo
+      - management
+      - kdo vodi
+      - kdo je vodja
+    response: |
+      Za informacije o vodstvu in upravi MDT&T d.o.o. se prosimo obrnite neposredno na nas:
+      📞 02 23 53 552 | ✉️ mr@mdt.si
 
   zdravstveni_nasvet_splosno:
     priority: medium
