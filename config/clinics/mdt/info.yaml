@@ -103,31 +103,6 @@ facts:
 
         Točno ceno dobite na ☎️ 02 23 53 552 ali ✉️ mr@mdt.si.
 
-  napotnica:
-    priority: fast
-    category: NAROCANJE_INFO
-    keywords:
-      - napotnica
-      - napotnico
-      - napotnic
-      - napotnco
-      - z napotnico
-      - zavarovalnica
-      - zzzs
-      - zavarovan
-      - čakalna doba
-      - cakalna doba
-    response: |
-      **Naročanje z napotnico (prek ZZZS):**
-
-      Napotnico izda vaš lečeči zdravnik. Čakalne dobe so odvisne od vrste napotnice in so skladne s pravilniki NIJZ.
-
-      Koristni povezave:
-      • Preverite čakalne dobe: https://cakalnedobe.ezdrav.si/
-      • Naročanje z napotnico (ZVEM): https://zvem.ezdrav.si/
-
-      Za informacije o čakalnih dobah pri MDT&T pokličite **02 23 53 552**.
-
   postopek_narocanja:
     priority: fast
     category: NAROCANJE_INFO
@@ -152,6 +127,31 @@ facts:
       Napotnico izda vaš lečeči zdravnik.
       • Čakalne dobe: https://cakalnedobe.ezdrav.si/
       • Naročanje z napotnico: https://zvem.ezdrav.si/
+
+  napotnica:
+    priority: fast
+    category: NAROCANJE_INFO
+    keywords:
+      - napotnica
+      - napotnico
+      - napotnic
+      - napotnco
+      - z napotnico
+      - zavarovalnica
+      - zzzs
+      - zavarovan
+      - čakalna doba
+      - cakalna doba
+    response: |
+      **Naročanje z napotnico (prek ZZZS):**
+
+      Napotnico izda vaš lečeči zdravnik. Čakalne dobe so odvisne od vrste napotnice in so skladne s pravilniki NIJZ.
+
+      Koristni povezave:
+      • Preverite čakalne dobe: https://cakalnedobe.ezdrav.si/
+      • Naročanje z napotnico (ZVEM): https://zvem.ezdrav.si/
+
+      Za informacije o čakalnih dobah pri MDT&T pokličite **02 23 53 552**.
 
   service_mr:
     priority: low
