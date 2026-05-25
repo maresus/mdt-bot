@@ -100,8 +100,8 @@ def handle_fast_pass(
             "po operacij", "rehabilitacij", "poškodb", "poskodb", "glivic",
         ]
         if any(c in _msg_lower for c in _symptom_cues):
-            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*"
-            if "zdravniški nasvet" not in fast_reply and "diagnoza" not in fast_reply:
+            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniško mnenje. Za natančno oceno se posvetujte z zdravnikom.*"
+            if "zdravniški nasvet" not in fast_reply and "zdravniško mnenje" not in fast_reply:
                 fast_reply = fast_reply.rstrip() + _disclaimer
 
     if deps.is_in_flow(session_id):

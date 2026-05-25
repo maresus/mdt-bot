@@ -892,8 +892,8 @@ def handle_unified_routing(
             "rehabilitacij", "poškodb", "poskodb", "glivic", "izpusc", "izpušč",
         ]
         if any(c in _msg_l for c in _symptom_cues_router) or _looks_like_medical_statement(message):
-            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniški nasvet ali diagnoza. Za natančno oceno se posvetujte z zdravnikom.*"
-            if "zdravniški nasvet" not in service_info_reply and "diagnoza" not in service_info_reply:
+            _disclaimer = "\n\n⚠️ *To je splošna usmeritev, ne zdravniško mnenje. Za natančno oceno se posvetujte z zdravnikom.*"
+            if "zdravniški nasvet" not in service_info_reply and "zdravniško mnenje" not in service_info_reply:
                 service_info_reply = service_info_reply.rstrip() + _disclaimer
         return service_info_reply
 
