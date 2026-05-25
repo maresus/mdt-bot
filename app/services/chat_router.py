@@ -505,11 +505,13 @@ def handle_unified_routing(
 
     # 2. Pacemaker/ICD → absolute MR block (any intent path)
     _PACEMAKER_GLOBAL_KW = [
-        "spodbujevalnik", "pacemaker", "pacemejker", "pacemajker", "pacemeker",
+        "spodbujevalnik", "spodbujvalnik", "spodbujevaliko", "spodbujevalik",
+        "pacemaker", "pacemejker", "pacemajker", "pacemeker",
         "defibrilator", " icd", "srčni icd", "srčni stimulator", "stimulator srca",
         "srčna naprava", "srčno napravo", "srčni aparat", "utrjevalnik",
         "srčni utrjevalnik", "cardiac pacemaker", "cardiac device",
         "implantiran srčni", "srčni vsadek",
+        "crt-d", "crt-p", "crt naprava", "kardioverter", "kardioverterja",
     ]
     if any(w in _g_lowered for w in _PACEMAKER_GLOBAL_KW):
         return (

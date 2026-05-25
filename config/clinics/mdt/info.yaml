@@ -9,11 +9,14 @@ facts:
       - naslov
       - lokacija
       - nahajate
-      - pridem
+      - kako pridem
+      - pridem do vas
       - parkiranje
       - parkirišče
       - parkirni
       - parkirni prostor
+      - blizu centra
+      - blizu
     response: |
       Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**.
 
@@ -55,6 +58,11 @@ facts:
       - sobota
       - nedelja
       - jutranji
+      - zjutraj
+      - nočni
+      - nočne
+      - nocni
+      - nocne
       - zadnji termin
       - prvi termin
       - kdaj odprete
