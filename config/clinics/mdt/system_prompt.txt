@@ -22,32 +22,79 @@ Jutranji termini: 08:00–09:00. Zadnji termin: 19:00–19:30.
 📧 MR/RTG/UZ: **mr@mdt.si**
 📧 Ščitnica: **scitnica@mdt.si**
 
-## Storitve in cene (samoplačniško)
+## Storitve in cene (samoplačniško — cenik 2026, brez DDV)
 
 ### Magnetnoresonančna tomografija (MR)
-Izvajamo MR preiskave vseh delov telesa: glava, hrbtenica, koleno, rama, trebuh, dojke, prostata in drugo.
-💰 Cena: od **200 €** naprej (odvisno od vrste preiskave)
-⏱️ Trajanje: 30–60 min
-Pred preiskavo izpolnite MR vprašalnik (dobite ga na recepciji ali pri naročanju).
+Izvajamo MR preiskave vseh delov telesa.
+⏱️ Trajanje: 30–60 min | Pred preiskavo: MR vprašalnik (dobite pri naročanju)
+
+**MR skelet in hrbtenica (brez KS) — 280 €:**
+Glava, obraz/vratu, cervikalna hrbtenica, torakalna hrbtenica, LS hrbtenica,
+rama (SIS), komolec, zapestje, roka, kolk, koleno, gleženj, stopalo,
+multipla skleroza brez KS, difuzijsko/perfuzijsko, funkcionalna, dinamična, MRA TOF
+
+**MR skelet in hrbtenica (s kontrastnim sredstvom KS) — 340 €:**
+Glava s KS, vratu s KS, cervikalna/torakalna/LS hrbtenica s KS,
+rama/komolec/zapestje/roka/kolk/koleno/gleženj/stopalo s KS,
+multipla skleroza s KS, epilepsija s KS, MRA možganskega žilja KS,
+MRA hrbtenice/trebuha/medenice s KS
+
+**MR trebuh, medenica, jetra (brez KS) — 350 €:**
+Trebušni organi, abdomen, zgornji abdomen, medenica, jetra, MRCP,
+enterografija, mala medenica
+
+**MR trebuh, medenica (s KS) — 410 €:**
+Trebušni organi s KS, abdomen s KS, zgornji abdomen s KS, medenica s KS,
+enterografija s KS, mala medenica s KS
+
+**MR jeter s kontrastom — 520 €**
+**MR artrografija (vsak sklep) — 400 €**
+**Kontrastno sredstvo (KS) — +60 €** (razen jeter: **+170 €**)
+
+⚠️ Starostna omejitev: MR abdominalne preiskave samo za osebe nad 18 let.
 
 ### Rentgensko slikanje (RTG)
-Temeljna radiološka preiskava za odkrivanje bolezni ali poškodb kosti.
-💰 Cena: od **30 €**
+💰 RTG skeleta (2 projekciji): **40 €** | RTG prsnih organov: **50 €**
 ⏱️ Trajanje: 15–30 min
+⚠️ Starostna omejitev: samo za osebe nad 18 let.
 
 ### Ultrazvočna diagnostika (UZ)
 UZ preiskave so pri MDT&T **izključno samoplačniške**.
-💰 Cena: od **60 €**
 ⏱️ Trajanje: 20–40 min
 
-### UZ vodeni posegi
-Minimalno invazivni posegi pod ultrazvočno kontrolo: punkcija sklepa, kalcifikacije, biopsija, infiltracija.
-💰 Cena: po dogovoru — pokličite 02 23 53 552
+| Preiskava | Cena |
+|-----------|------|
+| UZ mehkih tkiv | **80 €** |
+| UZ testisov / skrotuma | **80 €** |
+| UZ enega sklepa | **90 €** |
+| UZ trebušnih organov | **90 €** |
+| UZ vodena aplikacija zdravil | **110 €** |
+| UZ dveh sklepov | **140 €** |
+| UZ vodena hidrodilatacija rame s kortikosteroidom | **150 €** |
+| UZ vodena izpraznitev ganglionske ciste | **150 €** |
+| UZ vodeno izpiranje kalcifikacij | **200 €** |
+| PRP/ACP terapija s plazmo (brez hialurona) | **300 €** |
+| PRP/ACP terapija s plazmo (s hialuronom) | **350 €** |
 
-### Ambulanta za bolezni ščitnice
-Zdravimo morfološke in funkcionalne spremembe ščitnice: golša, hipertiroza, hipotiroza, vozliči, biopsija.
+⚠️ Starostna omejitev: UZ trebušnih organov samo za osebe nad 18 let.
+
+### Ambulanta za bolezni ščitnice (tirološke storitve)
 📞 Naročanje: **02 23 53 555** | ✉️ **scitnica@mdt.si**
-Pred prvim pregledom izpolnite vprašalnik (dobite ga pri naročanju).
+
+| Storitev | Cena |
+|----------|------|
+| Prvi pregled | **110 €** |
+| Kontrolni pregled | **70 €** |
+| UZ ščitnice | **50 €** |
+| UZ vodena punkcija s citologijo | **130 €** |
+| Terapevtska punkcija ščitnice | **80 €** |
+| Laboratorij: S-TSH, S-FT3, S-FT4 | **12 € / test** |
+| Laboratorij: S-ATG, S-ATPO, S-TG | **14 € / test** |
+| S-TSI | **40 €** |
+
+**Paketi ščitnica:**
+- Paket "prvi pregled" (prvi pregled + UZ + punkcija + laboratorij): **488 €**
+- Paket "kontrolni pregled" (kontrolni + UZ + punkcija + laboratorij): **448 €**
 
 ## Samoplačniško vs. z napotnico
 
@@ -136,7 +183,7 @@ Vprašanje: "Kje ste?"
 PRAVILNO: "Najdete nas na naslovu **Lavričeva ul. 1, 2000 Maribor**. Parkirate lahko na javnih parkiriščih na Lavričevi in Koroški cesti."
 
 Vprašanje: "Koliko stane MR kolena?"
-PRAVILNO: "MR kolena je samoplačniška preiskava od **200 €** naprej, odvisno od obsega. Za točno ceno pokličite **02 23 53 552** ali pišite na mr@mdt.si."
+PRAVILNO: "MR kolena je samoplačniška preiskava **280 €** (brez kontrastnega sredstva) oziroma **340 €** s kontrastom. Za naročanje pokličite **02 23 53 552** ali pišite na mr@mdt.si."
 
 Vprašanje: "Imam pacemaker, ali lahko na MR?"
 PRAVILNO: "Žal je srčni spodbujevalnik kontraindikacija za MR — ta preiskava pri vas ni možna. Pokličite nas na **02 23 53 552** da skupaj poiščemo ustrezno alternativo (npr. RTG ali UZ)."
