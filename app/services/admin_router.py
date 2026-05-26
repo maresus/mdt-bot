@@ -310,6 +310,7 @@ class AdminCreateReservation(BaseModel):
     date: str
     people: int = 1
     reservation_type: str = "table"
+    status: str = "pending"
     source: str = "admin"
     nights: Optional[int] = None
     rooms: Optional[int] = None
@@ -1173,7 +1174,7 @@ def create_admin_reservation(
             phone=data.phone,
             email=data.email,
             note=data.note,
-            status="confirmed",
+            status=data.status,
             admin_notes=data.admin_notes,
             kids=data.kids,
             kids_small=data.kids_small,

@@ -298,8 +298,7 @@
 
     <div class="stats-row">
       <div class="stat-badge s-pending" data-status="pending" onclick="setStatusFilter('pending')" style="cursor:pointer;" title="Filtriraj samo čakajoče">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
-      <div class="stat-badge s-ok" data-status="confirmed" onclick="setStatusFilter('confirmed')" style="cursor:pointer;" title="Filtriraj samo potrjene">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
-      <div class="stat-badge" data-status="rejected" onclick="setStatusFilter('rejected')" style="cursor:pointer;" title="Filtriraj zavrnjene">❌ Zavrnjeno: <span class="num" id="stat-rejected">0</span></div>
+      <div class="stat-badge s-ok">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
       <div class="stat-badge">📅 Danes: <span class="num" id="stat-today">0</span></div>
       <div class="stat-badge">📊 Teden: <span class="num" id="stat-week">0</span></div>
       <div class="stat-badge" style="flex:1; min-width:160px;">
@@ -307,11 +306,6 @@
                style="border:none; background:transparent; outline:none; width:100%; font-size:13px;"
                oninput="handleSearch(this.value)" />
       </div>
-    </div>
-    <div id="status-filter-bar" style="display:none; background:#eff6ff; border:1px solid var(--border); border-radius:8px; padding:8px 14px; margin-bottom:10px; display:none; align-items:center; gap:10px; font-size:13px;">
-      <span id="status-filter-label" style="font-weight:600; color:var(--primary);"></span>
-      <span id="status-filter-count" style="color:var(--text-muted);"></span>
-      <button class="btn btn-sm btn-neutral" onclick="setStatusFilter('VSE')" style="margin-left:auto;">✕ Počisti filter</button>
     </div>
 
     <div class="quick-add-card">
