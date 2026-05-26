@@ -696,7 +696,6 @@
       allReservations = rData.reservations || [];
       document.getElementById('stat-pending').textContent = stats.po_statusu?.pending || 0;
       document.getElementById('stat-confirmed').textContent = stats.po_statusu?.confirmed || 0;
-      document.getElementById('stat-rejected').textContent = stats.po_statusu?.rejected || 0;
       document.getElementById('stat-today').textContent = stats.danes || 0;
       document.getElementById('stat-week').textContent = stats.ta_teden || 0;
       buildCalData();
