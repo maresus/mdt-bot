@@ -308,6 +308,12 @@
       </div>
     </div>
 
+    <div id="status-filter-bar" style="display:none; align-items:center; gap:8px; padding:8px 12px; background:#fffbeb; border:1px solid var(--warning); border-radius:8px; font-size:13px; margin-bottom:8px;">
+      <span style="font-weight:600;" id="status-filter-label"></span>
+      <span id="status-filter-count" style="color:var(--text-muted);"></span>
+      <button onclick="setStatusFilter(statusFilter)" style="margin-left:auto; border:none; background:none; cursor:pointer; font-size:13px; color:var(--text-muted);">✕ Počisti filter</button>
+    </div>
+
     <div class="quick-add-card">
       <div>
         <h3>➕ Ročno dodajanje naročila</h3>
@@ -833,7 +839,7 @@
     resetModal();
     document.getElementById('modal-title').textContent = 'Novo naročilo';
     document.getElementById('edit-date').value = formatISO(new Date());
-    document.getElementById('edit-status').value = 'confirmed';
+    document.getElementById('edit-status').value = 'pending';
     refreshSlots();
     document.getElementById('edit-modal').classList.add('active');
   }
