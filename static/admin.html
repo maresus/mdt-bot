@@ -1006,10 +1006,11 @@
   }
 
   async function sendReply(channel='email') {
-    const id = parseInt(document.getElementById('edit-id').value);
+    const id = parseInt(document.getElementById('edit-id').value) || 0;
     const email = document.getElementById('edit-email').value;
     const phone = document.getElementById('edit-phone').value;
     const body = document.getElementById('reply-body').value.trim();
+    if (!id) { toast('Najprej shranite naročilo, nato pošljite sporočilo','err'); return; }
     if (!body) { toast('Sporočilo ne sme biti prazno','err'); return; }
     if (channel==='email'&&!email) { toast('Email manjka','err'); return; }
     if (channel==='sms'&&!phone) { toast('Telefon manjka','err'); return; }
@@ -1020,9 +1021,12 @@
         ? {reservation_id:id, phone, body, set_processing:false}
         : {reservation_id:id, email, subject:`Naročilo #${id} — MDT&T`, body, set_processing:false};
       const resp = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-      if (resp.ok) { toast('Poslano ✅','ok'); document.getElementById('reply-body').value=''; if(id) loadMessages(id); }
-      else toast('Napaka pri pošiljanju','err');
-    } catch { toast('Napaka','err'); }
+      if (resp.ok) { toast('Poslano ✅','ok'); document.getElementById('reply-body').value=''; loadMessages(id); }
+      else {
+        const d = await resp.json().catch(()=>({}));
+        toast(d.detail || 'Napaka pri pošiljanju','err');
+      }
+    } catch { toast('Napaka pri pošiljanju','err'); }
   }
 
   // ── Tab: Pogovori ──

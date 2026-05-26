@@ -287,7 +287,7 @@ class ReservationUpdate(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
-    reservation_id: int
+    reservation_id: Optional[int] = None
     email: str
     subject: str
     body: str
@@ -295,7 +295,7 @@ class SendMessageRequest(BaseModel):
 
 
 class SendSmsRequest(BaseModel):
-    reservation_id: int
+    reservation_id: Optional[int] = None
     phone: str
     body: str
     set_processing: bool = True
@@ -810,7 +810,9 @@ def send_message(
     if not data.email:
         raise HTTPException(status_code=400, detail="Email manjka")
     subject = _ensure_subject_tag(data.reservation_id, data.subject or "")
-    send_custom_message(data.email, subject, data.body)
+    sent = send_custom_message(data.email, subject, data.body)
+    if not sent:
+        raise HTTPException(status_code=503, detail="Email ni bil poslan — preverite SMTP/Resend konfiguracijo na Railway (SMTP_USER, SMTP_PASSWORD ali RESEND_API_KEY)")
     if data.reservation_id:
         service.add_reservation_message(
             reservation_id=data.reservation_id,
