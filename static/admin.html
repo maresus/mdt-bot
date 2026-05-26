@@ -71,6 +71,10 @@
     .stat-badge .num { font-weight: 700; font-size: 1.2rem; color: var(--primary); }
     .stat-badge.s-pending { border-left: 3px solid var(--warning); }
     .stat-badge.s-ok { border-left: 3px solid var(--success); }
+    .stat-badge[data-status]:hover { background: var(--bg); transform: translateY(-1px); transition: all .15s; }
+    .stat-badge[data-status].sf-active { outline: 2px solid var(--primary); background: rgba(67,139,209,0.08); }
+    .stat-badge[data-status].sf-active.s-pending { outline-color: var(--warning); background: rgba(245,158,11,0.08); }
+    .stat-badge[data-status].sf-active.s-ok { outline-color: var(--success); background: rgba(16,185,129,0.08); }
 
     /* Quick add */
     .quick-add-card {
@@ -293,8 +297,9 @@
   <div class="tab-content active" id="tab-narocila">
 
     <div class="stats-row">
-      <div class="stat-badge s-pending">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
-      <div class="stat-badge s-ok">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
+      <div class="stat-badge s-pending" data-status="pending" onclick="setStatusFilter('pending')" style="cursor:pointer;" title="Filtriraj samo čakajoče">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
+      <div class="stat-badge s-ok" data-status="confirmed" onclick="setStatusFilter('confirmed')" style="cursor:pointer;" title="Filtriraj samo potrjene">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
+      <div class="stat-badge" data-status="rejected" onclick="setStatusFilter('rejected')" style="cursor:pointer;" title="Filtriraj zavrnjene">❌ Zavrnjeno: <span class="num" id="stat-rejected">0</span></div>
       <div class="stat-badge">📅 Danes: <span class="num" id="stat-today">0</span></div>
       <div class="stat-badge">📊 Teden: <span class="num" id="stat-week">0</span></div>
       <div class="stat-badge" style="flex:1; min-width:160px;">
@@ -302,6 +307,11 @@
                style="border:none; background:transparent; outline:none; width:100%; font-size:13px;"
                oninput="handleSearch(this.value)" />
       </div>
+    </div>
+    <div id="status-filter-bar" style="display:none; background:#eff6ff; border:1px solid var(--border); border-radius:8px; padding:8px 14px; margin-bottom:10px; display:none; align-items:center; gap:10px; font-size:13px;">
+      <span id="status-filter-label" style="font-weight:600; color:var(--primary);"></span>
+      <span id="status-filter-count" style="color:var(--text-muted);"></span>
+      <button class="btn btn-sm btn-neutral" onclick="setStatusFilter('VSE')" style="margin-left:auto;">✕ Počisti filter</button>
     </div>
 
     <div class="quick-add-card">
@@ -597,6 +607,7 @@
   let currentDate = new Date();
   let selectedDate = new Date();
   let currentFilter = 'VSE';
+  let statusFilter = 'VSE';
   let searchTerm = '';
   let allReservations = [];
   let calendarData = {};
@@ -661,6 +672,27 @@
     setTimeout(() => t.remove(), 3200);
   }
 
+  // ── Status filter ──
+  function setStatusFilter(s) {
+    statusFilter = (statusFilter === s) ? 'VSE' : s;
+    document.querySelectorAll('.stat-badge[data-status]').forEach(b => {
+      b.classList.toggle('sf-active', b.dataset.status === statusFilter);
+    });
+    const bar = document.getElementById('status-filter-bar');
+    const label = document.getElementById('status-filter-label');
+    const cnt = document.getElementById('status-filter-count');
+    if (statusFilter === 'VSE') {
+      bar.style.display = 'none';
+    } else {
+      const names = {pending:'⏳ Čaka na potrditev', confirmed:'✅ Potrjeno', rejected:'❌ Zavrnjeno', processing:'📋 V obdelavi'};
+      const n = allReservations.filter(r => r.status === statusFilter).length;
+      label.textContent = names[statusFilter] || statusFilter;
+      cnt.textContent = `— ${n} naročil`;
+      bar.style.display = 'flex';
+    }
+    buildCalData(); renderCal(); renderPending();
+  }
+
   // ── Load data ──
   async function loadData() {
     try {
@@ -670,6 +702,7 @@
       allReservations = rData.reservations || [];
       document.getElementById('stat-pending').textContent = stats.po_statusu?.pending || 0;
       document.getElementById('stat-confirmed').textContent = stats.po_statusu?.confirmed || 0;
+      document.getElementById('stat-rejected').textContent = stats.po_statusu?.rejected || 0;
       document.getElementById('stat-today').textContent = stats.danes || 0;
       document.getElementById('stat-week').textContent = stats.ta_teden || 0;
       buildCalData();
@@ -687,6 +720,9 @@
       if (currentFilter === 'UZ vodeni') return loc.startsWith('UZ vodeni');
       return loc === currentFilter || loc.includes(currentFilter);
     });
+    if (statusFilter !== 'VSE') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
       filtered = filtered.filter(r => (r.name||'').toLowerCase().includes(t));
