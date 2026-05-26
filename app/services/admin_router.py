@@ -308,8 +308,8 @@ class ConfirmReservationRequest(BaseModel):
 
 class AdminCreateReservation(BaseModel):
     date: str
-    people: int
-    reservation_type: str
+    people: int = 1
+    reservation_type: str = "table"
     source: str = "admin"
     nights: Optional[int] = None
     rooms: Optional[int] = None
@@ -564,8 +564,7 @@ def update_reservation(
     valid_rooms = {"", None, "ALJAZ", "JULIJA", "ANA"}
     if res_type == "room" and location is not None and location not in valid_rooms:
         raise HTTPException(status_code=400, detail="Neveljavna soba")
-    if res_type == "table" and location is not None and location not in VALID_TABLE_LOCATIONS:
-        raise HTTPException(status_code=400, detail="Neveljavna vrsta pregleda/posega")
+    # MDT: lokacija za table (MR/RTG/UZ) ni validirana po stari listi
     ok = service.update_reservation(
         reservation_id,
         status=data.status,
@@ -1146,8 +1145,7 @@ def create_admin_reservation(
         if location not in valid_rooms:
             raise HTTPException(status_code=400, detail="Neveljavna soba")
     if data.reservation_type == "table":
-        if location and location not in VALID_TABLE_LOCATIONS:
-            raise HTTPException(status_code=400, detail="Neveljavna vrsta pregleda/posega")
+        pass  # MDT: lokacija je prosta (MR/RTG/UZ/Ščitnica — ne validiramo)
 
     if data.reservation_type == "room" and location:
         conflicts = _room_conflicts(0, location, data.date, data.nights)
