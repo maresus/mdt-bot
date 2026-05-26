@@ -733,9 +733,7 @@ class ReservationService:
         gdpr_consent: Optional[str] = None,
     ) -> int:
         created_at = datetime.now().isoformat()
-        # Admin / telefon / API vnosi se avtomatsko potrdijo
-        if source in ("admin", "phone", "api"):
-            status = "confirmed"
+        # Admin vnosi ohranijo eksplicitno poslan status (default je pending)
         conn = self._conn()
         ph = self._placeholder()
         placeholders = ", ".join([ph] * 32)  # 32 fields including gdpr_consent
