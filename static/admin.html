@@ -636,7 +636,7 @@
   }
 
   // ── Helpers ──
-  function formatISO(d) { return d.toISOString().split('T')[0]; }
+  function formatISO(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
   function formatSL(d) { return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()}`; }
   function parseSL(str) {
     if (!str) return null;
@@ -733,7 +733,7 @@
   }
 
   // ── Navigation ──
-  function selectDay(key) { selectedDate = new Date(key); renderDaySched(); }
+  function selectDay(key) { const [y,m,d] = key.split('-').map(Number); selectedDate = new Date(y, m-1, d); renderCal(); }
   function navigate(d) { currentDate.setMonth(currentDate.getMonth()+d); renderCal(); }
   function goToday() { currentDate = new Date(); selectedDate = new Date(); renderCal(); }
   function renderCal() { renderMiniCal(); renderDaySched(); }
@@ -746,7 +746,21 @@
     title.textContent = `${dn[selectedDate.getDay()]}, ${formatSL(selectedDate)}`;
     const key = formatISO(selectedDate);
     const appts = calendarData[key] || [];
-    let html = '<div class="day-grid">';
+    let html = '';
+
+    // Naročila brez določene ure — prikaži na vrhu
+    const unscheduled = appts.filter(a => !a.time);
+    if (unscheduled.length) {
+      html += `<div style="padding:10px 12px; background:#fffbeb; border-bottom:2px solid var(--warning);">
+        <div style="font-size:11px; font-weight:700; color:#78350f; margin-bottom:6px;">📋 Naročila brez določene ure (${unscheduled.length})</div>
+        ${unscheduled.map(a => `<div class="appt ${a.status}" onclick="event.stopPropagation();openEdit(${a.id})" style="margin-bottom:4px; white-space:normal; padding:5px 8px;" title="${esc(a.name||'')}">
+          <strong>${esc(a.name||'?')}</strong> · ${esc(a.location||'')} · <span style="opacity:.7">${a.phone||''}</span>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    // Urna mreža za naročila z določeno uro
+    html += '<div class="day-grid">';
     TIMES.forEach(time => {
       html += `<div class="time-label">${time}</div>`;
       const ta = appts.filter(a => a.time === time);
