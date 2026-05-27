@@ -300,7 +300,7 @@
     <div class="stats-row">
       <div class="stat-badge s-pending" data-status="pending" onclick="setStatusFilter('pending')" style="cursor:pointer;" title="Filtriraj samo čakajoče">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
       <div class="stat-badge s-ok">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
-      <div class="stat-badge" data-date="today" onclick="setDateFilter()" style="cursor:pointer;" title="Filtriraj samo današnje">📅 Danes: <span class="num" id="stat-today">0</span></div>
+      <div class="stat-badge">📅 Danes: <span class="num" id="stat-today">0</span></div>
       <div class="stat-badge">📊 Teden: <span class="num" id="stat-week">0</span></div>
       <div class="stat-badge" style="flex:1; min-width:160px;">
         <input type="text" id="search-input" placeholder="🔍 Išči po imenu..."
@@ -853,7 +853,7 @@
     resetModal();
     document.getElementById('modal-title').textContent = 'Novo naročilo';
     document.getElementById('edit-date').value = formatISO(new Date());
-    document.getElementById('edit-status').value = 'pending';
+    document.getElementById('edit-status').value = 'confirmed';
     refreshSlots();
     document.getElementById('edit-modal').classList.add('active');
   }
