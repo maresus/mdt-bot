@@ -75,6 +75,7 @@
     .stat-badge[data-status].sf-active { outline: 2px solid var(--primary); background: rgba(67,139,209,0.08); }
     .stat-badge[data-status].sf-active.s-pending { outline-color: var(--warning); background: rgba(245,158,11,0.08); }
     .stat-badge[data-status].sf-active.s-ok { outline-color: var(--success); background: rgba(16,185,129,0.08); }
+    .stat-badge[data-date].sf-active { outline: 2px solid var(--primary); background: rgba(67,139,209,0.08); }
 
     /* Quick add */
     .quick-add-card {
@@ -299,7 +300,7 @@
     <div class="stats-row">
       <div class="stat-badge s-pending" data-status="pending" onclick="setStatusFilter('pending')" style="cursor:pointer;" title="Filtriraj samo čakajoče">⏳ Čaka: <span class="num" id="stat-pending">0</span></div>
       <div class="stat-badge s-ok">✅ Potrjeno: <span class="num" id="stat-confirmed">0</span></div>
-      <div class="stat-badge">📅 Danes: <span class="num" id="stat-today">0</span></div>
+      <div class="stat-badge" data-date="today" onclick="setDateFilter()" style="cursor:pointer;" title="Filtriraj samo današnje">📅 Danes: <span class="num" id="stat-today">0</span></div>
       <div class="stat-badge">📊 Teden: <span class="num" id="stat-week">0</span></div>
       <div class="stat-badge" style="flex:1; min-width:160px;">
         <input type="text" id="search-input" placeholder="🔍 Išči po imenu..."
@@ -608,6 +609,7 @@
   let selectedDate = new Date();
   let currentFilter = 'VSE';
   let statusFilter = 'VSE';
+  let dateFilter = false;
   let searchTerm = '';
   let allReservations = [];
   let calendarData = {};
@@ -672,6 +674,14 @@
     setTimeout(() => t.remove(), 3200);
   }
 
+  // ── Date filter (Danes) ──
+  function setDateFilter() {
+    dateFilter = !dateFilter;
+    document.querySelectorAll('.stat-badge[data-date]').forEach(b => b.classList.toggle('sf-active', dateFilter));
+    if (dateFilter) { currentDate = new Date(); selectedDate = new Date(); }
+    buildCalData(); renderCal(); renderPending();
+  }
+
   // ── Status filter ──
   function setStatusFilter(s) {
     statusFilter = (statusFilter === s) ? 'VSE' : s;
@@ -721,6 +731,10 @@
     });
     if (statusFilter !== 'VSE') {
       filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    if (dateFilter) {
+      const todayKey = formatISO(new Date());
+      filtered = filtered.filter(r => { const d = parseSL(r.date); return d && formatISO(d) === todayKey; });
     }
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
