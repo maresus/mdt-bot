@@ -61,8 +61,8 @@
 
     /* NAROČI SE */
     .narocise-bar { padding: 10px 16px; background: var(--primary-lighter); border-top: 1px solid var(--border); flex-shrink: 0; }
-    .narocise-btn { width: 100%; padding: 13px 20px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .narocise-btn:hover { background: var(--primary-dark); }
+    .narocise-btn { width: 100%; padding: 13px 20px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+    .narocise-btn:hover { background: var(--primary-dark); color: #fff; }
 
     /* INPUT */
     .input-area { padding: 12px 16px; background: var(--white); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
@@ -74,65 +74,6 @@
     .send-btn svg { width: 20px; height: 20px; fill: currentColor; }
     .powered { padding: 6px; text-align: center; font-size: 0.65rem; color: #bbb; background: var(--white); }
 
-    /* BOOKING OVERLAY */
-    .booking-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(20,40,70,0.45); display: none; align-items: flex-end; justify-content: center; }
-    .booking-overlay.open { display: flex; }
-    .booking-sheet { background: var(--white); border-radius: 24px 24px 0 0; width: 100%; max-width: 860px; max-height: 92vh; overflow-y: auto; animation: slide-up 0.28s cubic-bezier(.32,.72,0,1); }
-    @keyframes slide-up { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .sheet-topbar { position: sticky; top: 0; z-index: 10; background: var(--primary); padding: 14px 20px; display: flex; align-items: center; gap: 12px; border-radius: 24px 24px 0 0; }
-    .sheet-back { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .sheet-back:hover { background: rgba(255,255,255,0.3); }
-    .sheet-title { color: #fff; font-size: 1rem; font-weight: 700; }
-    .sheet-body { padding: 20px 20px 28px; }
-
-    /* Type selector */
-    .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .type-card { border: 2px solid var(--border); border-radius: 14px; padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.15s; }
-    .type-card:hover { border-color: var(--primary); }
-    .type-card.selected { border-color: var(--primary); background: var(--primary-light); }
-    .type-card .type-icon { font-size: 1.6rem; margin-bottom: 6px; }
-    .type-card .type-name { font-size: 0.85rem; font-weight: 700; }
-    .type-card .type-desc { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
-
-    /* Napotnica info */
-    .napotnica-info { display: none; background: #fff8e1; border: 1.5px solid #f59e0b; border-radius: 14px; padding: 16px; margin-top: 4px; }
-    .napotnica-info h3 { font-size: 0.9rem; font-weight: 700; color: #92400e; margin-bottom: 10px; }
-    .napotnica-info p { font-size: 0.82rem; color: #78350f; line-height: 1.5; }
-    .napotnica-types { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .napotnica-type { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 10px 12px; }
-    .napotnica-type strong { font-size: 0.82rem; color: #92400e; }
-    .napotnica-type span { font-size: 0.78rem; color: #78350f; display: block; margin-top: 2px; }
-
-    /* Booking form */
-    .booking-form { display: none; }
-    .booking-form.visible { display: block; }
-    .form-section { margin-bottom: 16px; }
-    .form-section-title { font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-    .form-field { margin-bottom: 12px; }
-    .form-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-    .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.88rem; outline: none; background: var(--primary-lighter); transition: border-color 0.15s; }
-    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--primary); background: var(--white); }
-    .form-field textarea { min-height: 70px; resize: none; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    /* MR vprašalnik */
-    .mr-questionnaire { display: none; }
-    .mr-questionnaire.visible { display: block; }
-    .mr-question { background: var(--primary-lighter); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
-    .mr-question p { font-size: 0.83rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-    .q-options { display: flex; gap: 8px; }
-    .q-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .q-btn.yes.selected { background: #fee2e2; border-color: var(--danger); color: var(--danger); }
-    .q-btn.no.selected { background: #dcfce7; border-color: var(--success); color: var(--success); }
-    .mr-block-warning { display: none; background: #fee2e2; border: 2px solid var(--danger); border-radius: 12px; padding: 14px; margin-top: 4px; font-size: 0.83rem; color: #7f1d1d; line-height: 1.5; }
-
-    .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
-    .submit-btn:hover { background: var(--primary-dark); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .form-success { display: none; text-align: center; padding: 30px 16px; }
-    .form-success .s-icon { font-size: 3rem; margin-bottom: 12px; }
-    .form-success h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--success); }
-    .form-success p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -160,10 +101,10 @@
   </div>
 
   <div class="narocise-bar">
-    <button class="narocise-btn" id="narociseBtn">
+    <a class="narocise-btn" href="https://www.mdt.si/narocanje/" target="_blank" rel="noopener">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-      Naroči se na preiskavo
-    </button>
+      Naroči se na preiskavo ↗
+    </a>
   </div>
 
   <div class="input-area">
@@ -175,15 +116,12 @@
   <div class="powered">MDT&amp;T d.o.o. · Lavričeva ul. 1, Maribor · 02 23 53 552</div>
 </div>
 
-<!-- BOOKING OVERLAY -->
-<div class="booking-overlay" id="bookingOverlay">
+<!-- booking overlay removed — narocanje via mdt.si/narocanje/ -->
+<div style="display:none" id="bookingOverlay">
   <div class="booking-sheet">
     <div class="sheet-topbar">
-      <button class="sheet-back" id="closeSheet">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        Nazaj na pogovor
-      </button>
-      <span class="sheet-title">Naroči se na preiskavo</span>
+      <button class="sheet-back" id="closeSheet"></button>
+      <span class="sheet-title"></span>
     </div>
     <div class="sheet-body">
       <div id="step1">
@@ -336,100 +274,7 @@
     localStorage.setItem(SESSION_KEY, sessionId);
   }
 
-  const mrAnswers = {};
-  let mrBlocked = false;
-
-  function answerQ(qId, answer) {
-    mrAnswers[qId] = answer;
-    document.querySelectorAll(`[onclick*="'${qId}'"]`).forEach(btn => btn.classList.remove('selected'));
-    const selector = answer === 'da' ? `[onclick="answerQ('${qId}','da')"]` : `[onclick="answerQ('${qId}','ne')"]`;
-    document.querySelector(selector)?.classList.add('selected');
-    if (qId === 'spodbujevalnik') {
-      const warn = document.getElementById('warn-spodbujevalnik');
-      if (answer === 'da') { warn.style.display = 'block'; mrBlocked = true; document.getElementById('submitBtn').disabled = true; }
-      else { warn.style.display = 'none'; mrBlocked = false; document.getElementById('submitBtn').disabled = false; }
-    }
-  }
-
-  function isMR(val) { return val && val.startsWith('MR'); }
-
-  function onServiceChange() {
-    const val = document.getElementById('bf-service').value;
-    const mrQ = document.getElementById('mrQuestionnaire');
-    if (isMR(val)) { mrQ.classList.add('visible'); }
-    else { mrQ.classList.remove('visible'); mrBlocked = false; document.getElementById('submitBtn').disabled = false; }
-  }
-
-  let selectedType = null;
-  function selectType(type) {
-    selectedType = type;
-    document.getElementById('typesamoplacniski').classList.toggle('selected', type === 'samoplacniski');
-    document.getElementById('typenapotnica').classList.toggle('selected', type === 'napotnica');
-    document.getElementById('napotnicaInfo').style.display = type === 'napotnica' ? 'block' : 'none';
-    const form = document.getElementById('bookingForm');
-    if (type === 'samoplacniski') {
-      form.classList.add('visible');
-      document.getElementById('bf-date').min = new Date().toISOString().split('T')[0];
-    } else { form.classList.remove('visible'); }
-    document.getElementById('formSuccess').style.display = 'none';
-  }
-
-  async function submitBooking() {
-    if (mrBlocked) return;
-    const name = document.getElementById('bf-name').value.trim();
-    const phone = document.getElementById('bf-phone').value.trim();
-    const email = document.getElementById('bf-email').value.trim();
-    const service = document.getElementById('bf-service').value;
-    if (!name || !phone || !service) { alert('Prosimo izpolnite ime, telefon in vrsto preiskave.'); return; }
-    if (!email) { alert('E-pošta je obvezna za potrditev termina.'); return; }
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Pošiljam…';
-    const payload = {
-      session_id: sessionId, clinic_id: 'mdt',
-      booking_form: {
-        name, phone, email, service,
-        date: document.getElementById('bf-date').value,
-        time: document.getElementById('bf-time').value,
-        note: document.getElementById('bf-note').value.trim(),
-        mr_questionnaire: isMR(service) ? {...mrAnswers} : null,
-        booking_type: 'samoplacniski',
-      }
-    };
-    try {
-      await fetch('/reservations/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    } catch(e) { console.error(e); }
-    document.getElementById('bookingForm').classList.remove('visible');
-    document.getElementById('step1').style.display = 'none';
-    document.getElementById('formSuccess').style.display = 'block';
-    const mrNote = isMR(service) && Object.keys(mrAnswers).length ? '\nMR vprašalnik izpolnjen.' : '';
-    addMessageToDOM(`Naročilo oddano: ${service}\n${name} · ${phone} · ${email}${mrNote}`, 'user');
-    addMessageToDOM('Hvala za naročilo! Ekipa MDT&T vas bo kontaktirala za potrditev termina.\n\nPotrditveni email z navodili za pripravo preiskave boste prejeli na vaš email naslov.', 'bot');
-    setTimeout(() => { closeSheet(); resetBookingForm(); }, 4000);
-  }
-
-  function resetBookingForm() {
-    selectedType = null;
-    Object.keys(mrAnswers).forEach(k => delete mrAnswers[k]);
-    mrBlocked = false;
-    ['typesamoplacniski','typenapotnica'].forEach(id => document.getElementById(id).classList.remove('selected'));
-    document.getElementById('napotnicaInfo').style.display = 'none';
-    document.getElementById('bookingForm').classList.remove('visible');
-    document.getElementById('mrQuestionnaire').classList.remove('visible');
-    document.getElementById('formSuccess').style.display = 'none';
-    document.getElementById('step1').style.display = 'block';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 'Pošlji naročilo →';
-    document.getElementById('warn-spodbujevalnik').style.display = 'none';
-    ['bf-name','bf-phone','bf-email','bf-date','bf-time','bf-note'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('bf-service').selectedIndex = 0;
-    document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
-  }
-
-  const overlay = document.getElementById('bookingOverlay');
-  document.getElementById('narociseBtn').addEventListener('click', () => overlay.classList.add('open'));
-  document.getElementById('closeSheet').addEventListener('click', closeSheet);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
-  function closeSheet() { overlay.classList.remove('open'); }
+  function closeSheet() {}
 
   function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 

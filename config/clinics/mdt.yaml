@@ -8,15 +8,19 @@ contact:
   phone_mr2: "02 23 53 553"
   phone_scitnica: "02 23 53 555"
   address: "Lavričeva ul. 1, 2000 Maribor"
-  hours: "Vsak dan 08:00–20:00"
-  cenik_url: "https://www.mdt.si/wp-content/uploads/2025/11/2026-cenik_MDTT.pdf"
+  hours_radiological: "Pon–Pet: 07:00–21:00"
+  hours_scitnica_mon_tue: "12:00–19:30"
+  hours_scitnica_wed_fri: "07:00–15:00"
+  website: "https://www.mdt.si"
+  narocanje_url: "https://www.mdt.si/narocanje/"
+  cenik_url: "https://www.mdt.si/cenik/"
 
 services:
   mr:
     name: "Magnetnoresonančna tomografija (MR)"
     type: "samoplacniski_in_napotnica"
     duration_minutes: 45
-    price_range: "od 200 €"
+    price_range: "280–520 €"
     description: "MR preiskave glave, hrbtenice, sklepov, trebuha, dojk, prostate in več"
     requires_questionnaire: true
     subtypes:
@@ -36,14 +40,14 @@ services:
     name: "Rentgensko slikanje (RTG)"
     type: "samoplacniski_in_napotnica"
     duration_minutes: 20
-    price_range: "od 30 €"
+    price_range: "40–50 €"
     description: "Rentgensko slikanje različnih delov telesa"
     requires_questionnaire: false
   uz:
     name: "Ultrazvočna diagnostika (UZ)"
     type: "samoplacniski"
     duration_minutes: 30
-    price_range: "od 60 €"
+    price_range: "od 80 €"
     description: "Diagnostični ultrazvok – izključno samoplačniško"
     requires_questionnaire: false
   uz_posegi:
@@ -165,15 +169,16 @@ info_responses:
     📞 Ambulanta za bolezni ščitnice: 02 23 53 555
     ✉️ scitnica@mdt.si
 
-    🕐 Delovni čas: vsak dan 08:00–20:00
-  delovni_cas: "Odprti smo vsak dan od 08:00 do 20:00."
+    🕐 Radiološka ambulanta: Pon–Pet 07:00–21:00
+    🕐 Ambulanta za ščitnico: Pon–Tor 12:00–19:30 | Sre–Pet 07:00–15:00
+  delovni_cas: "Radiološka ambulanta: pon–pet 07:00–21:00. Ambulanta za ščitnico: pon–tor 12:00–19:30, sre–pet 07:00–15:00."
   cenik: |
     Cenik vseh samoplačniških storitev najdete na naši spletni strani.
 
     Ultrazvočne preiskave izvajamo izključno samoplačniško.
     Za MR in RTG je možno naročanje na napotnico ali samoplačniško.
 
-    Cenik: https://www.mdt.si/wp-content/uploads/2025/11/2026-cenik_MDTT.pdf
+    Cenik: https://www.mdt.si/cenik/
   napotnica_info: |
     Naročanje na napotnico poteka izključno prek sistema eZdravje.
 
@@ -187,7 +192,7 @@ info_responses:
     Samoplačniške storitve so na voljo brez čakalne dobe.
 
     Naročite se lahko:
-    • Prek tega klepeta (gumb Naroči se)
+    • Spletno naročanje: mdt.si/narocanje/
     • Po telefonu: 02 23 53 552
     • Po e-pošti: mr@mdt.si
 
