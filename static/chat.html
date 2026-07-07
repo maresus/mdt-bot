@@ -64,6 +64,30 @@
     .narocise-btn { width: 100%; padding: 13px 20px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
     .narocise-btn:hover { background: var(--primary-dark); color: #fff; }
 
+    /* BOOKING OVERLAY */
+    .booking-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(20,40,70,0.45); display: none; align-items: flex-end; justify-content: center; }
+    .booking-overlay.open { display: flex; }
+    .booking-sheet { background: var(--white); border-radius: 24px 24px 0 0; width: 100%; max-width: 860px; max-height: 88vh; overflow-y: auto; animation: slide-up 0.25s cubic-bezier(.32,.72,0,1); }
+    @keyframes slide-up { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .sheet-topbar { position: sticky; top: 0; z-index: 10; background: var(--primary); padding: 14px 20px; display: flex; align-items: center; gap: 12px; border-radius: 24px 24px 0 0; }
+    .sheet-back { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .sheet-back:hover { background: rgba(255,255,255,0.3); }
+    .sheet-title { color: #fff; font-size: 1rem; font-weight: 700; }
+    .sheet-body { padding: 20px 20px 32px; }
+    .bf-field { margin-bottom: 14px; }
+    .bf-field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .bf-field input, .bf-field select, .bf-field textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.9rem; outline: none; background: var(--primary-lighter); transition: border-color 0.15s; color: var(--text); }
+    .bf-field input:focus, .bf-field select:focus, .bf-field textarea:focus { border-color: var(--primary); background: var(--white); }
+    .bf-field textarea { min-height: 70px; resize: none; }
+    .bf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bf-submit { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background 0.15s; }
+    .bf-submit:hover { background: var(--primary-dark); }
+    .bf-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bf-success { text-align: center; padding: 32px 16px; }
+    .bf-success .s-icon { font-size: 3rem; margin-bottom: 12px; }
+    .bf-success h3 { font-size: 1.1rem; font-weight: 700; color: var(--success); margin-bottom: 8px; }
+    .bf-success p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
     /* INPUT */
     .input-area { padding: 12px 16px; background: var(--white); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
     .input-area textarea { flex: 1; min-height: 44px; max-height: 110px; padding: 11px 15px; border: 1.5px solid var(--border); border-radius: 22px; font-family: inherit; font-size: 0.9rem; resize: none; outline: none; line-height: 1.4; background: var(--primary-lighter); }
@@ -101,10 +125,10 @@
   </div>
 
   <div class="narocise-bar">
-    <a class="narocise-btn" href="https://www.mdt.si/narocanje/" target="_blank" rel="noopener">
+    <button class="narocise-btn" id="narociseBtn">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-      Naroči se na preiskavo ↗
-    </a>
+      Naroči se na preiskavo
+    </button>
   </div>
 
   <div class="input-area">
@@ -116,149 +140,77 @@
   <div class="powered">MDT&amp;T d.o.o. · Lavričeva ul. 1, Maribor · 02 23 53 552</div>
 </div>
 
-<!-- booking overlay removed — narocanje via mdt.si/narocanje/ -->
-<div style="display:none" id="bookingOverlay">
+<!-- BOOKING OVERLAY -->
+<div class="booking-overlay" id="bookingOverlay">
   <div class="booking-sheet">
     <div class="sheet-topbar">
-      <button class="sheet-back" id="closeSheet"></button>
-      <span class="sheet-title"></span>
+      <button class="sheet-back" id="closeSheet">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        Nazaj
+      </button>
+      <span class="sheet-title">Naroči se na preiskavo</span>
     </div>
     <div class="sheet-body">
-      <div id="step1">
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">Izberite vrsto naročanja:</p>
-        <div class="type-selector">
-          <div class="type-card" id="typesamoplacniski" onclick="selectType('samoplacniski')">
-            <div class="type-icon">💳</div>
-            <div class="type-name">Samoplačniško</div>
-            <div class="type-desc">Hitro, brez čakalne dobe</div>
+      <div id="bfForm">
+        <div class="bf-field">
+          <label>Vrsta preiskave *</label>
+          <select id="bf-service">
+            <option value="">— Izberite preiskavo —</option>
+            <optgroup label="MR — Magnetnoresonančna tomografija">
+              <option>MR glave in vratu</option>
+              <option>MR hrbtenice</option>
+              <option>MR sklepov in okončin</option>
+              <option>MR trebuha</option>
+              <option>MR dojk</option>
+              <option>MR prostate</option>
+              <option>MR — drugo</option>
+            </optgroup>
+            <optgroup label="RTG — Rentgensko slikanje">
+              <option>RTG slikanje</option>
+            </optgroup>
+            <optgroup label="UZ — Ultrazvočna diagnostika">
+              <option>UZ diagnostika</option>
+              <option>UZ vodeni poseg</option>
+            </optgroup>
+            <optgroup label="Ambulanta za bolezni ščitnice">
+              <option>Pregled ščitnice</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="bf-row">
+          <div class="bf-field">
+            <label>Ime in priimek *</label>
+            <input type="text" id="bf-name" placeholder="Ana Novak">
           </div>
-          <div class="type-card" id="typenapotnica" onclick="selectType('napotnica')">
-            <div class="type-icon">📋</div>
-            <div class="type-name">Na napotnico</div>
-            <div class="type-desc">Prek eZdravja</div>
+          <div class="bf-field">
+            <label>Telefon *</label>
+            <input type="tel" id="bf-phone" placeholder="041 123 456">
           </div>
         </div>
-        <div class="napotnica-info" id="napotnicaInfo">
-          <h3>ℹ️ Naročanje na napotnico</h3>
-          <p>Naročanje na napotnico poteka izključno prek sistema <strong>eZdravje</strong>. Napotnico vam izda vaš lečeči zdravnik in jo vnese v sistem — nato vas kontaktiramo sami.</p>
-          <div class="napotnica-types">
-            <div class="napotnica-type"><strong>Redna napotnica</strong><span>Čakalna doba 6 mesecev ali več (za MR).</span></div>
-            <div class="napotnica-type"><strong>Hitra napotnica</strong><span>Krajša čakalna doba — zahteva klinično utemeljitev lečečega zdravnika.</span></div>
-            <div class="napotnica-type"><strong>Zelo hitra napotnica</strong><span>Najkrajša čakalna doba — za urgentne klinične primere.</span></div>
-          </div>
-          <p style="margin-top:12px;font-size:0.78rem;">Za vprašanja pokličite <strong>02 23 53 552</strong>.</p>
+        <div class="bf-field">
+          <label>E-pošta</label>
+          <input type="email" id="bf-email" placeholder="ana@email.com">
         </div>
+        <div class="bf-field">
+          <label>Željeni datum</label>
+          <input type="date" id="bf-date">
+        </div>
+        <div class="bf-field">
+          <label>Opomba</label>
+          <textarea id="bf-note" placeholder="Dodatne informacije, posebne zahteve…"></textarea>
+        </div>
+        <button class="bf-submit" id="bf-submitBtn" onclick="submitBooking()">Pošlji naročilo →</button>
       </div>
-
-      <div class="booking-form" id="bookingForm">
-        <div class="form-section">
-          <div class="form-section-title">Vrsta preiskave</div>
-          <div class="form-field">
-            <label>Storitev *</label>
-            <select id="bf-service" onchange="onServiceChange()">
-              <option value="">— Izberite preiskavo —</option>
-              <optgroup label="Magnetnoresonančna tomografija (MR)">
-                <option value="MR glave in vratu">MR glave in vratu</option>
-                <option value="MR hrbtenice">MR hrbtenice</option>
-                <option value="MR sklepov in okončin">MR sklepov in okončin</option>
-                <option value="MR artrografija">MR artrografija</option>
-                <option value="MR zgornjega abdomna">MR zgornjega abdomna</option>
-                <option value="MR enterografija">MR enterografija</option>
-                <option value="MR urografija">MR urografija</option>
-                <option value="MR male medenice">MR male medenice</option>
-                <option value="MR prostate">MR prostate</option>
-                <option value="MR dojk">MR dojk</option>
-                <option value="MR prsnega koša">MR prsnega koša</option>
-                <option value="MR angiografija">MR angiografija (MRA)</option>
-              </optgroup>
-              <optgroup label="Rentgensko slikanje (RTG)">
-                <option value="RTG slikanje">RTG slikanje</option>
-              </optgroup>
-              <optgroup label="Ultrazvočna diagnostika (UZ) – samo samoplačniško">
-                <option value="UZ diagnostika">UZ diagnostika</option>
-                <option value="UZ vodeno izpiranje kalcifikacij">UZ vodeno izpiranje kalcifikacij</option>
-                <option value="UZ vodena aplikacija kortikosteroida">UZ vodena aplikacija kortikosteroida (blokada)</option>
-                <option value="UZ vodena izpraznitev ganglionske ciste">UZ vodena izpraznitev ganglionske ciste</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-
-        <div class="mr-questionnaire" id="mrQuestionnaire">
-          <div class="form-section">
-            <div class="form-section-title">⚠️ Varnostni vprašalnik za MR</div>
-            <div class="mr-question">
-              <p>1. Ali imate vgrajen srčni spodbujevalnik ali defibrilator?</p>
-              <div class="q-options">
-                <button class="q-btn yes" onclick="answerQ('spodbujevalnik','da')">Da</button>
-                <button class="q-btn no" onclick="answerQ('spodbujevalnik','ne')">Ne</button>
-              </div>
-            </div>
-            <div class="mr-block-warning" id="warn-spodbujevalnik">
-              ⛔ Žal pri osebah s srčnim spodbujevalnikom ali defibrilatorjem MR preiskav iz varnostnih razlogov ne opravljamo. Za alternativne možnosti se posvetujte z vašim zdravnikom ali nas pokličite na <strong>02 23 53 552</strong>.
-            </div>
-            <div class="mr-question">
-              <p>2. Ste kdaj imeli alergijsko reakcijo na kontrastno sredstvo?</p>
-              <div class="q-options">
-                <button class="q-btn yes" onclick="answerQ('alergija','da')">Da</button>
-                <button class="q-btn no" onclick="answerQ('alergija','ne')">Ne</button>
-              </div>
-            </div>
-            <div class="mr-question">
-              <p>3. Imate strah pred zaprtim prostorom (klavstrofobija)?</p>
-              <div class="q-options">
-                <button class="q-btn yes" onclick="answerQ('klavstrofobija','da')">Da</button>
-                <button class="q-btn no" onclick="answerQ('klavstrofobija','ne')">Ne</button>
-              </div>
-            </div>
-            <div class="mr-question">
-              <p>4. Imate kovinske vsadke, endoprotezo, vijake ali drug vsajen material?</p>
-              <div class="q-options">
-                <button class="q-btn yes" onclick="answerQ('vsadki','da')">Da</button>
-                <button class="q-btn no" onclick="answerQ('vsadki','ne')">Ne</button>
-              </div>
-            </div>
-            <div class="mr-question">
-              <p>5. Ali ste noseči ali je nosečnost možna?</p>
-              <div class="q-options">
-                <button class="q-btn yes" onclick="answerQ('nosecnost','da')">Da</button>
-                <button class="q-btn no" onclick="answerQ('nosecnost','ne')">Ne</button>
-              </div>
-            </div>
-            <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Vaše odgovore posredujemo MDT&amp;T ekipi pred preiskavo.</p>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="form-section-title">Vaši podatki</div>
-          <div class="form-row">
-            <div class="form-field"><label>Ime in priimek *</label><input type="text" id="bf-name" placeholder="Ana Novak" /></div>
-            <div class="form-field"><label>Telefon *</label><input type="tel" id="bf-phone" placeholder="041 123 456" /></div>
-          </div>
-          <div class="form-field"><label>E-pošta * <span style="font-weight:400">(za potrditev)</span></label><input type="email" id="bf-email" placeholder="ana.novak@email.com" /></div>
-        </div>
-
-        <div class="form-section">
-          <div class="form-section-title">Željeni termin</div>
-          <div class="form-row">
-            <div class="form-field"><label>Datum</label><input type="date" id="bf-date" /></div>
-            <div class="form-field"><label>Ura (08:00–20:00)</label><input type="time" id="bf-time" min="08:00" max="20:00" step="1800" /></div>
-          </div>
-          <div class="form-field"><label>Opomba</label><textarea id="bf-note" placeholder="Dodatne informacije…"></textarea></div>
-        </div>
-
-        <button class="submit-btn" id="submitBtn" onclick="submitBooking()">Pošlji naročilo →</button>
-      </div>
-
-      <div class="form-success" id="formSuccess">
+      <div class="bf-success" id="bfSuccess" style="display:none">
         <div class="s-icon">✅</div>
         <h3>Naročilo prejeto!</h3>
-        <p>Hvala za naročilo. Ekipa MDT&amp;T vas bo kontaktirala za potrditev termina.<br><br>Potrditveni email z navodili za pripravo preiskave boste prejeli na vaš email naslov.</p>
-        <p style="margin-top:16px;font-size:0.78rem;color:var(--muted);">Vprašanja? Pokličite: <strong>02 23 53 552</strong></p>
+        <p>Ekipa MDT&amp;T vas bo kontaktirala za potrditev termina.</p>
+        <p style="margin-top:12px;font-size:0.78rem;color:var(--muted);">Vprašanja? <strong>02 23 53 552</strong></p>
       </div>
     </div>
   </div>
 </div>
+
 
 <script>
   const STORAGE_KEY = 'mdt_chat_history';
@@ -274,7 +226,46 @@
     localStorage.setItem(SESSION_KEY, sessionId);
   }
 
-  function closeSheet() {}
+  // Booking overlay
+  const bookingOverlay = document.getElementById('bookingOverlay');
+  document.getElementById('narociseBtn').addEventListener('click', () => {
+    bookingOverlay.classList.add('open');
+    document.getElementById('bf-date').min = new Date().toISOString().split('T')[0];
+  });
+  document.getElementById('closeSheet').addEventListener('click', closeSheet);
+  bookingOverlay.addEventListener('click', e => { if (e.target === bookingOverlay) closeSheet(); });
+
+  function closeSheet() {
+    bookingOverlay.classList.remove('open');
+    document.getElementById('bfForm').style.display = 'block';
+    document.getElementById('bfSuccess').style.display = 'none';
+    document.getElementById('bf-submitBtn').disabled = false;
+    document.getElementById('bf-submitBtn').textContent = 'Pošlji naročilo →';
+    ['bf-service','bf-name','bf-phone','bf-email','bf-date','bf-note'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  }
+
+  async function submitBooking() {
+    const service = document.getElementById('bf-service').value;
+    const name = document.getElementById('bf-name').value.trim();
+    const phone = document.getElementById('bf-phone').value.trim();
+    const email = document.getElementById('bf-email').value.trim();
+    const date = document.getElementById('bf-date').value;
+    const note = document.getElementById('bf-note').value.trim();
+    if (!service || !name || !phone) { alert('Prosimo izpolnite vsaj: storitev, ime in telefon.'); return; }
+    const btn = document.getElementById('bf-submitBtn');
+    btn.disabled = true; btn.textContent = 'Pošiljam…';
+    try {
+      await fetch('/', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message: '', session_id: sessionId, booking_form: { service, name, phone, email, date, note } }) });
+    } catch(e) { console.error(e); }
+    document.getElementById('bfForm').style.display = 'none';
+    document.getElementById('bfSuccess').style.display = 'block';
+    addMessageToDOM(`Naročilo: ${service} · ${name} · ${phone}`, 'user');
+    addMessageToDOM('Hvala za naročilo! Kontaktirali vas bomo za potrditev termina.', 'bot');
+    setTimeout(closeSheet, 3500);
+  }
 
   function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 
