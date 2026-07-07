@@ -433,10 +433,29 @@
 
   function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 
+  function escapeHtml(text) {
+    const d = document.createElement('div'); d.textContent = text;
+    return d.innerHTML.replace(/\n/g, '<br>');
+  }
+
+  function renderMarkdown(text) {
+    var escaped = (function(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; })(text);
+    escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#0f4fa8;text-decoration:underline;">$1</a>');
+    escaped = escaped.replace(/(?<!=["'])(https?:\/\/[^\s<>"')\]]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#0f4fa8;text-decoration:underline;">$1</a>');
+    escaped = escaped.replace(/((?:^|\n)- [^\n]+)+/g, function(block) {
+      var items = block.trim().split(/\n/).map(function(line) { return '<li>' + line.replace(/^- /, '') + '</li>'; }).join('');
+      return '<ul style="margin:6px 0 6px 16px;padding:0;">' + items + '</ul>';
+    });
+    escaped = escaped.replace(/\n\n+/g, '</p><p style="margin:6px 0;">');
+    escaped = escaped.replace(/\n/g, '<br>');
+    return '<p style="margin:0;">' + escaped + '</p>';
+  }
+
   function addMessageToDOM(text, who, save = true, metadata = null) {
     const div = document.createElement('div');
     div.className = 'msg ' + who;
-    div.textContent = text;
+    div.innerHTML = who === 'bot' ? renderMarkdown(text) : escapeHtml(text);
     messagesEl.appendChild(div);
     scrollToBottom();
     if (who === 'bot' && metadata?.ui) renderUiActions(div, metadata.ui);
