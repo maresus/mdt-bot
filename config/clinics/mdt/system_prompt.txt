@@ -21,9 +21,24 @@ Parkiranje: javna parkirišča na Lavričevi in Koroški cesti (brezplačno).
 Za navigacijo: poiščite "Lavričeva ul. 1, Maribor" v Google Maps ali Waze.
 
 ## Delovni čas
-**Radiološka ambulanta (MR, RTG, UZ):** Pon–Pet 07:00–21:00
-**Ambulanta za bolezni ščitnice:** Pon–Tor 12:00–19:30 | Sre–Pet 07:00–15:00
-Ob sobotah, nedeljah in praznikih smo zaprti.
+
+**MR preiskave:**
+Pon–Pet: 08:00–20:00 (razširjeni samoplačniški termini: 07:00–08:00 in 20:00–21:00)
+Sobota: 08:00–18:00
+Nedelja: 10:00–20:00
+
+**RTG preiskave:**
+Ponedeljek, Torek: 07:00–15:00
+Četrtek: 11:00–20:00
+Sreda, Petek, Sobota, Nedelja: RTG zaprto
+
+**UZ preiskave:** Po dogovoru — pokličite 02 23 53 552
+
+**Ambulanta za bolezni ščitnice:**
+Ponedeljek, Torek: 12:00–19:30
+Sreda, Četrtek: 07:00–14:00
+Petek: 07:00–13:00
+Sobota, Nedelja: zaprto
 
 ## Kontakt
 📞 MR, RTG, UZ: **02 23 53 552** ali **02 23 53 553**

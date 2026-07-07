@@ -8,9 +8,14 @@ contact:
   phone_mr2: "02 23 53 553"
   phone_scitnica: "02 23 53 555"
   address: "Lavričeva ul. 1, 2000 Maribor"
-  hours_radiological: "Pon–Pet: 07:00–21:00"
+  hours_mr_weekdays: "Pon–Pet: 08:00–20:00 (razširjeni samoplačniški: 07:00–08:00 in 20:00–21:00)"
+  hours_mr_saturday: "Sob: 08:00–18:00"
+  hours_mr_sunday: "Ned: 10:00–20:00"
+  hours_rtg: "Pon, Tor: 07:00–15:00 | Čet: 11:00–20:00 | Sre, Pet, Sob, Ned: zaprto"
+  hours_uz: "Po dogovoru — pokličite 02 23 53 552"
   hours_scitnica_mon_tue: "12:00–19:30"
-  hours_scitnica_wed_fri: "07:00–15:00"
+  hours_scitnica_wed_thu: "07:00–14:00"
+  hours_scitnica_fri: "07:00–13:00"
   website: "https://www.mdt.si"
   narocanje_url: "https://www.mdt.si/narocanje/"
   cenik_url: "https://www.mdt.si/cenik/"
@@ -169,9 +174,11 @@ info_responses:
     📞 Ambulanta za bolezni ščitnice: 02 23 53 555
     ✉️ scitnica@mdt.si
 
-    🕐 Radiološka ambulanta: Pon–Pet 07:00–21:00
-    🕐 Ambulanta za ščitnico: Pon–Tor 12:00–19:30 | Sre–Pet 07:00–15:00
-  delovni_cas: "Radiološka ambulanta: pon–pet 07:00–21:00. Ambulanta za ščitnico: pon–tor 12:00–19:30, sre–pet 07:00–15:00."
+    🕐 MR: Pon–Pet 08:00–20:00 | Sob 08:00–18:00 | Ned 10:00–20:00
+    🕐 RTG: Pon–Tor 07:00–15:00 | Čet 11:00–20:00
+    🕐 UZ: po dogovoru
+    🕐 Ščitnica: Pon–Tor 12:00–19:30 | Sre–Čet 07:00–14:00 | Pet 07:00–13:00
+  delovni_cas: "MR: pon–pet 08:00–20:00, sob 08:00–18:00, ned 10:00–20:00. RTG: pon–tor 07:00–15:00, čet 11:00–20:00. UZ po dogovoru. Ščitnica: pon–tor 12:00–19:30, sre–čet 07:00–14:00, pet 07:00–13:00."
   cenik: |
     Cenik vseh samoplačniških storitev najdete na naši spletni strani.
 
