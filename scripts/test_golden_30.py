@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from test_framework import TestRunner
+from scripts.test_framework import TestRunner
 
 
 def main() -> int:

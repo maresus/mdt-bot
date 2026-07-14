@@ -97,7 +97,7 @@ def should_prioritize_booking_step_input(
         return True
     if effective_step == "reason" and message.strip():
         return True
-    if effective_step == "confirm" and decision_intent in {IntentType.AFFIRMATIVE, IntentType.NEGATIVE}:
+    if effective_step in {"gdpr", "confirm"} and decision_intent in {IntentType.AFFIRMATIVE, IntentType.NEGATIVE}:
         return True
     return False
 

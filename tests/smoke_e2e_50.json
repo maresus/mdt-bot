@@ -1,0 +1,403 @@
+[
+  {
+    "name": "1. Dermatolog booking - basic",
+    "steps": [
+      {"message": "Zdravo", "expected_intent": "GREETING"},
+      {"message": "Rad bi termin pri dermatologu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "2. Ortoped booking - s simptomom",
+    "steps": [
+      {"message": "Boli me koleno že teden dni", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+      {"message": "Rad bi se naročil na pregled", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "3. Okulist booking - kontrola",
+    "steps": [
+      {"message": "Potrebujem kontrolo pri okulistu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "OKULIST"},
+      {"message": "Ok", "expected_intent": "AFFIRMATIVE"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "4. Estetski poseg - botox",
+    "steps": [
+      {"message": "Zanima me botox", "expected_intent": "SERVICE_INFO", "expected_service": "ESTETSKI_POSEG"},
+      {"message": "Bi se naročila", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Da prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "5. Fizioterapija booking",
+    "steps": [
+      {"message": "Rad bi termin za fizioterapijo", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "FIZIOTERAPIJA"},
+      {"message": "Vredu", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "6. Kozmetika booking",
+    "steps": [
+      {"message": "Želim rezervirati termin za kozmetiko", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "KOZMETIKA"},
+      {"message": "Okej", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "7. Laserski poseg booking",
+    "steps": [
+      {"message": "A delate laserske posege?", "expected_intent": "SERVICE_INFO", "expected_service": "LASERSKI_POSEG"},
+      {"message": "Bi se naročil", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "8. Booking brez storitve",
+    "steps": [
+      {"message": "Rad bi se naročil na pregled", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Dermatolog", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "9. Booking z datumom",
+    "steps": [
+      {"message": "Rad bi termin za 15.3.2026", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "10. Booking z urgent",
+    "steps": [
+      {"message": "Nujno rabim termin danes", "expected_intent": "URGENCY"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "11. Booking + price interrupt",
+    "steps": [
+      {"message": "Rad bi termin pri dermatologu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+      {"message": "Koliko stane pregled?", "expected_intent": "PRICE"},
+      {"message": "Da prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "12. Booking + location interrupt",
+    "steps": [
+      {"message": "Termin za ortopeda prosim", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+      {"message": "Kje se nahajate?", "expected_intent": "INFO"},
+      {"message": "Ja", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "13. Booking + parking interrupt",
+    "steps": [
+      {"message": "Rad bi se naročil", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "A imate parking?", "expected_intent": "INFO"},
+      {"message": "Ok", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "14. Booking + hours interrupt",
+    "steps": [
+      {"message": "Potrebujem termin pri okulistu", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "OKULIST"},
+      {"message": "Kdaj ste odprti?", "expected_intent": "INFO"},
+      {"message": "Bom prišel", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "15. Booking + multiple interrupts",
+    "steps": [
+      {"message": "Termin za dermatolog", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+      {"message": "Kolko stane?", "expected_intent": "PRICE"},
+      {"message": "Pa kje ste?", "expected_intent": "INFO"},
+      {"message": "Okej vredu", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "16. Symptom → booking + price",
+    "steps": [
+      {"message": "Imam izpuščaj na koži", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+      {"message": "A je drago?", "expected_intent": "PRICE"},
+      {"message": "Rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "17. Booking + service info interrupt",
+    "steps": [
+      {"message": "Termin za ortopeda", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+      {"message": "Kako poteka pregled?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Super, ja prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "18. Complex flow - all interrupts",
+    "steps": [
+      {"message": "Zdravo", "expected_intent": "GREETING"},
+      {"message": "Boli me hrbet", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+      {"message": "Koliko stane pregled?", "expected_intent": "PRICE"},
+      {"message": "Kje se nahajate?", "expected_intent": "INFO"},
+      {"message": "Rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja prosim", "expected_intent": "AFFIRMATIVE"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "19. Booking + zavarovanje",
+    "steps": [
+      {"message": "Termin za dermatolog", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "DERMATOLOG"},
+      {"message": "Ali sprejemate zavarovanje?", "expected_intent": "PRICE"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "20. Booking + email vprašanje",
+    "steps": [
+      {"message": "Rad bi se naročil", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Kakšen je vaš email?", "expected_intent": "INFO"},
+      {"message": "Ok", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "21. Dermatolog info",
+    "steps": [
+      {"message": "Kaj dela dermatolog?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Hvala za info", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "22. Storitve splošno",
+    "steps": [
+      {"message": "Kakšne storitve ponujate?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "23. Simptom → info → booking",
+    "steps": [
+      {"message": "Slabo vidim na daleč", "expected_intent": "SERVICE_INFO", "expected_service": "OKULIST"},
+      {"message": "Kaj vključuje pregled?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"}
+    ]
+  },
+  {
+    "name": "24. Več storitev naenkrat",
+    "steps": [
+      {"message": "Zanima me dermatolog in ortoped", "expected_intent": "SERVICE_INFO"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "25. Estetski info",
+    "steps": [
+      {"message": "Katere estetske posege izvajate?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Me zanima botox", "expected_intent": "SERVICE_INFO", "expected_service": "ESTETSKI_POSEG"}
+    ]
+  },
+  {
+    "name": "26. Bolezni info",
+    "steps": [
+      {"message": "Katere bolezni zdravite?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "27. Specialist info",
+    "steps": [
+      {"message": "Kdo je vaš ortoped?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Kakšne izkušnje ima?", "expected_intent": "SERVICE_INFO"}
+    ]
+  },
+  {
+    "name": "28. Postopek info",
+    "steps": [
+      {"message": "Kako poteka pregled pri okulistu?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Hvala za info", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "29. Priprava info",
+    "steps": [
+      {"message": "Kaj moram prinesti s sabo?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Ok hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "30. Simptom + vprašanje",
+    "steps": [
+      {"message": "Boli me koleno, kaj mi priporočate?", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "31. Sleng booking",
+    "steps": [
+      {"message": "Ej zivjo", "expected_intent": "GREETING"},
+      {"message": "A lohk dobim termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja okej", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "32. Typos flow",
+    "steps": [
+      {"message": "Zdravjo", "expected_intent": "GREETING"},
+      {"message": "Termin za ortopet", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "ORTOPED"},
+      {"message": "Hvaal", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "33. Brez šumnikov flow",
+    "steps": [
+      {"message": "Zelim se narociti na pregled", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Pri dermatolgu", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+      {"message": "Da prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "34. Mešan sleng",
+    "steps": [
+      {"message": "Mam problem z kozo", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+      {"message": "Kolko stane to?", "expected_intent": "PRICE"},
+      {"message": "A lohk dobim termin?", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ja", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "35. Typo okulist",
+    "steps": [
+      {"message": "Okulsit pregled prosm", "expected_intent": "BOOKING_APPOINTMENT", "expected_service": "OKULIST"},
+      {"message": "Okej", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "36. Sleng lokacija",
+    "steps": [
+      {"message": "Kko pridm do vas?", "expected_intent": "INFO"},
+      {"message": "A mate parkplac?", "expected_intent": "INFO"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "37. Sleng cena",
+    "steps": [
+      {"message": "Kva stane pregled?", "expected_intent": "PRICE"},
+      {"message": "A je drago?", "expected_intent": "PRICE"},
+      {"message": "Okej hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "38. Affirmative variante",
+    "steps": [
+      {"message": "Termin prosim", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Okej vredu bom prsou", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "39. Negative variante",
+    "steps": [
+      {"message": "Termin?", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Ne hvala", "expected_intent": "NEGATIVE"}
+    ]
+  },
+  {
+    "name": "40. Kompleksen sleng",
+    "steps": [
+      {"message": "Ej lej a mam lohk termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Kolko pa to stane", "expected_intent": "PRICE"},
+      {"message": "Ja bom prsou", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "41. English booking",
+    "steps": [
+      {"message": "Hi", "expected_intent": "GREETING"},
+      {"message": "Need appointment please", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Yes", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "42. English info",
+    "steps": [
+      {"message": "Where are you located?", "expected_intent": "INFO"},
+      {"message": "What are your prices?", "expected_intent": "PRICE"},
+      {"message": "Thanks", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "43. Mixed SLO+ENG",
+    "steps": [
+      {"message": "Hello, rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "What's the price?", "expected_intent": "PRICE"},
+      {"message": "Ok cool", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "44. English symptom",
+    "steps": [
+      {"message": "My back hurts", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+      {"message": "Rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Yes please", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "45. Urgency flow",
+    "steps": [
+      {"message": "Nujno rabim pomoč!", "expected_intent": "URGENCY"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "46. Danes nujno",
+    "steps": [
+      {"message": "Rabim termin danes, nujno!", "expected_intent": "URGENCY"},
+      {"message": "Ja prosim", "expected_intent": "AFFIRMATIVE"}
+    ]
+  },
+  {
+    "name": "47. Greeting → complex",
+    "steps": [
+      {"message": "Pozdravljeni", "expected_intent": "GREETING"},
+      {"message": "Že dalj časa me boli koleno", "expected_intent": "SERVICE_INFO", "expected_service": "ORTOPED"},
+      {"message": "Koliko stane pregled?", "expected_intent": "PRICE"},
+      {"message": "Rad bi termin", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Da", "expected_intent": "AFFIRMATIVE"},
+      {"message": "Lep pozdrav", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "48. Samo info flow",
+    "steps": [
+      {"message": "Dober dan", "expected_intent": "GREETING"},
+      {"message": "Kje se nahajate?", "expected_intent": "INFO"},
+      {"message": "Kdaj ste odprti?", "expected_intent": "INFO"},
+      {"message": "Ali imate parking?", "expected_intent": "INFO"},
+      {"message": "Hvala za informacije", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "49. Samo price flow",
+    "steps": [
+      {"message": "Živjo", "expected_intent": "GREETING"},
+      {"message": "Koliko stane dermatološki pregled?", "expected_intent": "PRICE"},
+      {"message": "Pa koliko stane ortopedski?", "expected_intent": "PRICE"},
+      {"message": "Hvala", "expected_intent": "GOODBYE"}
+    ]
+  },
+  {
+    "name": "50. Full complex flow",
+    "steps": [
+      {"message": "Dober dan", "expected_intent": "GREETING"},
+      {"message": "Imam težave s kožo že nekaj dni", "expected_intent": "SERVICE_INFO", "expected_service": "DERMATOLOG"},
+      {"message": "Katere bolezni zdravite?", "expected_intent": "SERVICE_INFO"},
+      {"message": "Koliko stane pregled?", "expected_intent": "PRICE"},
+      {"message": "Kje se nahajate?", "expected_intent": "INFO"},
+      {"message": "Ali imate parking?", "expected_intent": "INFO"},
+      {"message": "Rad bi se naročil na pregled", "expected_intent": "BOOKING_APPOINTMENT"},
+      {"message": "Da prosim", "expected_intent": "AFFIRMATIVE"},
+      {"message": "Hvala za pomoč", "expected_intent": "GOODBYE"}
+    ]
+  }
+]

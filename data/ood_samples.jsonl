@@ -1,0 +1,25 @@
+{"timestamp": "2026-03-02T12:52:11.982862+00:00", "message": "Crypto wallet", "level": "ood_hard", "confidence": 0.95, "reason": "['crypto']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.984321+00:00", "message": "Kripto borza", "level": "ood_hard", "confidence": 0.95, "reason": "['kripto']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.985776+00:00", "message": "Politična stranka", "level": "ood_hard", "confidence": 0.95, "reason": "['stranka']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.987061+00:00", "message": "Kje je najboljša kmetija?", "level": "ood_hard", "confidence": 0.95, "reason": "['kmetij']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.988271+00:00", "message": "Bitcoin investicija", "level": "ood_hard", "confidence": 0.95, "reason": "['bitcoin', 'investic']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.989099+00:00", "message": "Rabim nevrologa", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nevrolog']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.990121+00:00", "message": "Kardiolog pregled", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['kardiolog']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.990583+00:00", "message": "Kardiologija termin", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['kardiologija', 'kardiolog']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.992083+00:00", "message": "Psihiater termin", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['psihiater']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.992594+00:00", "message": "Psihiatrija pomoč", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['psihiatrij']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:11.996325+00:00", "message": "Rabim nevrologa", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nevrolog']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:12.010519+00:00", "message": "traktor", "level": "ood_hard", "confidence": 0.95, "reason": "['traktor']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:12.010872+00:00", "message": "TRAKTOR", "level": "ood_hard", "confidence": 0.95, "reason": "['traktor']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:12.011533+00:00", "message": "Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin Bitcoin ", "level": "ood_hard", "confidence": 0.95, "reason": "['bitcoin']", "dry_run": false}
+{"timestamp": "2026-03-02T12:52:12.015863+00:00", "message": "Rabim nevrologa", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nevrolog']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.211607+00:00", "message": "Kje lahko kupim traktor?", "level": "ood_hard", "confidence": 0.95, "reason": "['traktor']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.214065+00:00", "message": "Bitcoin investicija", "level": "ood_hard", "confidence": 0.95, "reason": "['investic', 'bitcoin']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.217131+00:00", "message": "Hotel rezervacija v Ljubljani", "level": "ood_hard", "confidence": 0.9, "reason": "mixed_input", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.218840+00:00", "message": "Rabim nevrologa", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nevrolog']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.221524+00:00", "message": "Zlomljeno kost imam", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['zlomljen', 'zlom']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.222561+00:00", "message": "Imam depresijo", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['depresij']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.223750+00:00", "message": "Imam tumor", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['tumor']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.225657+00:00", "message": "Nosečnost pregled", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nosečnost']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.226206+00:00", "message": "Porod informacije", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['porod']", "dry_run": false}
+{"timestamp": "2026-03-02T13:19:55.243159+00:00", "message": "Rabim nevrologa", "level": "ood_medical_outside", "confidence": 0.9, "reason": "['nevrolog']", "dry_run": false}

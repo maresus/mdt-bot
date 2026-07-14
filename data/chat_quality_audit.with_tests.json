@@ -1,0 +1,139 @@
+{
+  "generated_at": "2026-02-17T06:55:09.435823",
+  "period_days": 1,
+  "period_start": "2026-02-16T06:55:08.558505",
+  "ignored_sessions": 0,
+  "sessions_analyzed": 983,
+  "messages_analyzed": 41976,
+  "issues_total": 197,
+  "issues": [
+    {
+      "code": "uncertain_fallback_returned",
+      "count": 197,
+      "title": "Vrnjen je bil negotov fallback",
+      "recommendation": "Dodaj intent/routing pravilo za to skupino vprašanj.",
+      "examples": [
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-16T23:20:05.677954",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-16T23:21:09.312850",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-16T23:21:59.330763",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-16T23:22:29.825148",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-17T05:07:17.942092",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-edge_mix_491",
+          "timestamp": "2026-02-17T05:10:05.663231",
+          "user": "25.2.",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_490",
+          "timestamp": "2026-02-16T23:20:05.191735",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_490",
+          "timestamp": "2026-02-16T23:20:05.348607",
+          "user": "kaj zdaj",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_489",
+          "timestamp": "2026-02-16T23:20:04.900872",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_489",
+          "timestamp": "2026-02-16T23:20:05.044371",
+          "user": "lahko",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_488",
+          "timestamp": "2026-02-16T23:20:04.766151",
+          "user": "kaj zdaj",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_487",
+          "timestamp": "2026-02-16T23:20:04.574512",
+          "user": "lahko",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-16T23:20:04.406288",
+          "user": "kaj zdaj",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-16T23:21:09.134689",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-16T23:21:59.138621",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-16T23:22:29.662084",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-17T05:07:17.765542",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_486",
+          "timestamp": "2026-02-17T05:10:05.425681",
+          "user": "imam nevrološke težave",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_485",
+          "timestamp": "2026-02-16T23:20:04.242790",
+          "user": "lahko",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        },
+        {
+          "session_id": "test_center::e2e500-urg_unsup_484",
+          "timestamp": "2026-02-16T23:20:04.083101",
+          "user": "kaj zdaj",
+          "assistant": "Nisem prepričan, da pravilno razumem. Lahko pojasnite:\n- Za katero storitev vas zanima? (dermatolog / ortoped / okulist / ...)\n- Za kateri datum?\n\nAli lahko zastavite vprašanje drugače?"
+        }
+      ]
+    }
+  ]
+}

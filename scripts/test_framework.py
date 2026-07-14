@@ -78,3 +78,56 @@ class TestRunner:
             for failure in self.failures:
                 print(failure)
         return 0 if self.failed == 0 else 1
+
+    def test_flow(self, flow: dict[str, Any], idx: int) -> None:
+        """Test multi-step flow: each step is a single routing call."""
+        name = str(flow["name"])
+        steps: list[dict[str, Any]] = flow["steps"]
+        failed_step: str | None = None
+
+        for step_idx, step in enumerate(steps, start=1):
+            msg = str(step["message"])
+            exp_intent = str(step["expected_intent"])
+            exp_service = step.get("expected_service")
+            state = step.get("state")
+            if not isinstance(state, dict):
+                state = {"flow": "idle", "step": None}
+
+            decision = route(msg, state)
+            intent_ok = decision.primary_intent.value == exp_intent
+            service_ok = True if exp_service is None else decision.service_type == exp_service
+
+            if not (intent_ok and service_ok):
+                failed_step = (
+                    f"FAIL [{idx:02d}] {name} (step {step_idx}: '{msg[:60]}')\n"
+                    f"  expected=intent:{exp_intent} service:{exp_service}\n"
+                    f"  got=intent:{decision.primary_intent.value} service:{decision.service_type}"
+                )
+                break
+
+        if failed_step is None:
+            self.passed += 1
+            print(f"PASS [{idx:02d}] {name}")
+        else:
+            self.failed += 1
+            self.failures.append(failed_step)
+            print(failed_step)
+
+    def run_flow_from_json(self, path: str | Path) -> int:
+        """Run multi-step flow suite from JSON (list of flows with 'steps' arrays)."""
+        suite_path = Path(path)
+        flows = json.loads(suite_path.read_text(encoding="utf-8"))
+        total = len(flows)
+
+        print("=" * 64)
+        print(f"{self.name} ({total} flows)")
+        print("=" * 64)
+        for idx, flow in enumerate(flows, start=1):
+            self.test_flow(flow, idx)
+        print("-" * 64)
+        print(f"RESULT: {self.passed}/{total} passed, {self.failed}/{total} failed")
+        if self.failures:
+            print("\n=== FAILED FLOWS ===")
+            for failure in self.failures:
+                print(failure)
+        return 0 if self.failed == 0 else 1
